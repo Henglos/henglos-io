@@ -1,0 +1,243 @@
+---
+title: "Display"
+description: "A monochrome I2C OLED — SSD1306 (0.96\", 128x64 or 128x32) or SH1106 (1.3\", 128x64), 4 pins."
+---
+
+A monochrome I2C OLED — SSD1306 (0.96", 128x64 or 128x32) or SH1106 (1.3", 128x64), 4 pins. Print text in 3 fonts and 4 sizes, Scroll it, Draw shapes (any shape from its vertices), show an Image (built-in icons or your own bitmap), and readings as a Bar, a Gauge or a Chart over time. Actions draw into a buffer and Update Screen sends it — turn it off on all but the last to build a screen without flicker.
+
+<PackageInfo name="@henglosio/component-display" version="1.0.0" platform="^1.0.0" />
+
+| Node | Kind | What it does |
+| --- | --- | --- |
+| [Print](#print) | Action | Writes text — or a bound value, like a sensor's reading — on a line of the screen, in one of 4 sizes. |
+| [Scroll](#scroll) | Action | Runs text across a line, marquee-style — in from one side, out the other — for a message longer than the line. |
+| [Draw](#draw) | Action | Draws a shape — a pixel, a line, a rectangle, a circle, or any shape from its vertices — lit, or erasing. |
+| [Image](#image) | Action | Draws a bitmap — one of the built-in 16x16 icons, an image you attach, or bytes from image2cpp — 1x to 4x. |
+| [Bar](#bar) | Action | A horizontal bar filled by a value between Min and Max — a sensor reading, a level, a progress. |
+| [Gauge](#gauge) | Action | A dial — a half circle with ticks and a needle pointing at a value between Min and Max, with the value under it. |
+| [Chart](#chart) | Action | A value's history as a graph — each run adds the value on the right and scrolls the older ones left: a reading over time. |
+| [Clear](#clear) | Action | Blanks the whole screen, or one line of it. |
+| [Settings](#settings) | Action | Brightness, rotation, colors and power — what's drawn stays. |
+
+## Actions
+
+### Print
+
+Writes text — or a bound value, like a sensor's reading — on a line of the screen, in one of 4 sizes.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **SDA Pin** | Pin (digital out) | GPIO21 | **Required.** Board pin wired to the display's SDA. |
+| **SCL Pin** | Pin (digital out) | GPIO22 | **Required.** Board pin wired to the display's SCL (sometimes labeled SCK). |
+| **Model** | One of: SSD1306 · 128x64 (0.96"), SSD1306 · 128x32 (0.91"), SH1106 · 128x64 (1.3") | SSD1306 · 128x64 (0.96") | The display's controller and size — 0.96" modules are usually SSD1306, 1.3" ones SH1106 (picking SSD1306 for one shows a shifted, noisy image). |
+| **Text** | Text | `Hello!` | What to show — type it, or bind an output or a variable (numbers are formatted, see Decimals). A typed \n goes on to the next line. Accents show as their plain letter. |
+| **Line** | Number (1 to 8) | `1` | Which line to write on, from 1 at the top — lines are 8 px: 1 to 8 on a 64-px screen, 1 to 4 on a 32-px one. A bigger Text Size takes more lines from there down. |
+| **Font** | One of: Standard · 8x8, Small · 5x7, Bold · 8x8 | Standard · 8x8 | The typeface — Standard (8 px a character, 16 a line), Small (a finer 5x7, 6 px a character: 21 a line, with descenders) or Bold (Standard 1 px thicker, 9 px a character: 14 a line). |
+| **Text Size** | One of: 1x · 8 px, 2x · 16 px, 3x · 24 px, 4x · 32 px | 1x · 8 px | How big the text is — 1x to 4x the font (8, 16, 24 or 32 px tall), taking that many 8-px lines from Line down. |
+| **Align** | One of: Left, Center, Right | Left | Where on the line the text goes. |
+| **Column** | Number (1 to 21) | `1` | *Advanced.* *Shown when Align is Left.* Which character the text starts at, from 1 — up to 16 in Standard at 1x, 21 in Small (fewer at bigger sizes). |
+| **Format** | Text | — | *Advanced.* Text around Text — \{\} stands for it: "Temp: \{\} C". Without \{\}, it goes before it. |
+| **Decimals** | Number (0 to 6) | `2` | *Advanced.* Decimal places of a bound number that isn't whole, from 0 to 6. |
+| **Clear Line** | On / off | Blank first | *Advanced.* Blank the line (all of its height) before writing, so a shorter text doesn't leave the end of the last one behind. |
+| **Update Screen** | On / off | Show now | *Advanced.* Send the drawing to the screen now. Turn it off to keep drawing with the next actions and show it all at once with the last one (no flicker). |
+| **Address** | Text | `0x3C` | *Advanced.* The display's I2C address, in hex — 0x3C on most modules, 0x3D on some (set by a jumper on the back). |
+
+### Scroll
+
+Runs text across a line, marquee-style — in from one side, out the other — for a message longer than the line. The flow waits while it scrolls, like a Delay.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **SDA Pin** | Pin (digital out) | GPIO21 | **Required.** Board pin wired to the display's SDA. |
+| **SCL Pin** | Pin (digital out) | GPIO22 | **Required.** Board pin wired to the display's SCL (sometimes labeled SCK). |
+| **Model** | One of: SSD1306 · 128x64 (0.96"), SSD1306 · 128x32 (0.91"), SH1106 · 128x64 (1.3") | SSD1306 · 128x64 (0.96") | The display's controller and size — 0.96" modules are usually SSD1306, 1.3" ones SH1106 (picking SSD1306 for one shows a shifted, noisy image). |
+| **Text** | Text | `Hello from Henglos IO!` | What to scroll — type it, or bind an output or a variable. Accents show as their plain letter. |
+| **Format** | Text | — | *Advanced.* Text around Text — \{\} stands for it: "Temp: \{\} C". Without \{\}, it goes before it. |
+| **Line** | Number (1 to 8) | `1` | Which 8-px line it runs on, from 1 at the top (1 to 8; 1 to 4 on a 32-px screen). |
+| **Font** | One of: Standard · 8x8, Small · 5x7, Bold · 8x8 | Standard · 8x8 | The typeface — Standard (8 px a character, 16 a line), Small (a finer 5x7, 6 px a character: 21 a line, with descenders) or Bold (Standard 1 px thicker, 9 px a character: 14 a line). |
+| **Text Size** | One of: 1x · 8 px, 2x · 16 px, 3x · 24 px, 4x · 32 px | 1x · 8 px | How big the text is — 1x to 4x the font (8, 16, 24 or 32 px tall), taking that many 8-px lines from Line down. |
+| **Direction** | One of: Left (reads naturally), Right | Left (reads naturally) | Where the text moves to. |
+| **Speed** | Number (10 to 400) | `60` | How fast it moves, in px a second — from 10 (slow) to 400. 60 reads comfortably. |
+| **Passes** | Number (1 to 20) | `1` | How many times it crosses the screen before the flow goes on — 1 to 20. The line is left blank after. |
+| **Address** | Text | `0x3C` | *Advanced.* The display's I2C address, in hex — 0x3C on most modules, 0x3D on some (set by a jumper on the back). |
+
+### Draw
+
+Draws a shape — a pixel, a line, a rectangle, a circle, or any shape from its vertices — lit, or erasing.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **SDA Pin** | Pin (digital out) | GPIO21 | **Required.** Board pin wired to the display's SDA. |
+| **SCL Pin** | Pin (digital out) | GPIO22 | **Required.** Board pin wired to the display's SCL (sometimes labeled SCK). |
+| **Model** | One of: SSD1306 · 128x64 (0.96"), SSD1306 · 128x32 (0.91"), SH1106 · 128x64 (1.3") | SSD1306 · 128x64 (0.96") | The display's controller and size — 0.96" modules are usually SSD1306, 1.3" ones SH1106 (picking SSD1306 for one shows a shifted, noisy image). |
+| **Shape** | One of: Pixel, Line, Rectangle, Circle, Polygon (custom shape) | Rectangle | What to draw. Its own settings show below. |
+| **X** | Number (0 to 127) | `0` | Horizontal position, in px from the left — 0 to 127. A circle's center, a rectangle's left edge, a line's start, where a polygon's 0,0 is. |
+| **Y** | Number (0 to 63) | `0` | Vertical position, in px from the top — 0 to 63. A circle's center, a rectangle's top edge, a line's start, where a polygon's 0,0 is. |
+| **X2** | Number (0 to 127) | `127` | *Shown when Shape is Line.* Where the line ends, horizontally — 0 to 127 px. |
+| **Y2** | Number (0 to 63) | `63` | *Shown when Shape is Line.* Where the line ends, vertically — 0 to 63 px. |
+| **Width** | Number (1 to 128) | `32` | *Shown when Shape is Rectangle.* The rectangle's width, in px — 1 to 128. |
+| **Height** | Number (1 to 64) | `16` | *Shown when Shape is Rectangle.* The rectangle's height, in px — 1 to 64. |
+| **Radius** | Number (1 to 64) | `10` | *Shown when Shape is Circle.* The circle's radius, in px — 1 to 64. |
+| **Vertices** | Text | `10,0 20,20 0,20` | *Shown when Shape is Polygon (custom shape).* The shape's corners, in order, as x,y pairs from X/Y — separated by spaces or ";" (at least 3; it closes back to the first). A triangle: "10,0 20,20 0,20". Negative values reach left of / above X/Y. |
+| **Fill** | On / off | Off | *Shown when Shape is Rectangle or Circle or Polygon (custom shape).* Fill the shape in, rather than drawing only its outline. |
+| **Color** | One of: On (lit), Off (erase) | On (lit) | Lit pixels, or Off to erase — draw in Off over something to cut it out. |
+| **Update Screen** | On / off | Show now | *Advanced.* Send the drawing to the screen now. Turn it off to keep drawing with the next actions and show it all at once with the last one (no flicker). |
+| **Address** | Text | `0x3C` | *Advanced.* The display's I2C address, in hex — 0x3C on most modules, 0x3D on some (set by a jumper on the back). |
+
+### Image
+
+Draws a bitmap — one of the built-in 16x16 icons, an image you attach, or bytes from image2cpp — 1x to 4x.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **SDA Pin** | Pin (digital out) | GPIO21 | **Required.** Board pin wired to the display's SDA. |
+| **SCL Pin** | Pin (digital out) | GPIO22 | **Required.** Board pin wired to the display's SCL (sometimes labeled SCK). |
+| **Model** | One of: SSD1306 · 128x64 (0.96"), SSD1306 · 128x32 (0.91"), SH1106 · 128x64 (1.3") | SSD1306 · 128x64 (0.96") | The display's controller and size — 0.96" modules are usually SSD1306, 1.3" ones SH1106 (picking SSD1306 for one shows a shifted, noisy image). |
+| **Source** | One of: Built-in icon, Image file, Custom bytes | Built-in icon | A built-in icon, an image file you attach (any size — it's fitted to the screen), or bitmap bytes you type in. |
+| **Bitmap** | File | — | *Shown when Source is Image file.* An image (PNG, JPG, BMP… or a .pbm) — the studio turns it into the screen's black and white, fitted in 128x64, and previews it. It reaches the board with the workflow when it runs. |
+| **Icon** | One of: Check, Cross, Warning, Bell, Lock, Power, Clock, Home, Heart, Wi-Fi, Battery full, Battery half, Battery low, Thermometer, Drop (humidity), Sun, Cloud, Arrow up, Arrow down, Arrow left, Arrow right | Heart | *Shown when Source is Built-in icon.* Which icon — 16x16 px (32 to 64 px with Scale). |
+| **Data** | Text | — | *Shown when Source is Custom bytes.* Your bitmap, in Encoding — from image2cpp ("Horizontal - 1 bit per pixel"): rows of Width / 8 bytes, the leftmost pixel in the top bit. It fits one setting: 64 bytes by default (16x16 in hex, 24x16 in base64) — raise Data size in Platform settings for more. |
+| **Encoding** | One of: Hex, Base64 | Hex | *Shown when Source is Custom bytes.* How Data is written — Hex (what image2cpp's "Arduino code" shows) or Base64 (shorter, fits a bigger image). |
+| **Width** | Number (1 to 128) | `16` | *Shown when Source is Custom bytes.* The bitmap's width, in px — 1 to 128. Its height follows from the data. |
+| **X** | Number (0 to 127) | `0` | The image's left edge, in px from the left — 0 to 127. |
+| **Y** | Number (0 to 63) | `0` | The image's top edge, in px from the top — 0 to 63. Line n starts at (n − 1) × 8. |
+| **Scale** | One of: 1x, 2x, 3x, 4x | 1x | How many screen pixels each image pixel takes — a 16x16 icon at 2x is 32x32. |
+| **Color** | One of: On (lit), Off (erase) | On (lit) | Draw the image lit (On), or Off to cut it out of something lit. |
+| **Transparent** | On / off | Keep background | *Advanced.* Leave what's under the image's empty pixels as it is. Off — they're drawn too, in the opposite color (a solid block). |
+| **Update Screen** | On / off | Show now | *Advanced.* Send the drawing to the screen now. Turn it off to keep drawing with the next actions and show it all at once with the last one (no flicker). |
+| **Address** | Text | `0x3C` | *Advanced.* The display's I2C address, in hex — 0x3C on most modules, 0x3D on some (set by a jumper on the back). |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `width` | int | The image's width on screen, in px (after Scale). |
+| `height` | int | The image's height on screen, in px (after Scale). |
+
+### Bar
+
+A horizontal bar filled by a value between Min and Max — a sensor reading, a level, a progress.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **SDA Pin** | Pin (digital out) | GPIO21 | **Required.** Board pin wired to the display's SDA. |
+| **SCL Pin** | Pin (digital out) | GPIO22 | **Required.** Board pin wired to the display's SCL (sometimes labeled SCK). |
+| **Model** | One of: SSD1306 · 128x64 (0.96"), SSD1306 · 128x32 (0.91"), SH1106 · 128x64 (1.3") | SSD1306 · 128x64 (0.96") | The display's controller and size — 0.96" modules are usually SSD1306, 1.3" ones SH1106 (picking SSD1306 for one shows a shifted, noisy image). |
+| **Value** | Number | — | **Required.** What fills the bar — usually bound to an output or a variable. Below Min it's empty, above Max full. |
+| **Min** | Number | `0` | The value of an empty bar. |
+| **Max** | Number | `100` | The value of a full bar — must be above Min. |
+| **X** | Number (0 to 127) | `0` | The bar's left edge, in px from the left — 0 to 127. |
+| **Y** | Number (0 to 63) | `56` | The bar's top edge, in px from the top — 0 to 63. Line n starts at (n − 1) × 8. |
+| **Width** | Number (3 to 128) | `128` | The bar's width, in px — 3 to 128. |
+| **Height** | Number (3 to 64) | `8` | The bar's height, in px — 3 to 64. |
+| **Border** | On / off | Outline | Draw an outline around the bar, so an empty one still shows where it is. |
+| **Update Screen** | On / off | Show now | *Advanced.* Send the drawing to the screen now. Turn it off to keep drawing with the next actions and show it all at once with the last one (no flicker). |
+| **Address** | Text | `0x3C` | *Advanced.* The display's I2C address, in hex — 0x3C on most modules, 0x3D on some (set by a jumper on the back). |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `percent` | float | How full the bar is, 0–100. |
+
+### Gauge
+
+A dial — a half circle with ticks and a needle pointing at a value between Min and Max, with the value under it.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **SDA Pin** | Pin (digital out) | GPIO21 | **Required.** Board pin wired to the display's SDA. |
+| **SCL Pin** | Pin (digital out) | GPIO22 | **Required.** Board pin wired to the display's SCL (sometimes labeled SCK). |
+| **Model** | One of: SSD1306 · 128x64 (0.96"), SSD1306 · 128x32 (0.91"), SH1106 · 128x64 (1.3") | SSD1306 · 128x64 (0.96") | The display's controller and size — 0.96" modules are usually SSD1306, 1.3" ones SH1106 (picking SSD1306 for one shows a shifted, noisy image). |
+| **Value** | Number | — | **Required.** Where the needle points — usually bound to an output or a variable. Past Min/Max it stops at the end. |
+| **Min** | Number | `0` | The value at the dial's left end. |
+| **Max** | Number | `100` | The value at the dial's right end — must be above Min. |
+| **X** | Number (0 to 127) | `64` | The needle's pivot (the bottom middle of the dial), in px from the left — 0 to 127. |
+| **Y** | Number (0 to 63) | `50` | The needle's pivot, in px from the top — 0 to 63. The dial rises Radius px above it; the value is written under it. |
+| **Radius** | Number (8 to 64) | `40` | The dial's size, in px — 8 to 64. |
+| **Show Value** | On / off | Number | Write the value under the needle's pivot. |
+| **Decimals** | Number (0 to 6) | `0` | *Advanced.* Decimal places of the value shown under the dial (with Show Value on), from 0 to 6. |
+| **Update Screen** | On / off | Show now | *Advanced.* Send the drawing to the screen now. Turn it off to keep drawing with the next actions and show it all at once with the last one (no flicker). |
+| **Address** | Text | `0x3C` | *Advanced.* The display's I2C address, in hex — 0x3C on most modules, 0x3D on some (set by a jumper on the back). |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `percent` | float | Where the needle points, 0–100. |
+
+### Chart
+
+A value's history as a graph — each run adds the value on the right and scrolls the older ones left: a reading over time.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **SDA Pin** | Pin (digital out) | GPIO21 | **Required.** Board pin wired to the display's SDA. |
+| **SCL Pin** | Pin (digital out) | GPIO22 | **Required.** Board pin wired to the display's SCL (sometimes labeled SCK). |
+| **Model** | One of: SSD1306 · 128x64 (0.96"), SSD1306 · 128x32 (0.91"), SH1106 · 128x64 (1.3") | SSD1306 · 128x64 (0.96") | The display's controller and size — 0.96" modules are usually SSD1306, 1.3" ones SH1106 (picking SSD1306 for one shows a shifted, noisy image). |
+| **Value** | Number | — | **Required.** The value to add — usually bound to an output or a variable. One per run. |
+| **Min** | Number | — | The value at the chart's bottom. Empty — fit the history (the lowest value shown). |
+| **Max** | Number | — | The value at the chart's top. Empty — fit the history (the highest value shown). |
+| **X** | Number (0 to 127) | `0` | The chart's left edge, in px from the left — 0 to 127. |
+| **Y** | Number (0 to 63) | `16` | The chart's top edge, in px from the top — 0 to 63. |
+| **Width** | Number (4 to 128) | `128` | The chart's width, in px — 4 to 128. One sample a pixel column, so also how much history it shows. |
+| **Height** | Number (4 to 64) | `48` | The chart's height, in px — 4 to 64. |
+| **Style** | One of: Line, Bars, Dots | Line | How the samples are drawn. |
+| **Border** | On / off | Outline | Draw an outline around the chart. |
+| **Update Screen** | On / off | Show now | *Advanced.* Send the drawing to the screen now. Turn it off to keep drawing with the next actions and show it all at once with the last one (no flicker). |
+| **Address** | Text | `0x3C` | *Advanced.* The display's I2C address, in hex — 0x3C on most modules, 0x3D on some (set by a jumper on the back). |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `minimum` | float | The lowest value of the history shown. |
+| `maximum` | float | The highest value of the history shown. |
+| `average` | float | The average of the history shown. |
+
+### Clear
+
+Blanks the whole screen, or one line of it.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **SDA Pin** | Pin (digital out) | GPIO21 | **Required.** Board pin wired to the display's SDA. |
+| **SCL Pin** | Pin (digital out) | GPIO22 | **Required.** Board pin wired to the display's SCL (sometimes labeled SCK). |
+| **Model** | One of: SSD1306 · 128x64 (0.96"), SSD1306 · 128x32 (0.91"), SH1106 · 128x64 (1.3") | SSD1306 · 128x64 (0.96") | The display's controller and size — 0.96" modules are usually SSD1306, 1.3" ones SH1106 (picking SSD1306 for one shows a shifted, noisy image). |
+| **Area** | One of: Whole screen, One line | Whole screen | What to blank. |
+| **Line** | Number (1 to 8) | `1` | *Shown when Area is One line.* Which 8-px line to blank, from 1 at the top — 1 to 8 (1 to 4 on a 32-px screen). |
+| **Update Screen** | On / off | Show now | *Advanced.* Send the drawing to the screen now. Turn it off to keep drawing with the next actions and show it all at once with the last one (no flicker). |
+| **Address** | Text | `0x3C` | *Advanced.* The display's I2C address, in hex — 0x3C on most modules, 0x3D on some (set by a jumper on the back). |
+
+### Settings
+
+Brightness, rotation, colors and power — what's drawn stays.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **SDA Pin** | Pin (digital out) | GPIO21 | **Required.** Board pin wired to the display's SDA. |
+| **SCL Pin** | Pin (digital out) | GPIO22 | **Required.** Board pin wired to the display's SCL (sometimes labeled SCK). |
+| **Model** | One of: SSD1306 · 128x64 (0.96"), SSD1306 · 128x32 (0.91"), SH1106 · 128x64 (1.3") | SSD1306 · 128x64 (0.96") | The display's controller and size — 0.96" modules are usually SSD1306, 1.3" ones SH1106 (picking SSD1306 for one shows a shifted, noisy image). |
+| **Contrast** | Number (0 to 255) | `207` | Brightness, from 0 (dimmest — still visible) to 255. Lower it to save power and the screen's life. |
+| **Rotate 180** | On / off | Off | Turn the picture upside down — for a display mounted the other way round. |
+| **Invert Colors** | On / off | Off | Dark pixels on a lit background. |
+| **Screen On** | On / off | On | Off blanks the screen without losing what's drawn — On brings it back. |
+| **Address** | Text | `0x3C` | *Advanced.* The display's I2C address, in hex — 0x3C on most modules, 0x3D on some (set by a jumper on the back). |

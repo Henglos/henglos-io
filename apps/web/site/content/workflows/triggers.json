@@ -1,0 +1,2281 @@
+{
+	"name": "Triggers",
+	"description": "A request on /led and a timer, each running its own branch.",
+	"board": {
+		"id": "87c30f07-64aa-4c31-b9af-10682a7f8f5a",
+		"packageId": "board",
+		"base": {
+			"name": "Esp32 Generic",
+			"description": "Board Description",
+			"pins": [
+				{
+					"gpio": 0,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch"
+					],
+					"displayName": "GPIO0"
+				},
+				{
+					"gpio": 1,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm"
+					],
+					"displayName": "GPIO1"
+				},
+				{
+					"gpio": 2,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch"
+					],
+					"displayName": "GPIO2"
+				},
+				{
+					"gpio": 3,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm"
+					],
+					"displayName": "GPIO3"
+				},
+				{
+					"gpio": 4,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO4"
+				},
+				{
+					"gpio": 5,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm"
+					],
+					"displayName": "GPIO5"
+				},
+				{
+					"gpio": 12,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch"
+					],
+					"displayName": "GPIO12"
+				},
+				{
+					"gpio": 13,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO13"
+				},
+				{
+					"gpio": 14,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO14"
+				},
+				{
+					"gpio": 15,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch"
+					],
+					"displayName": "GPIO15"
+				},
+				{
+					"gpio": 16,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO16"
+				},
+				{
+					"gpio": 17,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO17"
+				},
+				{
+					"gpio": 18,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO18"
+				},
+				{
+					"gpio": 19,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO19"
+				},
+				{
+					"gpio": 21,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO21"
+				},
+				{
+					"gpio": 22,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO22"
+				},
+				{
+					"gpio": 23,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO23"
+				},
+				{
+					"gpio": 25,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"analog_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO25"
+				},
+				{
+					"gpio": 26,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"analog_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO26"
+				},
+				{
+					"gpio": 27,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO27"
+				},
+				{
+					"gpio": 32,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO32"
+				},
+				{
+					"gpio": 33,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO33"
+				},
+				{
+					"gpio": 34,
+					"type": [
+						"digital_in",
+						"analog_in"
+					],
+					"displayName": "GPIO34"
+				},
+				{
+					"gpio": 35,
+					"type": [
+						"digital_in",
+						"analog_in"
+					],
+					"displayName": "GPIO35"
+				},
+				{
+					"gpio": 36,
+					"type": [
+						"digital_in",
+						"analog_in"
+					],
+					"displayName": "GPIO36"
+				},
+				{
+					"gpio": 39,
+					"type": [
+						"digital_in",
+						"analog_in"
+					],
+					"displayName": "GPIO39"
+				}
+			],
+			"connection": {
+				"serial": {
+					"baudrates": [
+						115200,
+						9600,
+						19200,
+						38400,
+						57600,
+						230400,
+						460800,
+						921600
+					]
+				}
+			},
+			"capabilities": [
+				"wifi",
+				"bluetooth"
+			]
+		},
+		"configurations": [],
+		"connection": null,
+		"actions": []
+	},
+	"start": {
+		"id": "dd646d17-16eb-451a-ae1e-d3b44227069b",
+		"componentId": "core",
+		"alias": "Start",
+		"base": {
+			"displayName": "Start",
+			"description": "Entry point of the workflow — runs first; connect its output to the first action in the flow.",
+			"outputs": [
+				{
+					"id": "start",
+					"name": "Start"
+				}
+			],
+			"configurations": [
+				{
+					"displayName": "Mode",
+					"description": "Whether the workflow keeps looping back to Start after finishing, or runs through once.",
+					"type": "options",
+					"defaultValue": "loop",
+					"options": [
+						{
+							"displayName": "Loop",
+							"value": "loop"
+						},
+						{
+							"displayName": "Once",
+							"value": "once"
+						}
+					]
+				}
+			]
+		},
+		"configurations": [
+			{
+				"id": "7bdfab6d-8eca-49ac-bdd1-8235c272db5b",
+				"base": {
+					"displayName": "Mode",
+					"description": "Whether the workflow keeps looping back to Start after finishing, or runs through once.",
+					"type": "options",
+					"defaultValue": "loop",
+					"options": [
+						{
+							"displayName": "Loop",
+							"value": "loop"
+						},
+						{
+							"displayName": "Once",
+							"value": "once"
+						}
+					]
+				},
+				"binding": null,
+				"value": "once"
+			}
+		],
+		"inputs": [
+			{
+				"id": "4044785f-0c5d-4d76-ae0b-86f52cfc6233",
+				"base": {
+					"id": "default",
+					"name": "In"
+				}
+			}
+		],
+		"outputs": [
+			{
+				"id": "9852a8b3-633e-4b26-ac06-690c18082d7c",
+				"base": {
+					"id": "start",
+					"name": "Start"
+				}
+			}
+		],
+		"x": 0,
+		"y": 40
+	},
+	"components": [
+		{
+			"id": "e58fcf1c-7ab1-4fd5-94a6-0ebf7d538524",
+			"packageId": "wifi",
+			"alias": "WiFi",
+			"base": {
+				"displayName": "WiFi",
+				"description": "The ESP32's WiFi — Connect the board to a network, check its Status, Scan for networks, make it an Access Point of its own, and Disconnect. What runs over it (HTTP, MQTT…) are components of their own.\n",
+				"credentials": [
+					{
+						"name": "wifi",
+						"displayName": "WiFi Network",
+						"description": "A WiFi network to join — its name and password (2.4 GHz; the ESP32 doesn't do 5 GHz).",
+						"fields": [
+							{
+								"name": "ssid",
+								"displayName": "SSID",
+								"description": "The network's name, as phones show it.",
+								"type": "string",
+								"required": true,
+								"placeholder": "e.g. MyHome"
+							},
+							{
+								"name": "password",
+								"displayName": "Password",
+								"description": "Empty for an open network.",
+								"type": "string",
+								"secret": true
+							}
+						]
+					}
+				],
+				"actions": [
+					{
+						"displayName": "Connect",
+						"description": "Joins the board to a WiFi network — goes on (Out) once it has an address, Fallback when the password is wrong, the network isn't there, or it took longer than Timeout. Already on that network: on at once. The connection stays up while the flow keeps running — a session that ends (Run ▶, Debug, a once-mode Play) drops it.\n",
+						"script": "src/connect.py",
+						"configurations": [
+							{
+								"displayName": "Network",
+								"description": "The WiFi network to join — one of your credentials (its name and password), or a new one.",
+								"type": "credential",
+								"credential": "wifi",
+								"required": true
+							},
+							{
+								"displayName": "Timeout",
+								"description": "How long it tries before giving up, in ms — 1000 to 60000. The flow waits meanwhile.",
+								"type": "number",
+								"defaultValue": "10000",
+								"placeholder": "1000-60000 ms",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1000
+									},
+									{
+										"name": "Max",
+										"value": 60000
+									}
+								]
+							},
+							{
+								"displayName": "Hostname",
+								"advanced": true,
+								"description": "The name the board shows in the router's device list — empty keeps the default (espressif).",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "e.g. henglos-board"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "ip",
+								"type": "any",
+								"description": "The board's address on the network, as text — empty when not connected."
+							},
+							{
+								"name": "ssid",
+								"type": "any",
+								"description": "The network it's on, as text."
+							},
+							{
+								"name": "rssi",
+								"type": "int",
+								"description": "The signal, in dBm — -30 strong, -70 fair, -90 barely there; 0 when not connected."
+							},
+							{
+								"name": "mac",
+								"type": "any",
+								"description": "The board's MAC address, as text — aa:bb:cc:dd:ee:ff."
+							},
+							{
+								"name": "reason",
+								"type": "any",
+								"description": "Why it went Fallback, as text — wrong_password, no_network, failed, timeout, or no_credential (the network's credential isn't on the board: run the workflow again); empty once connected.\n"
+							}
+						]
+					},
+					{
+						"displayName": "Disconnect",
+						"description": "Leaves the network, stops the board's Access Point, or both — the radio goes quiet for what's stopped.",
+						"script": "src/disconnect.py",
+						"configurations": [
+							{
+								"displayName": "Interface",
+								"description": "What to stop — the connection to a network (Station), the board's own network (Access Point), or both.",
+								"type": "options",
+								"defaultValue": "station",
+								"options": [
+									{
+										"displayName": "Station",
+										"value": "station"
+									},
+									{
+										"displayName": "Access Point",
+										"value": "access_point"
+									},
+									{
+										"displayName": "Both",
+										"value": "both"
+									}
+								]
+							}
+						]
+					},
+					{
+						"displayName": "Status",
+						"description": "Branches on whether the board is on a network — Connected or Disconnected — with its address and signal, and how its Access Point is doing.",
+						"script": "src/status.py",
+						"configurations": [],
+						"outputs": [
+							{
+								"id": "connected",
+								"name": "Connected"
+							},
+							{
+								"id": "disconnected",
+								"name": "Disconnected"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "ip",
+								"type": "any",
+								"description": "The board's address on the network, as text — empty when not connected."
+							},
+							{
+								"name": "ssid",
+								"type": "any",
+								"description": "The network it's on, as text."
+							},
+							{
+								"name": "rssi",
+								"type": "int",
+								"description": "The signal, in dBm — -30 strong, -70 fair, -90 barely there; 0 when not connected."
+							},
+							{
+								"name": "signal",
+								"type": "int",
+								"description": "The signal as a percentage — 0 to 100."
+							},
+							{
+								"name": "ap_active",
+								"type": "bool",
+								"description": "Whether the board's Access Point is on."
+							},
+							{
+								"name": "ap_clients",
+								"type": "int",
+								"description": "Devices joined to the board's Access Point."
+							}
+						]
+					},
+					{
+						"displayName": "Scan",
+						"description": "Lists the WiFi networks around, strongest first — an empty list when there's none (or the radio couldn't scan). Takes a couple of seconds.\n",
+						"script": "src/scan.py",
+						"configurations": [],
+						"outputSchema": [
+							{
+								"name": "networks",
+								"type": {
+									"array": {
+										"object": {
+											"ssid": "str",
+											"rssi": "int",
+											"channel": "int"
+										}
+									}
+								},
+								"description": "The networks it saw (the 10 strongest), strongest first, each with its ssid, rssi (dBm) and channel — bind it to a List variable or a list config."
+							}
+						]
+					},
+					{
+						"displayName": "Access Point",
+						"description": "Makes the board a WiFi network of its own, for phones and other boards to join — goes on (Out) with its address (usually 192.168.4.1), or Fallback. Works alongside Connect. It stays up while the flow keeps running — a session that ends (Run ▶, Debug, a once-mode Play) turns it off.\n",
+						"script": "src/access_point.py",
+						"configurations": [
+							{
+								"displayName": "SSID",
+								"description": "The network's name, as others will see it.",
+								"type": "string",
+								"required": true,
+								"defaultValue": "henglos",
+								"placeholder": "e.g. henglos"
+							},
+							{
+								"displayName": "Password",
+								"description": "8 characters or more (WPA2) — empty for an open network anyone can join.",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "open"
+							},
+							{
+								"displayName": "Channel",
+								"advanced": true,
+								"description": "The WiFi channel, 1 to 13 — another one if the air is crowded. With Connect on too, the board follows the network's channel.",
+								"type": "number",
+								"defaultValue": "1",
+								"placeholder": "1–13",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 13
+									}
+								]
+							},
+							{
+								"displayName": "Max Clients",
+								"advanced": true,
+								"description": "How many devices may join at once — 1 to 10.",
+								"type": "number",
+								"defaultValue": "4",
+								"placeholder": "1–10",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 10
+									}
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "ip",
+								"type": "any",
+								"description": "The board's address on its own network, as text — usually 192.168.4.1."
+							}
+						]
+					}
+				],
+				"capabilities": [
+					"wifi"
+				]
+			},
+			"actions": [
+				{
+					"id": "7ba30f39-343b-4287-b363-123e7099e639",
+					"componentId": "e58fcf1c-7ab1-4fd5-94a6-0ebf7d538524",
+					"alias": "Connect",
+					"base": {
+						"displayName": "Connect",
+						"description": "Joins the board to a WiFi network — goes on (Out) once it has an address, Fallback when the password is wrong, the network isn't there, or it took longer than Timeout. Already on that network: on at once. The connection stays up while the flow keeps running — a session that ends (Run ▶, Debug, a once-mode Play) drops it.\n",
+						"script": "src/connect.py",
+						"configurations": [
+							{
+								"displayName": "Network",
+								"description": "The WiFi network to join — one of your credentials (its name and password), or a new one.",
+								"type": "credential",
+								"credential": "wifi",
+								"required": true
+							},
+							{
+								"displayName": "Timeout",
+								"description": "How long it tries before giving up, in ms — 1000 to 60000. The flow waits meanwhile.",
+								"type": "number",
+								"defaultValue": "10000",
+								"placeholder": "1000-60000 ms",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1000
+									},
+									{
+										"name": "Max",
+										"value": 60000
+									}
+								]
+							},
+							{
+								"displayName": "Hostname",
+								"advanced": true,
+								"description": "The name the board shows in the router's device list — empty keeps the default (espressif).",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "e.g. henglos-board"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "ip",
+								"type": "any",
+								"description": "The board's address on the network, as text — empty when not connected."
+							},
+							{
+								"name": "ssid",
+								"type": "any",
+								"description": "The network it's on, as text."
+							},
+							{
+								"name": "rssi",
+								"type": "int",
+								"description": "The signal, in dBm — -30 strong, -70 fair, -90 barely there; 0 when not connected."
+							},
+							{
+								"name": "mac",
+								"type": "any",
+								"description": "The board's MAC address, as text — aa:bb:cc:dd:ee:ff."
+							},
+							{
+								"name": "reason",
+								"type": "any",
+								"description": "Why it went Fallback, as text — wrong_password, no_network, failed, timeout, or no_credential (the network's credential isn't on the board: run the workflow again); empty once connected.\n"
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "c7d856cc-3d7b-4202-b6f2-d3e58a4d68f6",
+							"base": {
+								"displayName": "Network",
+								"description": "The WiFi network to join — one of your credentials (its name and password), or a new one.",
+								"type": "credential",
+								"credential": "wifi",
+								"required": true
+							},
+							"binding": null
+						},
+						{
+							"id": "33df442c-de15-4741-9b32-10b75a20c882",
+							"base": {
+								"displayName": "Timeout",
+								"description": "How long it tries before giving up, in ms — 1000 to 60000. The flow waits meanwhile.",
+								"type": "number",
+								"defaultValue": "10000",
+								"placeholder": "1000-60000 ms",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1000
+									},
+									{
+										"name": "Max",
+										"value": 60000
+									}
+								]
+							},
+							"binding": null,
+							"value": "10000"
+						},
+						{
+							"id": "4437ac4d-6ffa-47f4-8091-4747160b955e",
+							"base": {
+								"displayName": "Hostname",
+								"advanced": true,
+								"description": "The name the board shows in the router's device list — empty keeps the default (espressif).",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "e.g. henglos-board"
+							},
+							"binding": null,
+							"value": ""
+						}
+					],
+					"inputs": [
+						{
+							"id": "271c29e6-b7e6-4a80-9414-cae7a581ff0d",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "107f3ccf-815f-4853-85d6-35a356a2e332",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 380,
+					"y": 0
+				}
+			]
+		},
+		{
+			"id": "2c83ac61-929a-43fe-873c-b13c4bf31503",
+			"packageId": "http",
+			"alias": "HTTP",
+			"base": {
+				"displayName": "HTTP",
+				"description": "Calls web APIs from the board — Request a URL (GET, POST…) with headers, a body and an auth token; the whole answer lands in a file the next actions read (Read JSON, the Filesystem component), and Pick takes one value out of its JSON right away. And serves them: Request Trigger runs a branch when a request comes in (a webhook), Respond answers it. Needs a network: WiFi's Connect before it.\n",
+				"credentials": [
+					{
+						"name": "http_header",
+						"displayName": "HTTP Header Auth",
+						"description": "A header sent with each request — an API key or a bearer token, kept out of the workflow.",
+						"fields": [
+							{
+								"name": "header",
+								"displayName": "Header",
+								"description": "The header's name — empty sends Authorization.",
+								"type": "string",
+								"placeholder": "Authorization"
+							},
+							{
+								"name": "value",
+								"displayName": "Value",
+								"description": "The header's value — \"Bearer <token>\", an API key…",
+								"type": "string",
+								"secret": true,
+								"required": true,
+								"placeholder": "Bearer sk-…"
+							}
+						]
+					}
+				],
+				"triggers": [
+					{
+						"displayName": "Request Trigger",
+						"description": "Runs its branch when a request comes in on Port for Method under Path — a webhook, a page's button, another board. Answer it with Respond; a branch that doesn't answers 200. A path outside it gets 404, another method 405, a request without Auth's header 401. Needs WiFi (Connect on Start).\n",
+						"script": "src/request_trigger.py",
+						"configurations": [
+							{
+								"displayName": "Path",
+								"description": "The base path it answers under — /api takes /api and everything below it (/api/led/on), read in subpath and segments; / takes every path. Two triggers on one port: the longer base path wins. The query (?a=1) doesn't count.\n",
+								"type": "string",
+								"required": true,
+								"defaultValue": "/webhook",
+								"placeholder": "/webhook"
+							},
+							{
+								"displayName": "Method",
+								"description": "Which requests run it — Any, or only one method.",
+								"type": "options",
+								"defaultValue": "ANY",
+								"options": [
+									{
+										"displayName": "Any",
+										"value": "ANY"
+									},
+									{
+										"displayName": "GET",
+										"value": "GET"
+									},
+									{
+										"displayName": "POST",
+										"value": "POST"
+									},
+									{
+										"displayName": "PUT",
+										"value": "PUT"
+									},
+									{
+										"displayName": "PATCH",
+										"value": "PATCH"
+									},
+									{
+										"displayName": "DELETE",
+										"value": "DELETE"
+									}
+								]
+							},
+							{
+								"displayName": "Port",
+								"description": "The port the board listens on — 80 is plain http://<board ip>/.",
+								"type": "number",
+								"defaultValue": "80",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 65535
+									}
+								]
+							},
+							{
+								"displayName": "Pick",
+								"description": "One value from the body's JSON, by its path — sensor.temp, items.0; empty picks nothing. Published as `value`.",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "sensor.temp"
+							},
+							{
+								"displayName": "Auth",
+								"description": "An HTTP Header Auth credential the request must carry (that header, that value) — else 401. Empty lets anyone in.",
+								"type": "credential",
+								"credential": "http_header"
+							},
+							{
+								"displayName": "Save To",
+								"advanced": true,
+								"description": "A file of your own for the body — /data/last.json; it stays. Empty, it goes to a temporary file (one per trigger), cleared when a session starts.",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "/data/request.json"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "method",
+								"type": "str",
+								"description": "The request's method — GET, POST…"
+							},
+							{
+								"name": "path",
+								"type": "str",
+								"description": "The path it came for, without the query."
+							},
+							{
+								"name": "subpath",
+								"type": "str",
+								"description": "What came after the base path — /led/on for /api/led/on on /api; empty for the base itself."
+							},
+							{
+								"name": "segments",
+								"type": {
+									"array": "str"
+								},
+								"description": "The subpath's parts, in order — [\"led\", \"on\"]; route on them with a Switch (segments[0])."
+							},
+							{
+								"name": "query",
+								"type": "any",
+								"description": "The query's fields as an object — ?led=on&level=3 is { \"led\": \"on\", \"level\": \"3\" }."
+							},
+							{
+								"name": "value",
+								"type": "any",
+								"description": "What Pick found in the body — a number, true/false, text, or a list/object as JSON; empty when nothing was picked."
+							},
+							{
+								"name": "file",
+								"type": "str",
+								"description": "The file holding the body — bind it to Read JSON or Filesystem's Read; empty when there was none."
+							},
+							{
+								"name": "size",
+								"type": "int",
+								"description": "How many bytes the body had."
+							},
+							{
+								"name": "client",
+								"type": "str",
+								"description": "The address it came from — 192.168.0.12."
+							},
+							{
+								"name": "error",
+								"type": "str",
+								"description": "What Pick missed, or why the body couldn't be saved; empty when all went well."
+							}
+						]
+					}
+				],
+				"actions": [
+					{
+						"displayName": "Request",
+						"description": "Calls a URL — goes on (Out) on a 2xx answer, Fallback when there's no network, it took longer than Timeout, or the server answered 4xx/5xx (`error` says which). The board waits for the answer meanwhile.\n",
+						"script": "src/request.py",
+						"configurations": [
+							{
+								"displayName": "Method",
+								"description": "What the request does — GET reads, POST sends, PUT/PATCH change, DELETE removes.",
+								"type": "options",
+								"defaultValue": "GET",
+								"options": [
+									{
+										"displayName": "GET",
+										"value": "GET"
+									},
+									{
+										"displayName": "POST",
+										"value": "POST"
+									},
+									{
+										"displayName": "PUT",
+										"value": "PUT"
+									},
+									{
+										"displayName": "PATCH",
+										"value": "PATCH"
+									},
+									{
+										"displayName": "DELETE",
+										"value": "DELETE"
+									},
+									{
+										"displayName": "HEAD",
+										"value": "HEAD"
+									}
+								]
+							},
+							{
+								"displayName": "URL",
+								"description": "The address to call — https:// or http:// (without one, http://).",
+								"type": "string",
+								"required": true,
+								"defaultValue": "",
+								"placeholder": "https://api.example.com/data"
+							},
+							{
+								"displayName": "Body",
+								"description": "What POST, PUT and PATCH send — JSON, form fields or text. GET, HEAD and DELETE send none.",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "{\"temp\": 21.5}"
+							},
+							{
+								"displayName": "Pick",
+								"description": "One value from the JSON answer, by its path — main.temp, weather.0.description (a number steps into a list); empty picks nothing. Published as `value`.\n",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "main.temp"
+							},
+							{
+								"displayName": "Auth",
+								"description": "An HTTP Header Auth credential — the API key or token sent as a header. Empty sends none.",
+								"type": "credential",
+								"credential": "http_header"
+							},
+							{
+								"displayName": "Headers",
+								"advanced": true,
+								"description": "Headers to send — a name and a value each.",
+								"type": "array",
+								"items": {
+									"object": {
+										"name": "str",
+										"value": "str"
+									}
+								},
+								"maxItems": 8,
+								"defaultValue": []
+							},
+							{
+								"displayName": "Content Type",
+								"advanced": true,
+								"description": "What the Body is — Auto takes JSON when it starts with { or [, text otherwise. A Content-Type in Headers wins.",
+								"type": "options",
+								"defaultValue": "auto",
+								"options": [
+									{
+										"displayName": "Auto",
+										"value": "auto"
+									},
+									{
+										"displayName": "JSON",
+										"value": "application/json"
+									},
+									{
+										"displayName": "Form",
+										"value": "application/x-www-form-urlencoded"
+									},
+									{
+										"displayName": "Text",
+										"value": "text/plain"
+									}
+								]
+							},
+							{
+								"displayName": "Save To",
+								"advanced": true,
+								"description": "A file of your own for the answer — /data/weather.json, its folders made; it stays. Empty, it goes to a temporary file, cleared when a session starts.",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "/data/response.json"
+							},
+							{
+								"displayName": "Timeout",
+								"advanced": true,
+								"description": "How long it waits for the server, in ms — 1000 to 60000.",
+								"type": "number",
+								"defaultValue": "10000",
+								"placeholder": "1000–60000 ms",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1000
+									},
+									{
+										"name": "Max",
+										"value": 60000
+									}
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "status",
+								"type": "int",
+								"description": "The HTTP status — 200 OK, 404 not found, 500 server error…; 0 when no answer came."
+							},
+							{
+								"name": "value",
+								"type": "any",
+								"description": "What Pick found — a number, true/false, text, or a list/object as JSON; empty when nothing was picked."
+							},
+							{
+								"name": "file",
+								"type": "str",
+								"description": "The file holding the whole answer, as text — bind it to Read JSON, Filesystem's Read, or open() it in a Code binding; empty for HEAD or when it failed."
+							},
+							{
+								"name": "size",
+								"type": "int",
+								"description": "How many bytes the answer had."
+							},
+							{
+								"name": "error",
+								"type": "str",
+								"description": "Why it went Fallback, or what Pick missed — no_network, dns, timeout, refused, unreachable, http_404…, \"pick: no field temp\"; empty when all went well.\n"
+							}
+						]
+					},
+					{
+						"displayName": "Read JSON",
+						"description": "One value from a JSON file on the board — a Request's `file` (bind it), or any other. Fallback when the file isn't there, isn't JSON, or has nothing at Pick.\n",
+						"script": "src/read_json.py",
+						"configurations": [
+							{
+								"displayName": "File",
+								"description": "The file to read — bind a Request's `file`, or a path like /data/response.json.",
+								"type": "string",
+								"required": true,
+								"defaultValue": "",
+								"placeholder": "/data/response.json"
+							},
+							{
+								"displayName": "Pick",
+								"description": "The value's path — main.temp, weather.0.description; empty takes the whole file (if it fits).",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "main.temp"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "value",
+								"type": "any",
+								"description": "What Pick found — a number, true/false, text, or a list/object as JSON."
+							},
+							{
+								"name": "error",
+								"type": "str",
+								"description": "Why it's Fallback — no_file, not_json, no field temp, value_too_large; empty otherwise."
+							}
+						]
+					},
+					{
+						"displayName": "Respond",
+						"description": "Answers the request its Request Trigger's branch runs for — Status and a Body (or a File). Fallback when there's none to answer: not in a Request Trigger's branch, or it was answered already.\n",
+						"script": "src/respond.py",
+						"configurations": [
+							{
+								"displayName": "Status",
+								"description": "The HTTP status — 200 OK, 201 created, 400 bad request, 404 not found…",
+								"type": "number",
+								"defaultValue": "200",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 100
+									},
+									{
+										"name": "Max",
+										"value": 599
+									}
+								]
+							},
+							{
+								"displayName": "Body",
+								"description": "What it answers — text, or bind a list/object (sent as JSON).",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "{\"ok\": true}"
+							},
+							{
+								"displayName": "Content Type",
+								"advanced": true,
+								"description": "What the Body is — Auto takes JSON for a list/object or text starting with { or [, plain text otherwise.",
+								"type": "options",
+								"defaultValue": "auto",
+								"options": [
+									{
+										"displayName": "Auto",
+										"value": "auto"
+									},
+									{
+										"displayName": "JSON",
+										"value": "application/json"
+									},
+									{
+										"displayName": "Text",
+										"value": "text/plain"
+									},
+									{
+										"displayName": "HTML",
+										"value": "text/html"
+									}
+								]
+							},
+							{
+								"displayName": "File",
+								"advanced": true,
+								"description": "A file on the board to answer with instead of Body — /www/index.html. Empty sends Body.",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "/www/index.html"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "error",
+								"type": "str",
+								"description": "Why it went Fallback — no_request, no_file; empty otherwise."
+							}
+						]
+					}
+				],
+				"capabilities": [
+					"wifi"
+				]
+			},
+			"actions": [
+				{
+					"kind": "trigger",
+					"id": "69a9494c-40c2-46c8-ad71-9bd2e5bb63aa",
+					"componentId": "2c83ac61-929a-43fe-873c-b13c4bf31503",
+					"alias": "Request Trigger",
+					"base": {
+						"displayName": "Request Trigger",
+						"description": "Runs its branch when a request comes in on Port for Method under Path — a webhook, a page's button, another board. Answer it with Respond; a branch that doesn't answers 200. A path outside it gets 404, another method 405, a request without Auth's header 401. Needs WiFi (Connect on Start).\n",
+						"script": "src/request_trigger.py",
+						"configurations": [
+							{
+								"displayName": "Path",
+								"description": "The base path it answers under — /api takes /api and everything below it (/api/led/on), read in subpath and segments; / takes every path. Two triggers on one port: the longer base path wins. The query (?a=1) doesn't count.\n",
+								"type": "string",
+								"required": true,
+								"defaultValue": "/webhook",
+								"placeholder": "/webhook"
+							},
+							{
+								"displayName": "Method",
+								"description": "Which requests run it — Any, or only one method.",
+								"type": "options",
+								"defaultValue": "ANY",
+								"options": [
+									{
+										"displayName": "Any",
+										"value": "ANY"
+									},
+									{
+										"displayName": "GET",
+										"value": "GET"
+									},
+									{
+										"displayName": "POST",
+										"value": "POST"
+									},
+									{
+										"displayName": "PUT",
+										"value": "PUT"
+									},
+									{
+										"displayName": "PATCH",
+										"value": "PATCH"
+									},
+									{
+										"displayName": "DELETE",
+										"value": "DELETE"
+									}
+								]
+							},
+							{
+								"displayName": "Port",
+								"description": "The port the board listens on — 80 is plain http://<board ip>/.",
+								"type": "number",
+								"defaultValue": "80",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 65535
+									}
+								]
+							},
+							{
+								"displayName": "Pick",
+								"description": "One value from the body's JSON, by its path — sensor.temp, items.0; empty picks nothing. Published as `value`.",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "sensor.temp"
+							},
+							{
+								"displayName": "Auth",
+								"description": "An HTTP Header Auth credential the request must carry (that header, that value) — else 401. Empty lets anyone in.",
+								"type": "credential",
+								"credential": "http_header"
+							},
+							{
+								"displayName": "Save To",
+								"advanced": true,
+								"description": "A file of your own for the body — /data/last.json; it stays. Empty, it goes to a temporary file (one per trigger), cleared when a session starts.",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "/data/request.json"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "method",
+								"type": "str",
+								"description": "The request's method — GET, POST…"
+							},
+							{
+								"name": "path",
+								"type": "str",
+								"description": "The path it came for, without the query."
+							},
+							{
+								"name": "subpath",
+								"type": "str",
+								"description": "What came after the base path — /led/on for /api/led/on on /api; empty for the base itself."
+							},
+							{
+								"name": "segments",
+								"type": {
+									"array": "str"
+								},
+								"description": "The subpath's parts, in order — [\"led\", \"on\"]; route on them with a Switch (segments[0])."
+							},
+							{
+								"name": "query",
+								"type": "any",
+								"description": "The query's fields as an object — ?led=on&level=3 is { \"led\": \"on\", \"level\": \"3\" }."
+							},
+							{
+								"name": "value",
+								"type": "any",
+								"description": "What Pick found in the body — a number, true/false, text, or a list/object as JSON; empty when nothing was picked."
+							},
+							{
+								"name": "file",
+								"type": "str",
+								"description": "The file holding the body — bind it to Read JSON or Filesystem's Read; empty when there was none."
+							},
+							{
+								"name": "size",
+								"type": "int",
+								"description": "How many bytes the body had."
+							},
+							{
+								"name": "client",
+								"type": "str",
+								"description": "The address it came from — 192.168.0.12."
+							},
+							{
+								"name": "error",
+								"type": "str",
+								"description": "What Pick missed, or why the body couldn't be saved; empty when all went well."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "c6c56ac4-0782-4076-9219-acc47ecd78d0",
+							"base": {
+								"displayName": "Path",
+								"description": "The base path it answers under — /api takes /api and everything below it (/api/led/on), read in subpath and segments; / takes every path. Two triggers on one port: the longer base path wins. The query (?a=1) doesn't count.\n",
+								"type": "string",
+								"required": true,
+								"defaultValue": "/webhook",
+								"placeholder": "/webhook"
+							},
+							"binding": null,
+							"value": "/led"
+						},
+						{
+							"id": "b6bd439e-d01c-43bc-9ae3-32253d9e12da",
+							"base": {
+								"displayName": "Method",
+								"description": "Which requests run it — Any, or only one method.",
+								"type": "options",
+								"defaultValue": "ANY",
+								"options": [
+									{
+										"displayName": "Any",
+										"value": "ANY"
+									},
+									{
+										"displayName": "GET",
+										"value": "GET"
+									},
+									{
+										"displayName": "POST",
+										"value": "POST"
+									},
+									{
+										"displayName": "PUT",
+										"value": "PUT"
+									},
+									{
+										"displayName": "PATCH",
+										"value": "PATCH"
+									},
+									{
+										"displayName": "DELETE",
+										"value": "DELETE"
+									}
+								]
+							},
+							"binding": null,
+							"value": "ANY"
+						},
+						{
+							"id": "e1f1212b-06c9-486c-8f23-efb66b9284ed",
+							"base": {
+								"displayName": "Port",
+								"description": "The port the board listens on — 80 is plain http://<board ip>/.",
+								"type": "number",
+								"defaultValue": "80",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 65535
+									}
+								]
+							},
+							"binding": null,
+							"value": "80"
+						},
+						{
+							"id": "3006f4a4-1f7d-47da-b118-830fe815ede6",
+							"base": {
+								"displayName": "Pick",
+								"description": "One value from the body's JSON, by its path — sensor.temp, items.0; empty picks nothing. Published as `value`.",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "sensor.temp"
+							},
+							"binding": null,
+							"value": ""
+						},
+						{
+							"id": "df7ac69b-60cc-4576-904d-af8ca2608292",
+							"base": {
+								"displayName": "Auth",
+								"description": "An HTTP Header Auth credential the request must carry (that header, that value) — else 401. Empty lets anyone in.",
+								"type": "credential",
+								"credential": "http_header"
+							},
+							"binding": null
+						},
+						{
+							"id": "a6b61d01-01a8-4c93-9f47-84e3fc347ca9",
+							"base": {
+								"displayName": "Save To",
+								"advanced": true,
+								"description": "A file of your own for the body — /data/last.json; it stays. Empty, it goes to a temporary file (one per trigger), cleared when a session starts.",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "/data/request.json"
+							},
+							"binding": null,
+							"value": ""
+						}
+					],
+					"inputs": [],
+					"outputs": [
+						{
+							"id": "f83978eb-4d0a-4509-8d3d-71c39691b1ad",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 0,
+					"y": 340
+				},
+				{
+					"id": "e569f946-4fc9-4755-a174-578dcac2bfb8",
+					"componentId": "2c83ac61-929a-43fe-873c-b13c4bf31503",
+					"alias": "Respond",
+					"base": {
+						"displayName": "Respond",
+						"description": "Answers the request its Request Trigger's branch runs for — Status and a Body (or a File). Fallback when there's none to answer: not in a Request Trigger's branch, or it was answered already.\n",
+						"script": "src/respond.py",
+						"configurations": [
+							{
+								"displayName": "Status",
+								"description": "The HTTP status — 200 OK, 201 created, 400 bad request, 404 not found…",
+								"type": "number",
+								"defaultValue": "200",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 100
+									},
+									{
+										"name": "Max",
+										"value": 599
+									}
+								]
+							},
+							{
+								"displayName": "Body",
+								"description": "What it answers — text, or bind a list/object (sent as JSON).",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "{\"ok\": true}"
+							},
+							{
+								"displayName": "Content Type",
+								"advanced": true,
+								"description": "What the Body is — Auto takes JSON for a list/object or text starting with { or [, plain text otherwise.",
+								"type": "options",
+								"defaultValue": "auto",
+								"options": [
+									{
+										"displayName": "Auto",
+										"value": "auto"
+									},
+									{
+										"displayName": "JSON",
+										"value": "application/json"
+									},
+									{
+										"displayName": "Text",
+										"value": "text/plain"
+									},
+									{
+										"displayName": "HTML",
+										"value": "text/html"
+									}
+								]
+							},
+							{
+								"displayName": "File",
+								"advanced": true,
+								"description": "A file on the board to answer with instead of Body — /www/index.html. Empty sends Body.",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "/www/index.html"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "error",
+								"type": "str",
+								"description": "Why it went Fallback — no_request, no_file; empty otherwise."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "479c1f99-4f0b-4442-990a-1fe35ee51aa1",
+							"base": {
+								"displayName": "Status",
+								"description": "The HTTP status — 200 OK, 201 created, 400 bad request, 404 not found…",
+								"type": "number",
+								"defaultValue": "200",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 100
+									},
+									{
+										"name": "Max",
+										"value": 599
+									}
+								]
+							},
+							"binding": null,
+							"value": "200"
+						},
+						{
+							"id": "63c7dfc8-2a49-488c-afe2-4c8bd9dff318",
+							"base": {
+								"displayName": "Body",
+								"description": "What it answers — text, or bind a list/object (sent as JSON).",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "{\"ok\": true}"
+							},
+							"binding": null,
+							"value": ""
+						},
+						{
+							"id": "4d6661ed-7106-442d-8506-d64d2eff1564",
+							"base": {
+								"displayName": "Content Type",
+								"advanced": true,
+								"description": "What the Body is — Auto takes JSON for a list/object or text starting with { or [, plain text otherwise.",
+								"type": "options",
+								"defaultValue": "auto",
+								"options": [
+									{
+										"displayName": "Auto",
+										"value": "auto"
+									},
+									{
+										"displayName": "JSON",
+										"value": "application/json"
+									},
+									{
+										"displayName": "Text",
+										"value": "text/plain"
+									},
+									{
+										"displayName": "HTML",
+										"value": "text/html"
+									}
+								]
+							},
+							"binding": null,
+							"value": "auto"
+						},
+						{
+							"id": "73d8438b-3f0c-4748-9994-2698a8d12373",
+							"base": {
+								"displayName": "File",
+								"advanced": true,
+								"description": "A file on the board to answer with instead of Body — /www/index.html. Empty sends Body.",
+								"type": "string",
+								"defaultValue": "",
+								"placeholder": "/www/index.html"
+							},
+							"binding": null,
+							"value": ""
+						}
+					],
+					"inputs": [
+						{
+							"id": "864fbe55-06a3-4ebc-b514-95a33199367e",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "e5fe7bf9-5efc-425a-92dc-672d039ba9be",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 760,
+					"y": 320
+				}
+			]
+		},
+		{
+			"id": "fdc3e576-3c42-4763-865e-7088e54f2252",
+			"packageId": "gpio",
+			"alias": "GPIO",
+			"base": {
+				"displayName": "GPIO",
+				"description": "Directly reads or drives a single digital pin on the board.  Use this when no more specific component (Servo, etc) fits what you're wiring up.\n",
+				"actions": [
+					{
+						"displayName": "Write",
+						"description": "Sets the pin as output and drives it to the given digital value.",
+						"script": "src/write.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							{
+								"displayName": "Value",
+								"description": "Value of GPIO send.",
+								"type": "toggle",
+								"label": "HIGH",
+								"defaultValue": false
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "value",
+								"type": "bool",
+								"description": "The digital value that was written (0 = LOW, 1 = HIGH)."
+							}
+						]
+					},
+					{
+						"displayName": "Read",
+						"description": "Sets the pin as input and reads its current digital value.",
+						"script": "src/read.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_in"
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "value",
+								"type": "bool",
+								"description": "The digital value read from the pin (0 = LOW, 1 = HIGH)."
+							}
+						]
+					}
+				],
+				"triggers": [
+					{
+						"displayName": "Pin Trigger",
+						"icon": "toggle-right",
+						"description": "Runs its branch when a pin changes — a button pressed, a sensor going high.",
+						"script": "src/pin_trigger.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "The pin to watch.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_in"
+								],
+								"required": true
+							},
+							{
+								"displayName": "Edge",
+								"description": "Which change fires it.",
+								"type": "options",
+								"defaultValue": "rising",
+								"options": [
+									{
+										"displayName": "Rising (low → high)",
+										"value": "rising"
+									},
+									{
+										"displayName": "Falling (high → low)",
+										"value": "falling"
+									},
+									{
+										"displayName": "Both",
+										"value": "both"
+									}
+								]
+							},
+							{
+								"displayName": "Pull",
+								"description": "The board's internal resistor — Up for a button wired to ground.",
+								"type": "options",
+								"defaultValue": "none",
+								"options": [
+									{
+										"displayName": "None",
+										"value": "none"
+									},
+									{
+										"displayName": "Up",
+										"value": "up"
+									},
+									{
+										"displayName": "Down",
+										"value": "down"
+									}
+								]
+							},
+							{
+								"displayName": "Debounce",
+								"description": "Changes closer than this to the last one are ignored (a button bounces), in ms.",
+								"type": "number",
+								"defaultValue": "50"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "level",
+								"type": "bool",
+								"description": "The pin right after the change."
+							},
+							{
+								"name": "at",
+								"type": "int",
+								"description": "When it changed — the board's clock, in ms."
+							}
+						]
+					}
+				]
+			},
+			"actions": [
+				{
+					"id": "5bf9010c-4065-48f8-90de-ccb423a3f17b",
+					"componentId": "fdc3e576-3c42-4763-865e-7088e54f2252",
+					"alias": "Write",
+					"base": {
+						"displayName": "Write",
+						"description": "Sets the pin as output and drives it to the given digital value.",
+						"script": "src/write.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							{
+								"displayName": "Value",
+								"description": "Value of GPIO send.",
+								"type": "toggle",
+								"label": "HIGH",
+								"defaultValue": false
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "value",
+								"type": "bool",
+								"description": "The digital value that was written (0 = LOW, 1 = HIGH)."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "6410c95c-6579-459f-9134-8a0f19377d6a",
+							"base": {
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							"binding": null,
+							"value": {
+								"gpio": 2,
+								"type": [
+									"digital_in",
+									"digital_out",
+									"analog_in",
+									"pwm",
+									"touch"
+								],
+								"displayName": "GPIO2"
+							}
+						},
+						{
+							"id": "bf85ba5b-7f6f-442c-9c8e-b9f451b35607",
+							"base": {
+								"displayName": "Value",
+								"description": "Value of GPIO send.",
+								"type": "toggle",
+								"label": "HIGH",
+								"defaultValue": false
+							},
+							"binding": null,
+							"value": false
+						}
+					],
+					"inputs": [
+						{
+							"id": "2d3c1f4b-4732-4cf7-ad90-1818fd33e15c",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "b71a171b-1230-4206-bd18-6b14cb922681",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 380,
+					"y": 320
+				},
+				{
+					"id": "27e3577c-479a-4d7c-bb18-0aff4ed49992",
+					"componentId": "fdc3e576-3c42-4763-865e-7088e54f2252",
+					"alias": "Write",
+					"base": {
+						"displayName": "Write",
+						"description": "Sets the pin as output and drives it to the given digital value.",
+						"script": "src/write.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							{
+								"displayName": "Value",
+								"description": "Value of GPIO send.",
+								"type": "toggle",
+								"label": "HIGH",
+								"defaultValue": false
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "value",
+								"type": "bool",
+								"description": "The digital value that was written (0 = LOW, 1 = HIGH)."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "828f2afb-f226-4da8-a6e2-a69f4d2b1625",
+							"base": {
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							"binding": null,
+							"value": {
+								"gpio": 4,
+								"type": [
+									"digital_in",
+									"digital_out",
+									"analog_in",
+									"pwm",
+									"touch",
+									"uart"
+								],
+								"displayName": "GPIO4"
+							}
+						},
+						{
+							"id": "98c7a314-fcde-4896-91a1-75f6b8ca300e",
+							"base": {
+								"displayName": "Value",
+								"description": "Value of GPIO send.",
+								"type": "toggle",
+								"label": "HIGH",
+								"defaultValue": false
+							},
+							"binding": null,
+							"value": false
+						}
+					],
+					"inputs": [
+						{
+							"id": "80fdb1df-61aa-4823-85ce-c7348a378751",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "52a3612b-011a-4353-8150-179ef89d2932",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 380,
+					"y": 620
+				}
+			]
+		},
+		{
+			"id": "62170396-e693-4aa3-89f2-947d955497ab",
+			"packageId": "time",
+			"alias": "Time",
+			"base": {
+				"displayName": "Time",
+				"description": "Waits, measures and paces: delays, the board's clock, timers and intervals that run part of a loop on a fixed rhythm.\n",
+				"actions": [
+					{
+						"displayName": "Delay",
+						"description": "Waits for the given duration, then continues.",
+						"script": "src/delay.py",
+						"configurations": [
+							{
+								"displayName": "Duration",
+								"description": "How long to wait, in Unit.",
+								"type": "number",
+								"defaultValue": "1000"
+							},
+							{
+								"displayName": "Unit",
+								"description": "Unit of Duration.",
+								"type": "options",
+								"defaultValue": "ms",
+								"options": [
+									{
+										"displayName": "Milliseconds",
+										"value": "ms"
+									},
+									{
+										"displayName": "Seconds",
+										"value": "s"
+									},
+									{
+										"displayName": "Minutes",
+										"value": "min"
+									}
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "duration",
+								"type": "int",
+								"description": "The time waited, in milliseconds."
+							}
+						]
+					},
+					{
+						"displayName": "Uptime",
+						"description": "Reads the board's clock — milliseconds since it started.",
+						"script": "src/uptime.py",
+						"outputSchema": [
+							{
+								"name": "uptime",
+								"type": "int",
+								"description": "Milliseconds since the board started (wraps around after ~12 days)."
+							}
+						]
+					},
+					{
+						"displayName": "Start Timer",
+						"description": "Starts (or restarts) a named timer. Read it later with Elapsed.",
+						"script": "src/start_timer.py",
+						"configurations": [
+							{
+								"displayName": "Name",
+								"description": "Which timer — Elapsed reads it by this same name.",
+								"type": "string",
+								"defaultValue": "timer"
+							}
+						]
+					},
+					{
+						"displayName": "Elapsed",
+						"description": "How long since Start Timer started the timer with this name.",
+						"script": "src/elapsed.py",
+						"configurations": [
+							{
+								"displayName": "Name",
+								"description": "The timer to read, as named in Start Timer.",
+								"type": "string",
+								"defaultValue": "timer"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "elapsed",
+								"type": "int",
+								"description": "Milliseconds since the timer started."
+							}
+						]
+					},
+					{
+						"displayName": "Every",
+						"description": "Goes out Due once every interval, Waiting the rest of the time — runs part of a looping program on a fixed rhythm without blocking the rest.\n",
+						"script": "src/every.py",
+						"configurations": [
+							{
+								"displayName": "Interval",
+								"description": "How often to go out Due, in Unit.",
+								"type": "number",
+								"defaultValue": "1000"
+							},
+							{
+								"displayName": "Unit",
+								"description": "Unit of Interval.",
+								"type": "options",
+								"defaultValue": "ms",
+								"options": [
+									{
+										"displayName": "Milliseconds",
+										"value": "ms"
+									},
+									{
+										"displayName": "Seconds",
+										"value": "s"
+									},
+									{
+										"displayName": "Minutes",
+										"value": "min"
+									}
+								]
+							},
+							{
+								"displayName": "Name",
+								"advanced": true,
+								"description": "Tells several Every apart — each name keeps its own rhythm.",
+								"type": "string",
+								"defaultValue": "every"
+							}
+						],
+						"outputs": [
+							{
+								"id": "due",
+								"name": "Due"
+							},
+							{
+								"id": "wait",
+								"name": "Waiting"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "elapsed",
+								"type": "int",
+								"description": "Milliseconds since the last time it went out Due."
+							}
+						]
+					}
+				],
+				"triggers": [
+					{
+						"displayName": "Timer Trigger",
+						"icon": "alarm-clock",
+						"description": "Runs its branch every Interval — on its own, alongside whatever Start does.",
+						"script": "src/timer_trigger.py",
+						"configurations": [
+							{
+								"displayName": "Interval",
+								"description": "Time between runs, in milliseconds (10 at least).",
+								"type": "number",
+								"defaultValue": "1000",
+								"required": true,
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 10
+									}
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "count",
+								"type": "int",
+								"description": "How many times it fired since the program started."
+							}
+						]
+					}
+				]
+			},
+			"actions": [
+				{
+					"kind": "trigger",
+					"id": "505645d9-91a0-4c07-a8cd-219e745b9486",
+					"componentId": "62170396-e693-4aa3-89f2-947d955497ab",
+					"alias": "Timer Trigger",
+					"base": {
+						"displayName": "Timer Trigger",
+						"icon": "alarm-clock",
+						"description": "Runs its branch every Interval — on its own, alongside whatever Start does.",
+						"script": "src/timer_trigger.py",
+						"configurations": [
+							{
+								"displayName": "Interval",
+								"description": "Time between runs, in milliseconds (10 at least).",
+								"type": "number",
+								"defaultValue": "1000",
+								"required": true,
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 10
+									}
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "count",
+								"type": "int",
+								"description": "How many times it fired since the program started."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "9e2e4d24-d819-4638-94bf-5fbf93ceac80",
+							"base": {
+								"displayName": "Interval",
+								"description": "Time between runs, in milliseconds (10 at least).",
+								"type": "number",
+								"defaultValue": "1000",
+								"required": true,
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 10
+									}
+								]
+							},
+							"binding": null,
+							"value": "1000"
+						}
+					],
+					"inputs": [],
+					"outputs": [
+						{
+							"id": "3ff94a59-3298-4521-9f14-04d5182b1b46",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 0,
+					"y": 640
+				}
+			]
+		}
+	],
+	"connections": [
+		{
+			"id": "39ece0dc-d3ae-4385-a3e8-b66b618fa2f8",
+			"source": "dd646d17-16eb-451a-ae1e-d3b44227069b",
+			"target": "7ba30f39-343b-4287-b363-123e7099e639",
+			"sourceHandle": "9852a8b3-633e-4b26-ac06-690c18082d7c",
+			"targetHandle": "271c29e6-b7e6-4a80-9414-cae7a581ff0d"
+		},
+		{
+			"id": "c2a2be94-281f-49c0-afa1-27d943d781b4",
+			"source": "69a9494c-40c2-46c8-ad71-9bd2e5bb63aa",
+			"target": "5bf9010c-4065-48f8-90de-ccb423a3f17b",
+			"sourceHandle": "f83978eb-4d0a-4509-8d3d-71c39691b1ad",
+			"targetHandle": "2d3c1f4b-4732-4cf7-ad90-1818fd33e15c"
+		},
+		{
+			"id": "061a659e-cae2-4dfa-8080-937dee54caaa",
+			"source": "5bf9010c-4065-48f8-90de-ccb423a3f17b",
+			"target": "e569f946-4fc9-4755-a174-578dcac2bfb8",
+			"sourceHandle": "b71a171b-1230-4206-bd18-6b14cb922681",
+			"targetHandle": "864fbe55-06a3-4ebc-b514-95a33199367e"
+		},
+		{
+			"id": "3704ce18-dbaa-40a4-a40f-df482d6416a9",
+			"source": "505645d9-91a0-4c07-a8cd-219e745b9486",
+			"target": "27e3577c-479a-4d7c-bb18-0aff4ed49992",
+			"sourceHandle": "3ff94a59-3298-4521-9f14-04d5182b1b46",
+			"targetHandle": "80fdb1df-61aa-4823-85ce-c7348a378751"
+		}
+	]
+}

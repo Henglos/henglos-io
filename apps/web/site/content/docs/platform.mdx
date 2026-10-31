@@ -1,0 +1,40 @@
+---
+title: Platform and limits
+description: The runtime on the board, and the limits a workflow can override.
+---
+
+The **platform** is the MicroPython runtime Henglos IO puts on the board. It receives each action
+as a binary frame, runs the component's script and answers with the output it ended on and the
+values it published. Each workflow builds against one platform version, changeable in the studio's
+workflow **Settings**.
+
+## Limits
+
+The runtime's limits are fixed when it's built — memory on a microcontroller is tight, so they're
+small by default. A workflow can override any of them in **Settings → Limits**; the next compile
+builds the runtime with your values, and the studio follows them everywhere (a variable's text
+length, a script's size…).
+
+| Limit | Default | Range | What it bounds |
+| --- | --- | --- | --- |
+| Pipeline entries | 16 | 4–128 | Configs and outputs a run keeps for binds and `context.get()` |
+| Variables | 16 | 0–128 | Workflow variables the board holds at once |
+| Compiled scripts kept | 8 | 1–32 | Code scripts kept compiled in RAM |
+| Receive buffer | 512 B | 128–8192 | Bytes buffered while a frame arrives |
+| Stored program size | 4096 B | 512–65536 | Flash the uploaded program may take |
+| Component name length | 32 | 8–128 | Longest component folder name |
+| Stream timeout | 2000 ms | 100–60000 | How long a streaming action waits for the next chunk |
+| Packet size | 256 B | 64–4096 | Largest frame, each way |
+| Config value size | 64 B | 4–4079 | Largest literal value one action carries |
+| Script size | 192 B | 16–4079 | Largest Code script |
+| Configs per action | 15 | 1–64 | Configs one action carries (Start: one per initialized variable) |
+| Outputs per action | 4 | 1–16 | Connected outputs one action may have |
+
+Some limits depend on each other, and the studio checks them as you type:
+
+- the receive buffer must hold a whole packet — at least *Packet size − 5*;
+- a config value and a script must fit in one packet with its headers — at most *Packet size − 17*.
+
+<Callout type="warn">
+  Higher limits cost RAM on the board. Raise only what a workflow needs.
+</Callout>

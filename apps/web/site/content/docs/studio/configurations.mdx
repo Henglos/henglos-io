@@ -1,0 +1,65 @@
+---
+title: Configurations and bindings
+description: Where an action's values come from.
+---
+
+A configuration is one of a node's fields — a pin, a duration, a text… Its value can come from four
+places, and the action reads it the same way in every case (`context.get()`), so a component never
+needs to know which one you chose.
+
+| Source | How | When it's read |
+| --- | --- | --- |
+| **Literal** | Type it in the field | Sent with the action |
+| **Output binding** | Drag another action's output onto the field | The value that action published in this run |
+| **Variable** | Drag a variable from the Variables list onto the field, or pick it | The variable's current value on the board |
+| **Code** | Switch the field to Code | A short MicroPython script, run on the board right before the action |
+
+## Output bindings
+
+An action publishes values under its output schema's names (GPIO Read publishes `value`). Bind one
+to a later action's field and it gets the value from that run. A binding to an action that didn't
+run in this pass reads nothing — the receiving action usually goes out **Fallback**.
+
+A binding goes by the output's **name**, not by the node it was dragged from: remove that action
+and add it again, or put another one that publishes the same name there, and the binding keeps
+working. It turns red only once no action whose data reaches this one publishes that name.
+
+To bind one field of a list or an object, drag it from the output's fields — or straight from the
+**table** of a run's values: a cell of row 3, column `size`, binds `entries[3].size`.
+
+## Pass Context
+
+By default an action hands the next one **only what it published**. Turn **Pass Context** on
+(Advanced, on every action) and it hands on what it was handed too — so the output of the first
+action reaches the third, the fourth… through every action with Pass Context on. The studio offers
+to bind only what reaches the action this way, and shows those actions under **Input** in the
+inspector.
+
+Logic (If, Switch, Repeat) and Variables actions pass it on by default — they steer the flow; the
+data around them is still the flow's.
+
+<Callout title="Keep it small">
+  The board keeps a run's values in a small pipeline (16 entries by default). Passing only what's
+  needed is what keeps it from filling up.
+</Callout>
+
+## Code
+
+A Code field holds a MicroPython script that computes the value on the board. It reads other values
+with `ctx.get("name")` and variables with `ctx.var("name")`. The editor completes MicroPython —
+including `machine` and the other ESP32 modules — and the names your workflow publishes; drop an
+output (or a table cell) in it and it writes what reads it — `ctx.get("networks")[0]["ssid"]`.
+
+What it returns takes the field's type. In an `any` field (Variables' **Set**) and in Logic's
+operands it keeps its own: `return not ctx.var("state")` stores a bool.
+
+<Callout title="Size limits">
+  A literal value travels in one packet: by default up to 64 bytes per value and 192 bytes per
+  script. Both can be raised per workflow — see [Platform limits](/docs/platform).
+</Callout>
+
+## Validation
+
+Fields check what you type against the type the component declares (a number range, a pin that
+supports the needed mode, a pattern…), and the studio shows the problem before anything reaches
+the board.

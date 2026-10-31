@@ -1,0 +1,25 @@
+{
+  "name": "@henglosio/rfc2217",
+  "version": "1.0.0",
+  "description": "RFC 2217 (serial over Telnet) parser.",
+  "author": "Henglos",
+  "license": "SEE LICENSE IN LICENSE",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
+  },
+  "files": [
+    "./dist"
+  ],
+  "scripts": {
+    "build": "tsdown"
+  },
+  "private": true,
+  "devDependencies": {
+    "tsdown": "^0.22.3"
+  }
+}

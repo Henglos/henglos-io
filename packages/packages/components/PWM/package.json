@@ -1,0 +1,16 @@
+{
+	"name": "@henglosio/component-pwm",
+	"version": "1.0.0",
+	"description": "PWM output (LED dimming, motor speed, buzzer) component for HenglosIO",
+	"author": "Henglos",
+	"license": "SEE LICENSE IN LICENSE",
+	"type": "module",
+	"exports": {
+		"./manifest.yaml": "./manifest.yaml",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"src/**/*.py",
+		"manifest.yaml"
+	]
+}

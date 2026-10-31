@@ -1,0 +1,62 @@
+---
+title: Introduction
+description: What Henglos IO is, and the pieces it's made of.
+---
+
+Henglos IO is a visual way to program microcontrollers. You compose a **workflow** — actions as
+nodes, outputs as wires — in the **studio**, and it runs on a real board plugged into your computer.
+The board runs a small MicroPython runtime; each node is an action or a trigger of a **component**
+package, and the board itself is a package too — so the same studio drives **many boards**.
+
+<WorkflowPreview name="water-alarm" debug height={420} />
+
+<Cards>
+  <Card title="Getting started" href="/docs/getting-started" description="Host it, pair a driver, run your first workflow." />
+  <Card title="Core concepts" href="/docs/concepts" description="Packages, components, actions and triggers — what a workflow is made of." />
+  <Card title="The studio" href="/docs/studio" description="The canvas, triggers, configurations, variables and the debugger." />
+  <Card title="Built-in packages" href="/docs/built-packages" description="Every board and component Henglos IO ships — each action and trigger." />
+  <Card title="Creating packages" href="/docs/packages" description="Build your own components and boards, and publish them." />
+  <Card title="Platform" href="/docs/platform" description="The runtime on the board and the limits you can tune." />
+</Cards>
+
+## How the pieces fit
+
+```txt
+Browser (studio)  ⇄  Hosting  ⇄  Driver (your computer)  ⇄  Board (USB)
+```
+
+| Piece | What it does |
+| --- | --- |
+| **Studio** | The web app: your workflows, the component library, the canvas, the debugger. |
+| **Hosting** | The server behind it: accounts, workflows, packages, and the link to your drivers. |
+| **Driver** | `hio driver` (the Henglos IO CLI), a small daemon on the computer the board is plugged into. It builds what the board needs and talks to it over its USB REPL. |
+| **Board** | Runs the Henglos IO platform on MicroPython and executes actions as the flow asks for them. |
+
+## Key ideas
+
+- **Workflow** — a graph of nodes and wires. Each action ends on an output (**Success**,
+  **Fallback** or a custom one, like an If's *True* / *False*); the wire from that output decides
+  what runs next.
+- **Triggers** — what starts a branch of the flow. **Start** is the one that runs at boot (once, or
+  in a loop); components add others — a pin changing, a timer, a web request, an IR code, a leak.
+  Each trigger runs its own branch, side by side with the others. See [Triggers](/docs/studio/triggers).
+- **Action** — one node: a component's operation (read a pin, move a servo, wait…) with its
+  **configurations** (the node's fields) and the **values it publishes** (its output schema).
+- **Binding** — a configuration can take a literal, another action's output, a workflow
+  **variable**, or a short **Code** script instead of a fixed value. An output reaches the next
+  action — and further down the flow through actions with **Pass Context** on.
+- **Package** — boards and components are npm packages, each described by a
+  [manifest](/docs/packages/manifest). Install them into your library from a registry; a workflow
+  records the exact versions it uses.
+
+## Many boards
+
+A board isn't built in: it's a [package](/docs/concepts/package) that says which pins the
+board has and what each can do, the MicroPython firmware it runs, and what it offers besides its
+pins — Wi-Fi, Bluetooth, Ethernet… (its **capabilities**). The ESP32 comes ready; any other
+MicroPython board is a board package away, and a workflow can move to another board from its
+**Settings** in the studio.
+
+Components declare what they need of a board — HTTP and WiFi need `wifi` — so a workflow never runs
+on a board that can't: the studio marks the nodes, the component store won't add the component, and
+the hosting refuses to start it.

@@ -1,0 +1,45 @@
+---
+title: Quickstart
+description: From nothing to a workflow running on an ESP32.
+---
+
+<Steps>
+<Step>
+
+### Run Henglos IO
+
+Start the hosting and the studio on your machine — see [Self-hosting](/docs/getting-started/self-hosting). The first
+time you open it, it asks you to create the admin account.
+
+</Step>
+<Step>
+
+### Pair a driver
+
+On the computer the board is plugged into, install the driver and pair it with a token from the
+studio's **Drivers** page — see [Pair a driver](/docs/getting-started/pair-a-driver).
+
+</Step>
+<Step>
+
+### Create a workflow
+
+In the **Hub**, click **New workflow**, pick a target board (ESP32) and a platform version.
+Add components from the library and wire their actions — see [Your first workflow](/docs/getting-started/first-workflow).
+
+</Step>
+<Step>
+
+### Upload and run
+
+Select the driver and the board's port in the studio, compile and upload, then press **Execute** —
+or **Debug** to go through it one action at a time.
+
+</Step>
+</Steps>
+
+## What you need
+
+- A board with **MicroPython** flashed (an ESP32 dev board is the reference target).
+- A USB cable that carries data, and the board's USB-serial driver (CP210x / CH340) if your OS needs one.
+- Node.js on the computer that runs the driver.

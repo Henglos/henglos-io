@@ -1,0 +1,36 @@
+---
+title: Variables
+description: Values that live on the board across actions and loops.
+---
+
+Workflow variables are values the board keeps for the whole run — across every action and every
+loop back to Start. Use them for counters, the last reading, a mode switch…
+
+## Create one
+
+In the sidebar, under **Variables**, press **+**. Give it a name, a type and, optionally, an
+initial value:
+
+| Type | Holds |
+| --- | --- |
+| `number` | A decimal number |
+| `integer` | A whole number (32-bit) |
+| `boolean` | true / false |
+| `text` | A string — up to the platform's value size (64 bytes by default) |
+
+A variable with an initial value is set when Start runs, so every run begins from the same state.
+
+## Write and read them
+
+- **Write** — add a **Variables → Set** node: it stores a value (a literal, a binding, Code…) into
+  the variable you pick.
+- **Read** — bind any configuration to the variable, or read it in a Code field with
+  `ctx.var("name")`.
+
+In MicroPython, `context.get("name")` falls back to the variable when no config or output of that
+name exists, and `context.variable("name")` reads only the variable.
+
+<Callout type="warn" title="Capacity">
+  The board holds 16 variables by default. A Set past the limit goes out **Fallback** — raise it in
+  [Platform limits](/docs/platform) if you need more.
+</Callout>

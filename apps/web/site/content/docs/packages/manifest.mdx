@@ -1,0 +1,153 @@
+---
+title: The manifest
+description: The manifest.yaml every package has — its kind, what it depends on, and what it offers.
+---
+
+Every package — a component, a board — has a `manifest.yaml`. It's the only thing the studio reads
+to know a package: its nodes, their fields and outputs, what it needs and what it offers. Only the
+`.yaml` files at the package root (or directly in `workspace/`) are read.
+
+## Every manifest
+
+```yaml
+kind: component            # component | board
+name: Water Sensor         # its name in the studio
+schemaVersion: 1
+
+dependences:
+  platform: ^1.0.0         # the platform versions it works with (a semver range)
+```
+
+| Field | What it is |
+| --- | --- |
+| `kind` | `component` or `board`. |
+| `name` | The package's name in the studio and the library. |
+| `schemaVersion` | The manifest format — `1`. |
+| `dependences.platform` | The [platform](/docs/platform) versions it works with. The studio only offers a version of the package to a workflow on a matching platform. |
+
+## A component
+
+```yaml title="manifest.yaml"
+kind: component
+name: Water Sensor
+schemaVersion: 1
+
+dependences:
+  platform: ^1.0.0
+  capabilities: [wifi]       # what it needs of the board — optional
+
+schema:
+  displayName: Water Sensor
+  description: An analog water level sensor.
+
+  actions:
+    - displayName: Read
+      description: How much of it is under water.
+      icon: droplets
+      script: src/read.py
+      configurations: [...]
+      outputSchema: [...]
+
+  # What starts a branch of the flow on its own.
+  triggers:
+    - displayName: Water Trigger
+      description: Runs its branch when the sensor gets wet.
+      icon: siren
+      script: src/water_trigger.py
+      configurations: [...]
+      outputSchema: [...]
+
+  credentials: [...]          # credential types — optional
+```
+
+### `dependences.capabilities`
+
+What every action and trigger of the component needs of the board, from a fixed list: `wifi`,
+`bluetooth`, `ethernet`, `can`, `usb-host`. A board that doesn't list one of them can't run the
+component: the store won't add it, its nodes are marked **⊘**, and the hosting refuses to start the
+workflow. An action or a trigger can add its own with `capabilities:` (one action that needs
+Bluetooth in a component that otherwise doesn't). Buses wired to pins — I²C, SPI, UART — aren't
+capabilities: the board's pins say those.
+
+### `actions` and `triggers`
+
+Both are lists of nodes with the same fields:
+
+| Field | What it is |
+| --- | --- |
+| `displayName` | Its name. Unique across the component's actions *and* triggers — both are `<component>/<name>` on the board. |
+| `description` | What it does — shown in the pickers and the inspector. |
+| `icon` | A [Lucide](https://lucide.dev/icons) icon, by its name there (`wifi`, `thermometer-sun`; PascalCase works too). Unknown or absent: the default. |
+| `script` | Its MicroPython module, relative to the package root. |
+| `configurations` | Its fields — see below. |
+| `outputSchema` | The values it publishes — `name`, `type` (a shape) and `description`. What other nodes bind to. |
+| `outputs` | Actions only: its branches (`{ id, name }`) — *True* / *False*, *Wet* / *Dry*… Absent: one **Out**. Every action also has **Fallback**. |
+| `capabilities` | What it needs of the board on top of the component's. |
+
+An **action** is a step of the flow: it has an input, runs when the flow reaches it and ends on one
+of its outputs. A **trigger** starts a branch on its own: no input, a single **Out**, written as an
+`HIOTrigger` — see [Triggers](/docs/studio/triggers) and
+[Building a component](/docs/packages/building-a-component#triggers).
+
+### Configurations
+
+| Field | What it is |
+| --- | --- |
+| `displayName` | The field's name — `context.get("<action>/<field>")` reads it, lowercased. |
+| `description` | What it's for — the ⓘ next to the field. |
+| `type` | Its editor — see below. |
+| `defaultValue` | Its value on a new node. |
+| `required` | Marked **!** on the node while it's empty. |
+| `advanced` | Folded away under **Advanced** in the inspector. |
+| `displayOptions` | `show` / `hide` it by another field's value — `{ show: { Mode: [i2c] } }`. |
+| `placeholder`, `patterns` | Typing hints and checks (`Min`, `Max`, a pattern…) for text and numbers. |
+
+| `type` | Edits |
+| --- | --- |
+| `string`, `password`, `number`, `toggle` | Text, hidden text, a number, on/off. |
+| `options` | A pick from `options: [{ displayName, value }]`. |
+| `pin` | A board pin — `from: board`, `filterBy: [digital_in, pwm…]`: only pins that support all of them. |
+| `bytes`, `color` | Raw bytes, a color. |
+| `array`, `object` | A list (`items: <shape>`, `maxItems`) or an object (`fields`). |
+| `any` | A value of any type (`availables` limits which: `[int, float, bool]`). |
+| `code` | A script — `language: python`. |
+| `file` | A file attached in the studio — reaches the board, the action gets its path. |
+| `credential` | A credential of a type (`credential: wifi`) — its values reach the board as a file. |
+| `variable` | A workflow variable (Variables' Set). |
+
+### Shapes
+
+An output, a list or an object config, or a variable is typed by a **shape**: one of MicroPython's
+types — `int`, `float`, `bool`, `str` — or `{ array: <shape> }` (a list) or
+`{ object: { <field>: <shape> } }` (a dict), as deep as needed —
+`{ array: { object: { ssid: str, rssi: int } } }`.
+
+They're the types the script itself sees: MicroPython has one `int` and one `float`, so there's no
+`uint8` or `int16` to pick. On the way to and from the board an `int` is 32 bits (−2³¹ to 2³¹−1)
+and a `float` is single precision — what the ESP32's MicroPython uses. Manifests written with the
+old names (`int32`, `uint8`, `float32`, `text`…) still load, read as these.
+
+## A board
+
+```yaml title="workspace/manifest.yaml"
+kind: board
+name: ESP32
+schemaVersion: 1
+
+dependences:
+  platform: ^1.0.0
+
+ui:
+  schema: ./board.schema.yaml       # its pins and connection
+
+capabilities: [wifi, bluetooth]     # what it offers besides its pins
+
+firmware:
+  micropython: 1.29.0
+  image: https://micropython.org/resources/firmware/ESP32_GENERIC-20260824-v1.29.0.bin
+  flash: { chip: esp32, offset: "0x1000" }
+```
+
+`capabilities` lists what the board offers from the same fixed list as a component's. A board that
+doesn't say isn't checked against anything. See [Building a board](/docs/packages/building-a-board)
+for every field.

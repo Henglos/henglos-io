@@ -1,0 +1,127 @@
+---
+title: "HTTP"
+description: "Calls web APIs from the board — Request a URL (GET, POST…) with headers, a body and an auth token; the whole answer lands in a file the next actions read (Read JSON, the Filesystem component), and Pick takes one value out of its JSON right away."
+---
+
+Calls web APIs from the board — Request a URL (GET, POST…) with headers, a body and an auth token; the whole answer lands in a file the next actions read (Read JSON, the Filesystem component), and Pick takes one value out of its JSON right away. And serves them: Request Trigger runs a branch when a request comes in (a webhook), Respond answers it. Needs a network: WiFi's Connect before it.
+
+<PackageInfo name="@henglosio/component-http" version="1.0.0" platform="^1.0.0" needs={["wifi"]} />
+
+| Node | Kind | What it does |
+| --- | --- | --- |
+| [Request Trigger](#request-trigger) | Trigger | Runs its branch when a request comes in on Port for Method under Path — a webhook, a page's button, another board. |
+| [Request](#request) | Action | Calls a URL — goes on (Out) on a 2xx answer, Fallback when there's no network, it took longer than Timeout, or the server answered 4xx/5xx (`error` says which). |
+| [Read JSON](#read-json) | Action | One value from a JSON file on the board — a Request's `file` (bind it), or any other. |
+| [Respond](#respond) | Action | Answers the request its Request Trigger's branch runs for — Status and a Body (or a File). |
+
+## Triggers
+
+### Request Trigger
+
+Runs its branch when a request comes in on Port for Method under Path — a webhook, a page's button, another board. Answer it with Respond; a branch that doesn't answers 200. A path outside it gets 404, another method 405, a request without Auth's header 401. Needs WiFi (Connect on Start).
+
+A trigger: no input, one **Out** — the first action of its branch.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Path** | Text | `/webhook` | **Required.** The base path it answers under — /api takes /api and everything below it (/api/led/on), read in subpath and segments; / takes every path. Two triggers on one port: the longer base path wins. The query (?a=1) doesn't count. |
+| **Method** | One of: Any, GET, POST, PUT, PATCH, DELETE | Any | Which requests run it — Any, or only one method. |
+| **Port** | Number (1 to 65535) | `80` | The port the board listens on — 80 is plain http://&lt;board ip&gt;/. |
+| **Pick** | Text | — | One value from the body's JSON, by its path — sensor.temp, items.0; empty picks nothing. Published as `value`. |
+| **Auth** | Credential (http_header) | — | An HTTP Header Auth credential the request must carry (that header, that value) — else 401. Empty lets anyone in. |
+| **Save To** | Text | — | *Advanced.* A file of your own for the body — /data/last.json; it stays. Empty, it goes to a temporary file (one per trigger), cleared when a session starts. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `method` | str | The request's method — GET, POST… |
+| `path` | str | The path it came for, without the query. |
+| `subpath` | str | What came after the base path — /led/on for /api/led/on on /api; empty for the base itself. |
+| `segments` | list of str | The subpath's parts, in order — ["led", "on"]; route on them with a Switch (segments[0]). |
+| `query` | any | The query's fields as an object — ?led=on&level=3 is \{ "led": "on", "level": "3" \}. |
+| `value` | any | What Pick found in the body — a number, true/false, text, or a list/object as JSON; empty when nothing was picked. |
+| `file` | str | The file holding the body — bind it to Read JSON or Filesystem's Read; empty when there was none. |
+| `size` | int | How many bytes the body had. |
+| `client` | str | The address it came from — 192.168.0.12. |
+| `error` | str | What Pick missed, or why the body couldn't be saved; empty when all went well. |
+
+## Actions
+
+### Request
+
+Calls a URL — goes on (Out) on a 2xx answer, Fallback when there's no network, it took longer than Timeout, or the server answered 4xx/5xx (`error` says which). The board waits for the answer meanwhile.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Method** | One of: GET, POST, PUT, PATCH, DELETE, HEAD | GET | What the request does — GET reads, POST sends, PUT/PATCH change, DELETE removes. |
+| **URL** | Text | — | **Required.** The address to call — https:// or http:// (without one, http://). |
+| **Body** | Text | — | What POST, PUT and PATCH send — JSON, form fields or text. GET, HEAD and DELETE send none. |
+| **Pick** | Text | — | One value from the JSON answer, by its path — main.temp, weather.0.description (a number steps into a list); empty picks nothing. Published as `value`. |
+| **Auth** | Credential (http_header) | — | An HTTP Header Auth credential — the API key or token sent as a header. Empty sends none. |
+| **Headers** | List of \{ name: str, value: str \}, up to 8 | `[]` | *Advanced.* Headers to send — a name and a value each. |
+| **Content Type** | One of: Auto, JSON, Form, Text | Auto | *Advanced.* What the Body is — Auto takes JSON when it starts with \{ or [, text otherwise. A Content-Type in Headers wins. |
+| **Save To** | Text | — | *Advanced.* A file of your own for the answer — /data/weather.json, its folders made; it stays. Empty, it goes to a temporary file, cleared when a session starts. |
+| **Timeout** | Number (1000 to 60000) | `10000` | *Advanced.* How long it waits for the server, in ms — 1000 to 60000. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `status` | int | The HTTP status — 200 OK, 404 not found, 500 server error…; 0 when no answer came. |
+| `value` | any | What Pick found — a number, true/false, text, or a list/object as JSON; empty when nothing was picked. |
+| `file` | str | The file holding the whole answer, as text — bind it to Read JSON, Filesystem's Read, or open() it in a Code binding; empty for HEAD or when it failed. |
+| `size` | int | How many bytes the answer had. |
+| `error` | str | Why it went Fallback, or what Pick missed — no_network, dns, timeout, refused, unreachable, http_404…, "pick: no field temp"; empty when all went well. |
+
+### Read JSON
+
+One value from a JSON file on the board — a Request's `file` (bind it), or any other. Fallback when the file isn't there, isn't JSON, or has nothing at Pick.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **File** | Text | — | **Required.** The file to read — bind a Request's `file`, or a path like /data/response.json. |
+| **Pick** | Text | — | The value's path — main.temp, weather.0.description; empty takes the whole file (if it fits). |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `value` | any | What Pick found — a number, true/false, text, or a list/object as JSON. |
+| `error` | str | Why it's Fallback — no_file, not_json, no field temp, value_too_large; empty otherwise. |
+
+### Respond
+
+Answers the request its Request Trigger's branch runs for — Status and a Body (or a File). Fallback when there's none to answer: not in a Request Trigger's branch, or it was answered already.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Status** | Number (100 to 599) | `200` | The HTTP status — 200 OK, 201 created, 400 bad request, 404 not found… |
+| **Body** | Text | — | What it answers — text, or bind a list/object (sent as JSON). |
+| **Content Type** | One of: Auto, JSON, Text, HTML | Auto | *Advanced.* What the Body is — Auto takes JSON for a list/object or text starting with \{ or [, plain text otherwise. |
+| **File** | Text | — | *Advanced.* A file on the board to answer with instead of Body — /www/index.html. Empty sends Body. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `error` | str | Why it went Fallback — no_request, no_file; empty otherwise. |
+
+## Credentials
+
+### HTTP Header Auth
+
+A header sent with each request — an API key or a bearer token, kept out of the workflow.
+
+| Field | What it's for |
+| --- | --- |
+| **Header** | The header's name — empty sends Authorization. |
+| **Value** | The header's value — "Bearer &lt;token&gt;", an API key… |

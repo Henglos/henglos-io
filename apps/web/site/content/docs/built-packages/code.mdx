@@ -1,0 +1,31 @@
+---
+title: "Code"
+description: "Runs a short Python script on the board, for logic that doesn't fit a fixed node: reads what earlier actions published, computes, and publishes the result for the next ones."
+---
+
+Runs a short Python script on the board, for logic that doesn't fit a fixed node: reads what earlier actions published, computes, and publishes the result for the next ones.
+
+<PackageInfo name="@henglosio/component-code" version="1.0.0" platform="^1.0.0" />
+
+| Node | Kind | What it does |
+| --- | --- | --- |
+| [Run](#run) | Action | Runs Script. |
+
+## Actions
+
+### Run
+
+Runs Script. Its return value goes out as result; a script that raises (or returns something that can't be published) goes out Fallback, with the reason in error.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Script** | Python code | — | MicroPython, run as the body of a function. ctx.get("name") reads values published before this action; `return <value>` publishes it as result — a number, bool, text, bytes, or a list / object (as JSON: `return {"temp": t, "ok": True}`). |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `result` | any | What the script returned — a number, bool, text, bytes, or a list / object (its fields read as result.&lt;field&gt;, its items by index). |
+| `error` | any | Why it went out Fallback (the exception, as text). |

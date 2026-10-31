@@ -1,0 +1,41 @@
+---
+title: Component
+description: A set of actions and triggers about one thing — a sensor, a display, a protocol.
+---
+
+A **component** groups the nodes that work with one thing. **GPIO** reads and drives pins; **DHT**
+reads a temperature sensor; **HTTP** calls web APIs and answers requests. Each of its nodes is an
+[action](/docs/concepts/action) or a [trigger](/docs/concepts/trigger).
+
+| Component | Triggers | Actions |
+| --- | --- | --- |
+| GPIO | Pin Trigger | Write, Read |
+| HTTP | Request Trigger | Request, Read JSON, Respond |
+| DHT | Climate Trigger | Read |
+| Servo | — | To Angle, Rotate, Release |
+
+## What a component carries
+
+- **Its nodes** — every action and trigger, with its settings (the node's fields) and the values it
+  publishes.
+- **Their scripts** — one MicroPython module per node, plus any code they share (a driver for the
+  chip, a parser).
+- **What it needs of the board** — its capabilities (`wifi` for HTTP). A board without them can't
+  run it.
+- **Credential types**, when it uses secrets — WiFi's network, an API token. Their values reach the
+  board as a file, never in the workflow.
+
+## In a workflow
+
+Add a component from the studio's store (the **+** on the canvas, or the library), then add its
+nodes. A workflow can use the same component's nodes as many times as it needs — two GPIO Writes on
+two pins are two nodes of one component, each with its own settings.
+
+On the board, the component's scripts are put there when a session starts — only the components the
+workflow uses, compiled for the board's MicroPython.
+
+## Built in, or installed
+
+**Start**, **Logic** (If, Switch, Repeat) and **Variables** (Set, Append…) come with every
+workflow. Every other component is a package you install: the ones Henglos IO makes are in
+[Built-in packages](/docs/built-packages), and you can [build your own](/docs/packages/building-a-component).

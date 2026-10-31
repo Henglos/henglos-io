@@ -1,0 +1,299 @@
+---
+title: Building a component
+description: A manifest, a MicroPython script per action and trigger, an npm package.
+---
+
+A component is an npm package with a `manifest.yaml` and one MicroPython script per action (and per
+trigger). The studio builds the node, its form and its outputs from the manifest; the board runs
+the script. Every field of the manifest is in [The manifest](/docs/packages/manifest).
+
+```txt
+my-component/
+├── package.json
+├── manifest.yaml
+└── src/
+    └── read.py
+```
+
+## The manifest
+
+```yaml title="manifest.yaml"
+kind: component
+name: GPIO
+schemaVersion: 1
+
+dependences:
+  platform: ^1.0.0
+
+schema:
+  displayName: GPIO
+  description: Directly reads or drives a single digital pin on the board.
+
+  actions:
+    - displayName: Read
+      description: Sets the pin as input and reads its current digital value.
+      icon: toggle-right
+      script: src/read.py
+      configurations:
+        - displayName: Pin
+          description: Board pin this GPIO instance controls.
+          type: pin
+          from: board
+          filterBy: [digital_in]
+      outputSchema:
+        - name: value
+          type: bool
+          description: The digital value read from the pin.
+```
+
+- `configurations` are the node's fields. `type` picks the editor (`pin`, `number`, `toggle`,
+  `options`…); a `pin` with `from: board` lists the board's pins, filtered by what they support.
+- `outputSchema` declares the values the action publishes — what other actions can bind to.
+- `icon` is a [Lucide](https://lucide.dev/icons) icon by its name there — on the node and in the
+  pickers.
+- `dependences.capabilities` says what it needs of the board (`[wifi]` for HTTP); a board without it
+  never runs the component.
+
+## The script
+
+```python title="src/read.py"
+from machine import Pin
+from hio.sdk import HIOAction, action, SUCCESS, FALLBACK
+
+
+@action("gpio/read")
+class ReadAction(HIOAction):
+
+    async def execute(self, context):
+        pin = context.get("read/pin")
+        if pin is None:
+            return FALLBACK
+
+        value = Pin(pin, Pin.IN).value()
+        context.set("value", value != 0)
+        return SUCCESS
+```
+
+Names come from the manifest's display names, lowercased:
+
+| In the script | Comes from |
+| --- | --- |
+| `@action("gpio/read")` | `<component>/<action>` |
+| `context.get("read/pin")` | `<action>/<configuration>` |
+| `context.set("value", …)` | an `outputSchema` name |
+
+The action returns the output it ends on — `SUCCESS` or `FALLBACK`.
+
+### The context
+
+| Method | Does |
+| --- | --- |
+| `context.get(name)` | This action's configs first, then values earlier actions published, then the variable `name`. `None` if there's none. |
+| `context.set(name, value)` | Publishes a value — sent back to the studio and readable by later actions. |
+| `context.variable(name)` | Only the workflow variable `name`. |
+| `context.remove(name)` | Drops a published value. |
+
+Values come back as `int`, `float` or `bool`; arrays and text as `bytes`.
+
+<Callout title="One instance, many nodes">
+  The same action class serves every node of that action in a workflow, each with its own configs —
+  read them in `execute`, don't cache them on the instance.
+</Callout>
+
+## Triggers
+
+A trigger starts a branch of the flow on its own — a pin changing, a request coming in. Declare it
+under `triggers:` (next to `actions:`), with the same fields as an action but no `outputs`: a
+trigger has no input and one **Out**.
+
+```yaml title="manifest.yaml"
+schema:
+  actions: [...]
+
+  triggers:
+    - displayName: Pin Trigger
+      description: Runs its branch when a pin changes.
+      icon: toggle-right
+      script: src/pin_trigger.py
+      configurations:
+        - displayName: Pin
+          type: pin
+          from: board
+          filterBy: [digital_in]
+      outputSchema:
+        - name: level
+          type: bool
+```
+
+Its script is an `HIOTrigger`, registered with `@trigger`:
+
+```python title="src/pin_trigger.py"
+from machine import Pin
+from hio.sdk import HIOTrigger, trigger
+
+
+@trigger("gpio/pin trigger")
+class PinTrigger(HIOTrigger):
+
+    def arm(self, context):
+        # The program starts listening: read the configs, open what it listens on.
+        self.pin = Pin(context.get("pin trigger/pin"), Pin.IN)
+        self.pending = False
+        self.pin.irq(handler=self.edge, trigger=Pin.IRQ_RISING)
+
+    def edge(self, pin):
+        self.pending = True             # in the interrupt: just note it
+
+    def poll(self, context):
+        # Asked over and over — never block. True: it fired, its branch runs.
+        if not self.pending:
+            return False
+        self.pending = False
+        context.set("level", self.pin.value() != 0)
+        return True
+
+    def disarm(self):
+        self.pin.irq(handler=None)
+```
+
+| Method | When |
+| --- | --- |
+| `arm(context)` | The program starts listening (at boot, or when a session arms it). |
+| `poll(context)` | Asked again and again: return `True` when it fired, after publishing with `context.set`. **Never block.** |
+| `finish(context)` | Optional: its branch is over — HTTP's Request Trigger answers `200` there if nothing did. |
+| `disarm()` | Optional: stop listening — close what `arm` opened. |
+
+While its branch runs, a trigger isn't polled: an event that comes meanwhile waits in it (a flag, a
+socket's queue) until the branch is over.
+
+### Shared code
+
+Code the actions share goes in a module next to them, imported **relatively**:
+
+```python title="src/read.py"
+from .driver import open_pin        # src/driver.py
+from . import fonts                 # src/fonts.py
+```
+
+When a workflow runs, the board gets only the actions on its canvas — and the modules they import
+this way, followed through their own relative imports. A module nothing imports relatively never
+reaches the board.
+
+### Attached files
+
+A `file` configuration lets the user attach a file in the studio; it reaches the board's filesystem
+with the workflow, and the action gets its **path** there:
+
+```yaml
+- displayName: Bitmap
+  description: The image to show.
+  type: file
+  accept: [image/*, .pbm]
+  # Optional: turn a picked image into a 1-bit PBM that fits — the studio converts and previews it.
+  image: { format: pbm, maxWidth: 128, maxHeight: 64 }
+```
+
+```python
+path = bytes(context.get("image/bitmap")).decode()     # "/files/3f2a…pbm"
+with open(path, "rb") as file:
+    data = file.read()
+```
+
+Files are up to 64 KB, and can't be bound to outputs, variables or Code.
+
+### Lists and objects
+
+An output, a configuration or a workflow variable can hold a **list** or an **object**, typed by
+its **shape**: a MicroPython type (`int`, `float`, `bool`, `str`), `{ array: <shape> }` or
+`{ object: { <field>: <shape> } }`, as deep as you need.
+
+```yaml
+outputSchema:
+  - name: networks
+    type: { array: { object: { ssid: str, rssi: int, channel: int } } }
+
+configurations:
+  - displayName: Points
+    type: array
+    items: { object: { x: float, y: float } }
+    maxItems: 20
+  - displayName: Limits
+    type: object
+    fields:
+      - { name: low, displayName: Low, type: float }
+      - { name: high, displayName: High, type: float }
+```
+
+In the action they're plain Python lists and dicts — publish one with `context.set`, read one with
+`context.get` (from a config, a bound output or a variable):
+
+```python
+context.set("networks", [{"ssid": "Home", "rssi": -55, "channel": 6}])
+points = context.get("plot/points")                   # [{"x": 1.0, "y": 2.0}, …]
+```
+
+They travel as JSON, at most the board's value size (512 bytes by default — *Config value size* in
+Platform settings). The studio edits a list config row by row (or as JSON), binds one only to an
+output or a variable of a shape that fits, and the Variables component's **Append**, **Set Field**
+and **Clear** keep a list or an object in a variable — a history of readings, say.
+
+### Credentials
+
+For a password, a token, an API key — anything the workflow shouldn't hold — declare a
+**credential type** in the manifest, and pick one in a `credential` configuration. The user makes the
+credential once (the Credentials page, or "New" right in the config) and picks it by name in any
+workflow, like n8n's credentials. The hosting keeps it with its `secret` fields encrypted; the
+workflow, and its `.hio` export, only point at it.
+
+```yaml
+schema:
+  credentials:
+    - name: wifi                     # global: a component may use a type another package declares
+      displayName: WiFi Network
+      fields:
+        - { name: ssid, displayName: SSID, type: string, required: true }
+        - { name: password, displayName: Password, type: string, secret: true }
+
+  actions:
+    - displayName: Connect
+      configurations:
+        - displayName: Network
+          type: credential
+          credential: wifi
+          required: true
+```
+
+When a session starts, its values reach the board as a JSON file, and the action gets its **path**:
+
+```python
+import json
+path = bytes(context.get("connect/network")).decode()   # "/secrets/<id>.json"
+with open(path) as file:
+    network = json.load(file)                         # {"ssid": "MyHome", "password": "…"}
+```
+
+The file stays on the board only while a workflow there uses the credential. Its values are in the
+clear on the board — whoever has it, and a USB cable, can read them.
+
+## Publish it
+
+```json title="package.json"
+{
+  "name": "@you/component-gpio",
+  "version": "1.0.0",
+  "type": "module",
+  "files": ["src/**/*.py", "manifest.yaml"],
+  "exports": {
+    "./manifest.yaml": "./manifest.yaml",
+    "./package.json": "./package.json"
+  }
+}
+```
+
+```bash
+npm publish                                       # the public registry
+npm publish --registry http://localhost:4873      # a local Verdaccio
+```
+
+Then install it from the studio's component store by its package name. No compile or flash: the
+next time a workflow using it runs, the driver compiles what it uses and puts it on the board.

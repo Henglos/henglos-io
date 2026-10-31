@@ -1,0 +1,7 @@
+/* The studio's look for the stories: the design system (tokens, Tailwind)
+   and every class the canvas uses — this package's and the ui package's. */
+@import "@henglosio/ui/globals.css";
+@import "../src/scale.css";
+
+@source "../src";
+@source "../../ui/src";

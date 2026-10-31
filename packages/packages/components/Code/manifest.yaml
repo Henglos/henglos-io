@@ -1,0 +1,48 @@
+kind: component
+name: Code
+schemaVersion: 1
+
+dependences:
+  platform: ^1.0.0
+
+schema:
+
+  displayName: Code
+  description: >
+    Runs a short Python script on the board, for logic that doesn't fit a
+    fixed node: reads what earlier actions published, computes, and publishes
+    the result for the next ones.
+
+  # Wire ids come from the lowercased displayNames (computeWireActionId /
+  # computeWireConfigId in @henglosio/workflow) — src/run.py's @action and
+  # context.get() names must match: "code/run", "run/script".
+
+  actions:
+
+    - displayName: Run
+      description: >
+        Runs Script. Its return value goes out as result; a script that raises
+        (or returns something that can't be published) goes out Fallback, with
+        the reason in error.
+      script: src/run.py
+      configurations:
+        # Sent as a regular config value, so the script is limited to 64 bytes
+        # (UTF-8) for now — the studio counts and warns past that.
+        - displayName: Script
+          description: >
+            MicroPython, run as the body of a function. ctx.get("name") reads
+            values published before this action; `return <value>` publishes it
+            as result — a number, bool, text, bytes, or a list / object (as
+            JSON: `return {"temp": t, "ok": True}`).
+          type: code
+          language: python
+          placeholder: return ctx.get("value")
+      outputSchema:
+        - name: result
+          type: any
+          description: >
+            What the script returned — a number, bool, text, bytes, or a list
+            / object (its fields read as result.<field>, its items by index).
+        - name: error
+          type: any
+          description: Why it went out Fallback (the exception, as text).

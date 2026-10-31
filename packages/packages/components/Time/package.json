@@ -1,0 +1,16 @@
+{
+	"name": "@henglosio/component-time",
+	"version": "1.0.0",
+	"description": "Time component for HenglosIO: delay, uptime, timers and intervals",
+	"author": "Henglos",
+	"license": "SEE LICENSE IN LICENSE",
+	"type": "module",
+	"exports": {
+		"./manifest.yaml": "./manifest.yaml",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"src/**/*.py",
+		"manifest.yaml"
+	]
+}

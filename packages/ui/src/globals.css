@@ -1,0 +1,90 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+
+@import "tailwindcss";
+
+@import "./tokens.css";
+
+/* ---------- escala não-cor ---------- */
+@theme {
+	--spacing: 4px; /* grid de 8px: use só passos pares — p-2 = 8px, p-4 = 16px, h-8 = 32px. Ímpares/frações só p/ hairlines (<4px) */
+
+	--radius-sm: 3px; /* kbd, chips */
+	--radius-md: 6px; /* botões, inputs */
+	--radius-lg: 8px; /* nós, cards, modais */
+
+	--font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+	--font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+	/* Escala modular: base 13px × 1.125 (major second), arredondada p/ px inteiro
+     (px fracionário borra em Windows 100%). Line-height fixo no grid de 4px. */
+	--text-xs: 11px;
+	--text-xs--line-height: 16px;
+	--text-xs--letter-spacing: 0.01em; /* 13÷1.125² ≈ 10.3 → piso 11 */
+	--text-sm: 12px;
+	--text-sm--line-height: 16px;
+	--text-sm--letter-spacing: 0.005em; /* 13÷1.125  ≈ 11.6 */
+	--text-base: 13px;
+	--text-base--line-height: 20px; /* base (= UI do VS Code) */
+	--text-lg: 15px;
+	--text-lg--line-height: 20px;
+	--text-lg--letter-spacing: -0.005em; /* 13×1.125  ≈ 14.6 */
+	--text-xl: 18px;
+	--text-xl--line-height: 24px;
+	--text-xl--letter-spacing: -0.01em; /* 13×1.125³ ≈ 18.5 */
+	--text-2xl: 24px;
+	--text-2xl--line-height: 32px;
+	--text-2xl--letter-spacing: -0.02em; /* 13×1.125⁵ ≈ 23.4 */
+
+	--font-weight-normal: 400; /* corpo, valores */
+	--font-weight-medium: 500; /* labels, botões, itens ativos */
+	--font-weight-semibold: 600; /* títulos de nó, painel, diálogo */
+
+	--shadow-glow: 0 0 6px var(--accent-line);
+}
+
+/* ---------- utilities próprias ---------- */
+@utility focus-ring {
+	outline: none;
+	box-shadow:
+		0 0 0 2px var(--canvas),
+		0 0 0 4px var(--focus);
+}
+
+/* ---------- base ---------- */
+@layer base {
+	html,
+	body {
+		height: 100%;
+	}
+	body {
+		@apply bg-canvas text-fg font-sans text-base antialiased;
+		text-rendering: optimizeLegibility;
+		overflow: hidden;
+	}
+	::selection {
+		background: var(--selected-hover);
+		color: var(--fg);
+	}
+	:focus-visible {
+		@apply focus-ring;
+	}
+
+	* {
+		scrollbar-color: var(--scrollbar) transparent;
+		scrollbar-width: thin;
+	}
+	*::-webkit-scrollbar {
+		width: 9px;
+		height: 9px;
+	}
+	*::-webkit-scrollbar-thumb {
+		background: var(--scrollbar);
+		border-radius: 999px;
+		border: 2px solid transparent;
+		background-clip: content-box;
+	}
+	*::-webkit-scrollbar-thumb:hover {
+		background: var(--scrollbar-hover);
+		background-clip: content-box;
+	}
+}

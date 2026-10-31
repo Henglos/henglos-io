@@ -1,0 +1,16 @@
+{
+	"name": "@henglosio/component-watersensor",
+	"version": "1.0.0",
+	"description": "Analog water level / leak sensor (the S + - module and the like) component for HenglosIO",
+	"author": "Henglos",
+	"license": "SEE LICENSE IN LICENSE",
+	"type": "module",
+	"exports": {
+		"./manifest.yaml": "./manifest.yaml",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"src/**/*.py",
+		"manifest.yaml"
+	]
+}

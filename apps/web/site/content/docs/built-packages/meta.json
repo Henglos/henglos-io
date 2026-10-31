@@ -1,0 +1,31 @@
+{
+  "title": "Built-in packages",
+  "pages": [
+    "index",
+    "core",
+    "---Boards---",
+    "esp32",
+    "---Pins and timing---",
+    "gpio",
+    "pwm",
+    "servo",
+    "time",
+    "---Sensors---",
+    "dht",
+    "water-sensor",
+    "sound-sensor",
+    "ultrasonic-sensor",
+    "imu",
+    "joystick",
+    "---Displays---",
+    "display",
+    "lcd",
+    "---Connectivity---",
+    "wifi",
+    "http",
+    "ir",
+    "---Data and code---",
+    "filesystem",
+    "code"
+  ]
+}

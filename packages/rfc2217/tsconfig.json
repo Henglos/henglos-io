@@ -1,0 +1,30 @@
+{
+	"include": ["src/**/*"],
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./dist",
+
+		"module": "esnext",
+		"target": "esnext",
+		"lib": ["esnext"],
+		"types": ["node"],
+
+		"moduleResolution": "bundler",
+
+		"sourceMap": true,
+		"declaration": true,
+		"declarationMap": true,
+
+		"noEmit": true,
+
+		"noUncheckedIndexedAccess": true,
+		"exactOptionalPropertyTypes": true,
+
+		"strict": true,
+		"verbatimModuleSyntax": true,
+		"isolatedModules": true,
+		"noUncheckedSideEffectImports": true,
+		"moduleDetection": "force",
+		"skipLibCheck": true
+	}
+}

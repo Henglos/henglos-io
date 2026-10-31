@@ -1,0 +1,20 @@
+@import "@henglosio/ui/globals.css";
+@source "../../../../packages/ui/src";
+
+html, body {
+	margin: 0px;
+	padding: 0px;
+	width: 100vw;
+	height: 100vh;
+}
+
+.react-flow__attribution {
+
+	background: var(--color-chrome) !important;
+	border: dashed 1px;
+	border-color: var(--line);
+	border-radius: 1000px;
+	padding: 2px 10px !important;
+	margin: 4px !important;
+
+}

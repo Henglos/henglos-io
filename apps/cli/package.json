@@ -1,0 +1,50 @@
+{
+  "name": "@henglosio/cli",
+  "version": "1.0.0",
+  "description": "The HenglosIO command-line interface.",
+  "author": "Henglos",
+  "license": "SEE LICENSE IN LICENSE",
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "files": [
+    "./dist"
+  ],
+  "bin": {
+    "hio": "./dist/index.mjs"
+  },
+  "scripts": {
+    "start": "node dist/index.mjs",
+    "build": "tsdown"
+  },
+  "dependencies": {
+    "@commander-js/extra-typings": "^14.0.0",
+    "@hono/node-server": "^1.19.11",
+    "@pybricks/mpy-cross-v6": "2.0.0",
+    "axios": "^1.15.0",
+    "commander": "^14.0.3",
+    "daemonize-process": "^4.1.1",
+    "dockerode": "^4.0.10",
+    "hono": "^4.12.22",
+    "native-machine-id": "^0.3.11",
+    "pacote": "^21.0.0",
+    "reflect-metadata": "^0.2.2",
+    "semver": "7.8.5",
+    "serialport": "^13.0.0",
+    "socket.io-client": "^4.8.3",
+    "tar": "^7.5.13",
+    "tsyringe": "^4.10.0",
+    "typescript": "^5.9.3",
+    "yaml": "^2.8.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@henglosio/driver": "workspace:*",
+    "@henglosio/rfc2217": "workspace:*",
+    "@henglosio/runner": "workspace:*",
+    "@henglosio/shared": "workspace:*",
+    "@henglosio/workflow": "workspace:*",
+    "@types/node": "^22.19.11",
+    "@types/semver": "7.7.1",
+    "tsdown": "latest"
+  }
+}

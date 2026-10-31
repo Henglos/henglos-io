@@ -1,0 +1,28 @@
+{
+  "name": "@henglosio/runner",
+  "version": "1.0.0",
+  "description": "Build orchestrator that compiles and flashes a workflow inside the driver's containers.",
+  "author": "Henglos",
+  "license": "SEE LICENSE IN LICENSE",
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
+  },
+  "files": [
+    "./dist"
+  ],
+  "scripts": {
+    "start": "node dist/index.mjs",
+    "build": "tsdown"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@henglosio/shared": "workspace:*",
+    "@types/node": "^22.19.11",
+    "tsdown": "latest"
+  }
+}

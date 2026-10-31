@@ -1,0 +1,41 @@
+---
+title: The canvas
+description: Nodes, wires and how a workflow flows.
+---
+
+Every workflow has a **Start** node, and as many [triggers](/docs/studio/triggers) as it needs.
+Each action you add is a node: its icon, its name and component, its inputs on the left and its
+outputs on the right. Select one to edit it in the **inspector** — its settings, the data it can
+bind to (**Input**) and what it publishes (**Output**). A node says what's off about it: a required
+setting left empty (**!**), or something the board doesn't have (**⊘** — an HTTP node on a board
+without Wi-Fi).
+
+<WorkflowPreview name="button-led" height={380} />
+
+Here **Write**'s *Value* is bound to **Read**'s `value` output (highlighted in green) — it reads
+whatever Read published in that run.
+
+## Outputs decide what runs next
+
+When an action finishes, it ends on one of its outputs:
+
+- **Success** — it did what it does.
+- **Fallback** (red, at the bottom) — it couldn't: a missing value, a pin that failed, a variable
+  store that's full…
+- **Custom outputs** — some actions branch further (a comparison's *true* / *false*, for example).
+
+The wire leaving that output is the next action. An output with nothing connected ends the pass:
+in **loop** mode (Start's *Mode*) the flow returns to Start, in **once** mode it stops.
+
+## Working on the canvas
+
+- The **+** in the canvas' corner adds an action or a trigger — components listed alphabetically,
+  triggers first with their green mark. Hover a wire and press **+** to insert one in the middle of
+  it; drop a wire on empty canvas to add one there.
+- Each setting's **ⓘ** shows what it's for. **Notes** are only for you — the board never sees them.
+- The **eye** on a node disables it: the flow skips it and goes straight on to where its Success
+  output leads, without unwiring anything. Configs bound to its outputs read nothing while it's off.
+  Press it again to bring it back.
+- The minimap (top right) can be dragged and zoomed to move around large workflows.
+- The workflow's **Settings** (⚙ next to its name) changes its **board** and its platform version
+  and limits.

@@ -1,0 +1,16 @@
+{
+	"name": "@henglosio/component-filesystem",
+	"version": "1.0.0",
+	"description": "The board's files — read, write, copy, move, delete, list — component for HenglosIO",
+	"author": "Henglos",
+	"license": "SEE LICENSE IN LICENSE",
+	"type": "module",
+	"exports": {
+		"./manifest.yaml": "./manifest.yaml",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"src/**/*.py",
+		"manifest.yaml"
+	]
+}

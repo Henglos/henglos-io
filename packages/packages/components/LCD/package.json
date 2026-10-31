@@ -1,0 +1,16 @@
+{
+	"name": "@henglosio/component-lcd",
+	"version": "1.0.0",
+	"description": "Character LCD (16x2, 20x4 — HD44780) component for HenglosIO, over an I2C backpack or wired in 4-bit parallel",
+	"author": "Henglos",
+	"license": "SEE LICENSE IN LICENSE",
+	"type": "module",
+	"exports": {
+		"./manifest.yaml": "./manifest.yaml",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"src/**/*.py",
+		"manifest.yaml"
+	]
+}

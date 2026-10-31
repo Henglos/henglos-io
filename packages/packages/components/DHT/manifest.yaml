@@ -1,0 +1,125 @@
+kind: component
+name: DHT
+schemaVersion: 1
+
+dependences:
+  platform: ^1.0.0
+
+schema:
+
+  displayName: DHT
+  description: >
+    A DHT11 or DHT22 (AM2302) temperature and humidity sensor on one data
+    pin: Read gives both — with how hot it feels and the dew point — and
+    Climate Trigger runs a branch when one of them goes past a limit.
+
+  # Wire ids come from the lowercased displayNames (computeWireActionId /
+  # computeWireConfigId in @henglosio/workflow) — each script's @action /
+  # @trigger and context.get() names must match: "dht/<action>",
+  # "<action>/<config>". The configs they share are written once (YAML anchors).
+
+  actions:
+
+    - displayName: Read
+      icon: thermometer
+      description: The temperature and the humidity — with how hot it feels (heat index) and the dew point. Fallback when the sensor doesn't answer, with the reason in error.
+      script: src/read.py
+      configurations:
+        - &pin
+          displayName: Data Pin
+          description: Board pin wired to the sensor's data (DATA / S / OUT). A bare sensor needs a 10 kΩ pull-up from it to 3.3 V; a module has one.
+          type: pin
+          from: board
+          filterBy: [digital_in, digital_out]
+          required: true
+          defaultValue: { gpio: 4, type: [digital_in, digital_out, analog_in, pwm, touch, uart], displayName: GPIO4 }
+        - &model
+          displayName: Model
+          description: Which sensor it is — DHT11 (blue, 0-50 °C, 1 reading a second) or DHT22 / AM2302 (white, -40-80 °C, finer, 1 every 2 s).
+          type: options
+          defaultValue: dht11
+          options:
+            - { displayName: DHT11, value: dht11 }
+            - { displayName: DHT22 / AM2302, value: dht22 }
+        - &unit
+          displayName: Unit
+          description: What temperature, heat_index and dew_point are in.
+          type: options
+          defaultValue: celsius
+          options:
+            - { displayName: Celsius (°C), value: celsius }
+            - { displayName: Fahrenheit (°F), value: fahrenheit }
+      outputSchema:
+        - &temperature
+          name: temperature
+          type: float
+          description: The temperature, in Unit — a DHT11 reads it in whole degrees.
+        - &humidity
+          name: humidity
+          type: float
+          description: The relative humidity, 0 to 100 %.
+        - &heatIndex
+          name: heat_index
+          type: float
+          description: How hot it feels, in Unit — the temperature itself in cool air, higher when it's hot and humid.
+        - &dewPoint
+          name: dew_point
+          type: float
+          description: The temperature the air would fog (and surfaces sweat) at, in Unit.
+        - name: error
+          type: str
+          description: Why it's Fallback — no_pin, no_answer (the wiring, the pull-up, the Model picked or its power); empty otherwise.
+
+  # What starts a branch of the flow on its own — no input, only Out.
+  triggers:
+
+    - displayName: Climate Trigger
+      icon: thermometer-sun
+      description: >
+        Runs its branch when the temperature or the humidity goes above (or
+        below) Limit — read every Interval. It fires again only once the value
+        came back past Hysteresis, so one sitting right on Limit doesn't fire
+        over and over. Past Limit when the program starts counts as getting there.
+      script: src/climate_trigger.py
+      configurations:
+        - *pin
+        - *model
+        - displayName: Watch
+          description: Which value it watches.
+          type: options
+          defaultValue: temperature
+          options:
+            - { displayName: Temperature, value: temperature }
+            - { displayName: Humidity, value: humidity }
+        - displayName: When
+          description: Which way past Limit fires it.
+          type: options
+          defaultValue: above
+          options:
+            - { displayName: Goes above Limit, value: above }
+            - { displayName: Goes below Limit, value: below }
+        - displayName: Limit
+          description: The temperature (in Unit) or humidity (%) it fires past.
+          type: number
+          defaultValue: "30"
+          required: true
+        - displayName: Hysteresis
+          advanced: true
+          description: How far back past Limit the value has to come before it can fire again — in Unit or %.
+          type: number
+          defaultValue: "1"
+          patterns:
+            - { name: Min, value: 0 }
+        - displayName: Interval
+          description: How often it reads, in ms — at least the sensor's own (1000 for a DHT11, 2000 for a DHT22).
+          type: number
+          defaultValue: "5000"
+          placeholder: 5000 ms
+          patterns:
+            - { name: Min, value: 1000 }
+        - *unit
+      outputSchema:
+        - *temperature
+        - *humidity
+        - *heatIndex
+        - *dewPoint

@@ -1,0 +1,148 @@
+kind: component
+name: PWM
+schemaVersion: 1
+
+dependences:
+  platform: ^1.0.0
+
+schema:
+
+  displayName: PWM
+  description: >
+    A PWM signal on a pin — for dimming a LED, setting a DC motor's speed
+    (through a driver or transistor), driving a buzzer. Write sets a duty and
+    holds it, Fade moves to one smoothly over a time, Stop cuts the signal.
+    For servos, use the Servo component.
+
+  # Wire ids come from the lowercased displayNames (computeWireActionId /
+  # computeWireConfigId in @henglosio/workflow) — each script's @action and
+  # context.get() names must match: "pwm/<action>", "<action>/<config>".
+  # The configs Write and Fade share are written once (YAML anchors).
+  #
+  # Every typed number has its range as patterns (Min/Max — real checks,
+  # unlike the integer-only PWM regex): the studio flags a value outside it,
+  # and the build refuses it. A bound value can't be checked ahead: the
+  # scripts clamp it.
+
+  actions:
+
+    - displayName: Write
+      description: Puts a PWM signal on the pin — Duty % of the time on — and holds it until the next action on the pin.
+      script: src/write.py
+      configurations:
+        - &pin
+          displayName: Pin
+          description: Board pin the signal goes out on — only PWM-capable pins are listed.
+          type: pin
+          from: board
+          filterBy: [pwm]
+          required: true
+        - displayName: Duty
+          description: >
+            How much of the time the pin is on, from 0 (off) to 100 (fully on),
+            in %. Decimals are fine (12.5). Bind it to follow a sensor.
+          type: number
+          defaultValue: "50"
+          placeholder: 0–100 %
+          required: true
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 100 }
+        - &frequency
+          displayName: Frequency
+          description: >
+            Signal frequency, from 1 to 40000 Hz. 1000 suits LEDs; motors run
+            quieter at 20000 (out of hearing); on a buzzer it's the note.
+          type: number
+          defaultValue: "1000"
+          placeholder: 1–40000 Hz
+          patterns:
+            - { name: Min, value: 1 }
+            - { name: Max, value: 40000 }
+        - &scale
+          displayName: Scale
+          advanced: true
+          description: >
+            How Duty maps to the signal. Perceived brightness follows how the
+            eye sees light, so a LED dims evenly (50% looks half as bright);
+            keep Linear for motors and buzzers.
+          type: options
+          defaultValue: linear
+          options:
+            - displayName: Linear
+              value: linear
+            - displayName: Perceived brightness
+              value: perceived
+        - &invert
+          displayName: Invert
+          advanced: true
+          description: >
+            On for a load that's on when the pin is LOW — a LED wired from
+            3.3 V to the pin, an active-low driver. 100% is then fully on.
+          type: toggle
+          label: Active low
+          defaultValue: false
+      outputSchema:
+        - name: duty
+          type: float
+          description: The duty set, in % (0–100).
+        - name: frequency
+          type: int
+          description: The frequency set, in Hz.
+
+    - displayName: Fade
+      description: Moves the pin's duty smoothly to To over Duration, then holds it — a LED fading in or out, a motor easing up.
+      script: src/fade.py
+      configurations:
+        - *pin
+        - displayName: To
+          description: The duty to end at, from 0 to 100, in %.
+          type: number
+          defaultValue: "100"
+          placeholder: 0–100 %
+          required: true
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 100 }
+        - displayName: Duration
+          description: >
+            How long the fade takes, in milliseconds — 0 jumps straight to To,
+            up to 600000 (10 minutes). The flow waits for it, like a Delay.
+          type: number
+          defaultValue: "1000"
+          placeholder: ms
+          required: true
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 600000 }
+        - displayName: From
+          advanced: true
+          description: >
+            The duty to start at, from 0 to 100, in %. Leave it empty to start
+            where the pin is now (what the last Write or Fade left it at — 0 if
+            none).
+          type: number
+          placeholder: current
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 100 }
+        - *frequency
+        - *scale
+        - *invert
+      outputSchema:
+        - name: duty
+          type: float
+          description: The duty it ended at (To), in %.
+
+    - displayName: Stop
+      description: Cuts the signal and frees the pin.
+      script: src/stop.py
+      configurations:
+        - *pin
+        - displayName: Hold Low
+          description: >
+            Drive the pin LOW after stopping, so what's on it stays off. Off:
+            the pin is left floating (an input).
+          type: toggle
+          label: LOW after
+          defaultValue: true

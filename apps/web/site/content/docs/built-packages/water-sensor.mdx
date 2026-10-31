@@ -1,0 +1,114 @@
+---
+title: "Water Sensor"
+description: "An analog water level / leak sensor (the S + - module and the like): Read gives how much of it is under water, Detect branches Wet or Dry, Water Trigger runs a branch when it gets wet (or dries off), and Calibrate measures its Dry and Wet levels."
+---
+
+An analog water level / leak sensor (the S + - module and the like): Read gives how much of it is under water, Detect branches Wet or Dry, Water Trigger runs a branch when it gets wet (or dries off), and Calibrate measures its Dry and Wet levels.
+
+<PackageInfo name="@henglosio/component-watersensor" version="1.0.0" platform="^1.0.0" />
+
+| Node | Kind | What it does |
+| --- | --- | --- |
+| [Water Trigger](#water-trigger) | Trigger | Runs its branch when the sensor gets wet — a leak, a tank full — or dries off, or either; read every Interval. |
+| [Read](#read) | Action | How much of the sensor is under water — level from 0 (dry) to 100 % (as deep as it goes), wet once it reaches Threshold, and the raw reading. |
+| [Detect](#detect) | Action | Branches Wet or Dry — whether the level reaches Threshold. |
+| [Calibrate](#calibrate) | Action | Takes the reading now as the sensor's Dry level (out of the water) or Wet level (as deep as it goes), for Read, Detect and Water Trigger on the same Signal pin — run it once with each. |
+
+## Triggers
+
+### Water Trigger
+
+Runs its branch when the sensor gets wet — a leak, a tank full — or dries off, or either; read every Interval. Already wet when the program starts counts as getting wet.
+
+A trigger: no input, one **Out** — the first action of its branch.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Signal Pin** | Pin (analog in) | GPIO36 | **Required.** Board pin wired to the sensor's S — an analog input; GPIO32-39 keep working with Wi-Fi on. |
+| **Power Pin** | Pin (digital out) | — | Board pin wired to the sensor's + — powered only while it reads, so its traces don't corrode. Empty, wire + to 3.3 V. |
+| **Threshold** | Number (1 to 100) | `10` | The level it counts as wet from, in % — 1 to 100. |
+| **Fires On** | One of: Getting wet, Drying off, Both | Getting wet | Which change runs the branch. |
+| **Interval** | Number (from 50) | `500` | How often it reads, in ms — 50 at least. |
+| **Samples** | Number (1 to 64) | `8` | *Advanced.* Readings averaged, 1 to 64 — more is steadier, a little slower. |
+| **Dry Level** | Number (0 to 65535) | `0` | *Advanced.* The raw reading out of the water (0 %), 0 to 65535 — until Calibrate measures it on the sensor. |
+| **Wet Level** | Number (0 to 65535) | `35000` | *Advanced.* The raw reading as deep as it goes (100 %), 0 to 65535 — until Calibrate measures it on the sensor. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `level` | float | How much of it is under water, 0 (dry) to 100 %. |
+| `wet` | bool | Whether it's wet now — true when it fired on getting wet. |
+| `raw` | int | The voltage read, 0 (0 V) to 65535 (3.3 V) — to check the wiring and calibrate. |
+
+## Actions
+
+### Read
+
+How much of the sensor is under water — level from 0 (dry) to 100 % (as deep as it goes), wet once it reaches Threshold, and the raw reading.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Signal Pin** | Pin (analog in) | GPIO36 | **Required.** Board pin wired to the sensor's S — an analog input; GPIO32-39 keep working with Wi-Fi on. |
+| **Power Pin** | Pin (digital out) | — | Board pin wired to the sensor's + — powered only while it reads, so its traces don't corrode. Empty, wire + to 3.3 V. |
+| **Threshold** | Number (1 to 100) | `10` | The level it counts as wet from, in % — 1 to 100. |
+| **Samples** | Number (1 to 64) | `8` | *Advanced.* Readings averaged, 1 to 64 — more is steadier, a little slower. |
+| **Dry Level** | Number (0 to 65535) | `0` | *Advanced.* The raw reading out of the water (0 %), 0 to 65535 — until Calibrate measures it on the sensor. |
+| **Wet Level** | Number (0 to 65535) | `35000` | *Advanced.* The raw reading as deep as it goes (100 %), 0 to 65535 — until Calibrate measures it on the sensor. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `level` | float | How much of it is under water, 0 (dry) to 100 %. |
+| `wet` | bool | Whether level reached Threshold. |
+| `raw` | int | The voltage read, 0 (0 V) to 65535 (3.3 V) — to check the wiring and calibrate. |
+
+### Detect
+
+Branches Wet or Dry — whether the level reaches Threshold. A leak under the sink, a full tank, rain.
+
+Ends on **Wet**, **Dry** — or **Fallback** when it can't run.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Signal Pin** | Pin (analog in) | GPIO36 | **Required.** Board pin wired to the sensor's S — an analog input; GPIO32-39 keep working with Wi-Fi on. |
+| **Power Pin** | Pin (digital out) | — | Board pin wired to the sensor's + — powered only while it reads, so its traces don't corrode. Empty, wire + to 3.3 V. |
+| **Threshold** | Number (1 to 100) | `10` | The level it counts as wet from, in % — 1 to 100. |
+| **Samples** | Number (1 to 64) | `8` | *Advanced.* Readings averaged, 1 to 64 — more is steadier, a little slower. |
+| **Dry Level** | Number (0 to 65535) | `0` | *Advanced.* The raw reading out of the water (0 %), 0 to 65535 — until Calibrate measures it on the sensor. |
+| **Wet Level** | Number (0 to 65535) | `35000` | *Advanced.* The raw reading as deep as it goes (100 %), 0 to 65535 — until Calibrate measures it on the sensor. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `level` | float | How much of it is under water, 0 (dry) to 100 %. |
+| `raw` | int | The voltage read, 0 (0 V) to 65535 (3.3 V) — to check the wiring and calibrate. |
+
+### Calibrate
+
+Takes the reading now as the sensor's Dry level (out of the water) or Wet level (as deep as it goes), for Read, Detect and Water Trigger on the same Signal pin — run it once with each. Kept on the board (/data/water_sensor.json): it stays across runs and restarts.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Signal Pin** | Pin (analog in) | GPIO36 | **Required.** Board pin wired to the sensor's S — an analog input; GPIO32-39 keep working with Wi-Fi on. |
+| **Power Pin** | Pin (digital out) | — | Board pin wired to the sensor's + — powered only while it reads, so its traces don't corrode. Empty, wire + to 3.3 V. |
+| **Point** | One of: Dry, Wet | Dry | Which level this reading is — the sensor out of the water (Dry), or under it as deep as it goes (Wet). |
+| **Samples** | Number (1 to 64) | `16` | *Advanced.* Readings averaged, 1 to 64. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `raw` | int | The voltage read, 0 (0 V) to 65535 (3.3 V) — to check the wiring and calibrate. |
+| `dry` | int | The Dry level set so far. |
+| `wet` | int | The Wet level set so far. |

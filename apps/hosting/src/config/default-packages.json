@@ -1,0 +1,9 @@
+{
+	"packages": [
+		{ "spec": "@henglosio/board-esp32", "name": "Esp32" },
+		{ "spec": "@henglosio/component-gpio", "name": "GPIO" },
+		{ "spec": "@henglosio/component-time", "name": "Time" },
+		{ "spec": "@henglosio/component-servo", "name": "Servo" },
+		{ "spec": "@henglosio/component-code", "name": "Code" }
+	]
+}

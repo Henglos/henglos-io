@@ -1,0 +1,61 @@
+---
+title: Action
+description: One step of the flow — its settings, the values it publishes, the output it ends on.
+---
+
+An **action** is a node that runs when the flow reaches it: read a pin, move a servo, send a
+request, wait. It has an **input** on the left, **outputs** on the right, and **settings** in the
+inspector.
+
+## Settings
+
+The node's fields — a pin, a number, a mode, a URL. Each one takes:
+
+| | |
+| --- | --- |
+| **A literal** | What you type or pick. |
+| **A binding** | Another action's output — `distance` from the Ultrasonic Sensor that ran before. |
+| **A variable** | A workflow variable, by dragging it onto the field. |
+| **Code** | A short Python expression run on the board: `return ctx.get("distance") < 10`. |
+
+See [Configurations](/docs/studio/configurations).
+
+## What it publishes
+
+An action publishes **values** by name — GPIO's Read publishes `value`, DHT's Read publishes
+`temperature` and `humidity`. They're what later actions bind to, and what the debugger shows after
+it runs. Each has a type: `int`, `float`, `bool`, `str`, a list or an object.
+
+By default an action hands the next one only what it published. With **Pass Context** on, it hands
+on what it was handed too — so the first action's output reaches the third.
+
+## The output it ends on
+
+Every action ends on **one** of its outputs, and the wire from that output decides what runs next:
+
+- **Success** — it did what it does. Most actions have just this one (shown as **Out**).
+- **Custom outputs** — an If's **True** / **False**, a Water Sensor's **Wet** / **Dry**, a Switch's
+  cases.
+- **Fallback** — it couldn't (no answer from the sensor, no network). Every action has it, so a
+  failure can go somewhere on purpose.
+
+An action whose output has nothing wired to it ends its branch.
+
+## On the board
+
+An action is a MicroPython class: it reads its settings and what earlier actions published, does its
+work, publishes values and returns the output it ends on.
+
+```python
+@action("gpio/read")
+class ReadAction(HIOAction):
+
+    async def execute(self, context):
+        pin = context.get("read/pin")          # a setting
+        if pin is None:
+            return FALLBACK
+        context.set("value", Pin(pin, Pin.IN).value() != 0)   # what it publishes
+        return SUCCESS                         # the output it ends on
+```
+
+See [Building a component](/docs/packages/building-a-component).

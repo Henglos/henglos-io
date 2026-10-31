@@ -1,0 +1,177 @@
+kind: component
+name: Sound Sensor
+schemaVersion: 1
+
+dependences:
+  platform: ^1.0.0
+
+schema:
+
+  displayName: Sound Sensor
+  description: >
+    A microphone module with a comparator (KY-037 / KY-038 and the like — AO,
+    DO, +, G): Read gives how loud it is, Detect branches Loud or Quiet, and
+    Sound Trigger runs a branch on a sound — a clap, a knock.
+
+  # Wire ids come from the lowercased displayNames (computeWireActionId /
+  # computeWireConfigId in @henglosio/workflow) — each script's @action /
+  # @trigger and context.get() names must match: "sound sensor/<action>",
+  # "<action>/<config>". The configs they share are written once (YAML anchors).
+  #
+  # Default Analog Pin GPIO39: the ESP32's ADC1, which keeps reading with
+  # Wi-Fi on (the ADC2 pins don't).
+
+  actions:
+
+    - displayName: Read
+      icon: audio-lines
+      description: How loud it is — level from 0 to 100 % (how far the microphone's signal swung over Window), and loud once it reaches Threshold or the module's DO is on.
+      script: src/read.py
+      configurations:
+        - &analog
+          displayName: Analog Pin
+          description: Board pin wired to the module's AO — how loud. An analog input; GPIO32-39 keep working with Wi-Fi on. Empty to use DO only.
+          type: pin
+          from: board
+          filterBy: [analog_in]
+          defaultValue: { gpio: 39, type: [digital_in, analog_in], displayName: GPIO39 }
+        - &digital
+          displayName: Digital Pin
+          description: Board pin wired to the module's DO — on past the threshold set on its trimpot (detected). Optional.
+          type: pin
+          from: board
+          filterBy: [digital_in]
+        - &threshold
+          displayName: Threshold
+          description: The level that counts as loud, in % — 1 to 100. With Analog Pin.
+          type: number
+          defaultValue: "30"
+          placeholder: 1–100 %
+          patterns:
+            - { name: Min, value: 1 }
+            - { name: Max, value: 100 }
+        - &window
+          displayName: Window
+          advanced: true
+          description: How long it listens, in ms — 5 to 1000. Longer catches a sound that comes and goes; it holds the flow that long.
+          type: number
+          defaultValue: "50"
+          placeholder: 5–1000 ms
+          patterns:
+            - { name: Min, value: 5 }
+            - { name: Max, value: 1000 }
+        - &fullScale
+          displayName: Full Scale
+          advanced: true
+          description: The swing (peak, 0 to 65535) that counts as 100 % — lower it if loud sounds barely move level; raise it if level is stuck at 100.
+          type: number
+          defaultValue: "16384"
+          patterns:
+            - { name: Min, value: 1 }
+            - { name: Max, value: 65535 }
+        - &active
+          displayName: Active
+          advanced: true
+          description: Which DO level means sound — High on most modules (its LED lights up with it), Low on some.
+          type: options
+          defaultValue: high
+          options:
+            - { displayName: High, value: high }
+            - { displayName: Low, value: low }
+      outputSchema:
+        - &levelOut
+          name: level
+          type: float
+          description: How loud, 0 to 100 % of Full Scale — with Analog Pin.
+        - &peakOut
+          name: peak
+          type: int
+          description: How far AO swung over Window, 0 to 65535 — to set Full Scale. Near 0 in silence.
+        - &detectedOut
+          name: detected
+          type: bool
+          description: Whether the module's DO is on — with Digital Pin.
+        - &loudOut
+          name: loud
+          type: bool
+          description: Whether level reached Threshold, or DO is on.
+        - name: error
+          type: str
+          description: no_pin when neither pin is set; empty otherwise.
+
+    - displayName: Detect
+      icon: ear
+      description: Branches Loud or Quiet — level past Threshold over Window (Analog Pin), or the module's DO on (Digital Pin); either, with both.
+      script: src/detect.py
+      configurations:
+        - *analog
+        - *digital
+        - *threshold
+        - *window
+        - *fullScale
+        - *active
+      outputs:
+        - { id: loud, name: Loud }
+        - { id: quiet, name: Quiet }
+      outputSchema:
+        - *levelOut
+        - *peakOut
+        - *detectedOut
+        - *loudOut
+
+  # What starts a branch of the flow on its own — no input, only Out.
+  triggers:
+
+    - displayName: Sound Trigger
+      icon: megaphone
+      description: >
+        Runs its branch on a sound — a clap, a knock — then waits Cooldown
+        before it can fire again. With a Digital Pin, the module's DO is caught
+        the moment it flips (nothing is missed); without one, Analog Pin is
+        listened to every Interval.
+      script: src/sound_trigger.py
+      configurations:
+        - displayName: Digital Pin
+          description: Board pin wired to the module's DO — the best for short sounds; set its threshold with the module's trimpot. Empty to listen on Analog Pin.
+          type: pin
+          from: board
+          filterBy: [digital_in]
+        - displayName: Analog Pin
+          description: Board pin wired to the module's AO — used when there's no Digital Pin.
+          type: pin
+          from: board
+          filterBy: [analog_in]
+          defaultValue: { gpio: 39, type: [digital_in, analog_in], displayName: GPIO39 }
+        - *threshold
+        - displayName: Cooldown
+          description: How long after a sound before it can fire again, in ms — one clap and its echo are one run.
+          type: number
+          defaultValue: "300"
+          placeholder: 300 ms
+          patterns:
+            - { name: Min, value: 0 }
+        - *active
+        - displayName: Window
+          advanced: true
+          description: With Analog Pin, how long each listen is, in ms — 1 to 200. It holds the board that long, so keep it short.
+          type: number
+          defaultValue: "20"
+          patterns:
+            - { name: Min, value: 1 }
+            - { name: Max, value: 200 }
+        - displayName: Interval
+          advanced: true
+          description: With Analog Pin, how often it listens, in ms — 10 at least.
+          type: number
+          defaultValue: "100"
+          patterns:
+            - { name: Min, value: 10 }
+        - *fullScale
+      outputSchema:
+        - *levelOut
+        - name: loud
+          type: bool
+          description: Always true — it fired on a sound.
+        - name: at
+          type: int
+          description: When the sound came — the board's clock, in ms.

@@ -1,0 +1,293 @@
+kind: component
+name: IMU
+schemaVersion: 1
+
+dependences:
+  platform: ^1.0.0
+
+schema:
+
+  displayName: IMU
+  description: >
+    An accelerometer + gyroscope on I2C — the MPU-6050 (GY-521) and its
+    family (MPU-6500, MPU-9250), found by itself or picked in Model. Read
+    gives acceleration (g), rotation (°/s) and temperature, Orientation a
+    steady pitch and roll, Tilt branches on which way it leans, Motion on
+    whether it's still, moving or falling, and Calibrate zeroes it.
+
+  # Wire ids come from the lowercased displayNames (computeWireActionId /
+  # computeWireConfigId in @henglosio/workflow) — each script's @action and
+  # context.get() names must match: "imu/<action>", "<action>/<config>".
+  # The wiring configs are the same on every action (YAML anchors).
+  #
+  # Chip-independent: the actions speak g, °/s and °C; a driver per chip
+  # family (src/mpu.py) knows the registers — see src/sensor.py.
+  #
+  # SDA/SCL: any GPIO works (software I2C). The defaults are the ESP32's
+  # usual pair, GPIO21 / GPIO22 — the same as the Display's: they share the bus.
+
+  actions:
+
+    - displayName: Read
+      description: The sensor's acceleration on each axis (g), rotation about each axis (°/s) and its temperature (°C).
+      script: src/read.py
+      configurations:
+        - &sda
+          displayName: SDA Pin
+          description: Board pin wired to the sensor's SDA.
+          type: pin
+          from: board
+          filterBy: [digital_out]
+          required: true
+          defaultValue: { gpio: 21, type: [digital_in, digital_out], displayName: GPIO21 }
+        - &scl
+          displayName: SCL Pin
+          description: Board pin wired to the sensor's SCL.
+          type: pin
+          from: board
+          filterBy: [digital_out]
+          required: true
+          defaultValue: { gpio: 22, type: [digital_in, digital_out], displayName: GPIO22 }
+        - &model
+          displayName: Model
+          description: >
+            The sensor's chip. Auto finds it by its ID — pick it when a clone
+            answers with an ID Auto doesn't know (it then reads as an MPU-6050).
+          type: options
+          defaultValue: auto
+          options:
+            - displayName: Auto
+              value: auto
+            - displayName: MPU-6050 (GY-521)
+              value: mpu6050
+            - displayName: MPU-6500
+              value: mpu6500
+            - displayName: MPU-9250 / 9255
+              value: mpu9250
+        - &address
+          displayName: Address
+          advanced: true
+          description: The sensor's I2C address — 0x68 with AD0 to GND or unwired (most modules), 0x69 with AD0 to 3.3 V. Auto tries both.
+          type: options
+          defaultValue: auto
+          options:
+            - displayName: Auto
+              value: auto
+            - displayName: 0x68 (AD0 low)
+              value: "0x68"
+            - displayName: 0x69 (AD0 high)
+              value: "0x69"
+        - &accelRange
+          displayName: Accel Range
+          advanced: true
+          description: The most acceleration it measures — ±2 g is the finest; raise it for hits and fast moves, which read as stuck at the top otherwise.
+          type: options
+          defaultValue: "2"
+          options:
+            - displayName: ±2 g
+              value: "2"
+            - displayName: ±4 g
+              value: "4"
+            - displayName: ±8 g
+              value: "8"
+            - displayName: ±16 g
+              value: "16"
+        - &gyroRange
+          displayName: Gyro Range
+          advanced: true
+          description: The fastest rotation it measures — ±250 °/s is the finest; raise it for quick spins.
+          type: options
+          defaultValue: "250"
+          options:
+            - displayName: ±250 °/s
+              value: "250"
+            - displayName: ±500 °/s
+              value: "500"
+            - displayName: ±1000 °/s
+              value: "1000"
+            - displayName: ±2000 °/s
+              value: "2000"
+      outputSchema:
+        - name: ax
+          type: float
+          description: Acceleration along X (forward), in g. Lying flat at rest it's 0.
+        - name: ay
+          type: float
+          description: Acceleration along Y (left), in g. Lying flat at rest it's 0.
+        - name: az
+          type: float
+          description: Acceleration along Z (up), in g. Lying flat at rest it's 1 — gravity.
+        - name: gx
+          type: float
+          description: Rotation about X, in °/s — positive as the right side dips.
+        - name: gy
+          type: float
+          description: Rotation about Y, in °/s — positive as the front dips.
+        - name: gz
+          type: float
+          description: Rotation about Z, in °/s — positive turning left (counterclockwise from above).
+        - name: temperature
+          type: float
+          description: The chip's temperature, in °C — a few degrees above the air around it.
+        - name: model
+          type: any
+          description: The chip found, as text — mpu6050, mpu6500 or mpu9250.
+
+    - displayName: Orientation
+      description: >
+        Pitch and roll in degrees, steady and quick at once — the gyro for
+        quick turns, gravity to keep it from drifting. Run it often (a loop):
+        it builds on its last reading.
+      script: src/orientation.py
+      configurations:
+        - *sda
+        - *scl
+        - *model
+        - *address
+        - *accelRange
+        - *gyroRange
+        - displayName: Gyro Weight
+          advanced: true
+          description: How much each reading trusts the gyro over gravity, in % — 0 to 99.9. Higher is smoother but corrects drift slower; 0 is gravity alone.
+          type: number
+          defaultValue: "96"
+          placeholder: 0–99.9 %
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 99.9 }
+      outputSchema:
+        - name: pitch
+          type: float
+          description: Front up or down, in degrees — positive as the front (X) dips.
+        - name: roll
+          type: float
+          description: Side to side, in degrees — positive as the right side dips.
+
+    - displayName: Tilt
+      description: >
+        Branches on which way the sensor leans — Forward, Back, Left, Right,
+        or Level within Threshold of flat. Split evenly: a diagonal goes to
+        the side it leans most towards. A board connects 4 outputs of an
+        action by default: leave one unconnected, or raise Outputs per action
+        in Platform settings.
+      script: src/tilt.py
+      configurations:
+        - *sda
+        - *scl
+        - *model
+        - *address
+        - displayName: Threshold
+          description: How far it has to lean to count, in degrees from flat — 1 to 90. Below it, Level.
+          type: number
+          defaultValue: "20"
+          placeholder: 1–90°
+          patterns:
+            - { name: Min, value: 1 }
+            - { name: Max, value: 90 }
+      outputs:
+        - { id: forward, name: Forward }
+        - { id: back, name: Back }
+        - { id: left, name: Left }
+        - { id: right, name: Right }
+        - { id: level, name: Level }
+      outputSchema:
+        - name: pitch
+          type: float
+          description: Front up or down, in degrees — positive as the front dips.
+        - name: roll
+          type: float
+          description: Side to side, in degrees — positive as the right side dips.
+        - name: lean
+          type: float
+          description: How far from flat, in degrees, whichever way.
+        - name: tilt
+          type: any
+          description: Which way it leans, as text — forward, back, left, right or level.
+
+    - displayName: Motion
+      description: Branches on what the sensor is doing — Still, Moving (it accelerates or turns), or Free Fall.
+      script: src/motion.py
+      configurations:
+        - *sda
+        - *scl
+        - *model
+        - *address
+        - *accelRange
+        - *gyroRange
+        - displayName: Accel Threshold
+          advanced: true
+          description: How far from gravity (1 g) the acceleration has to stray to count as Moving, in g — 0.01 to 4.
+          type: number
+          defaultValue: "0.15"
+          placeholder: 0.01–4 g
+          patterns:
+            - { name: Min, value: 0.01 }
+            - { name: Max, value: 4 }
+        - displayName: Gyro Threshold
+          advanced: true
+          description: How fast it has to turn to count as Moving, in °/s — 1 to 1000.
+          type: number
+          defaultValue: "20"
+          placeholder: 1–1000 °/s
+          patterns:
+            - { name: Min, value: 1 }
+            - { name: Max, value: 1000 }
+      outputs:
+        - { id: still, name: Still }
+        - { id: moving, name: Moving }
+        - { id: free_fall, name: Free Fall }
+      outputSchema:
+        - name: acceleration
+          type: float
+          description: The total acceleration, in g — 1 at rest (gravity), near 0 falling.
+        - name: rotation
+          type: float
+          description: How fast it turns, in °/s, about any axis.
+        - name: motion
+          type: any
+          description: What it's doing, as text — still, moving or free fall.
+
+    - displayName: Calibrate
+      description: >
+        Zeroes the sensor while it rests — for every action on the same chip:
+        the gyro's drift at rest, and with Level the accelerometer too (lying
+        flat). Goes out Fallback, changing nothing, if it moved while measuring.
+      script: src/calibrate.py
+      configurations:
+        - *sda
+        - *scl
+        - *model
+        - *address
+        - displayName: Samples
+          advanced: true
+          description: Readings averaged, 5 ms apart — 10 to 500. 100 takes half a second.
+          type: number
+          defaultValue: "100"
+          placeholder: 10–500
+          patterns:
+            - { name: Min, value: 10 }
+            - { name: Max, value: 500 }
+        - displayName: Level
+          description: "The sensor is lying flat — zero the accelerometer too, so flat reads exactly (0, 0, 1 g). Off: only the gyro."
+          type: toggle
+          label: Lying flat
+          defaultValue: true
+      outputSchema:
+        - name: gx_offset
+          type: float
+          description: The gyro's X reading at rest, now subtracted — °/s.
+        - name: gy_offset
+          type: float
+          description: The gyro's Y reading at rest, now subtracted — °/s.
+        - name: gz_offset
+          type: float
+          description: The gyro's Z reading at rest, now subtracted — °/s.
+        - name: ax_offset
+          type: float
+          description: The accelerometer's X offset, now subtracted — g.
+        - name: ay_offset
+          type: float
+          description: The accelerometer's Y offset, now subtracted — g.
+        - name: az_offset
+          type: float
+          description: The accelerometer's Z offset (its reading flat minus 1 g), now subtracted — g.

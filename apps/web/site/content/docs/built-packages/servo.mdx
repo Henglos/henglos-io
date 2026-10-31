@@ -1,0 +1,65 @@
+---
+title: "Servo"
+description: "Drives a hobby servo on a PWM-capable pin — To Angle for a positional servo (SG90-style, holds a 0-180° angle), Rotate for a continuous-rotation (360°) one (spins at a speed and direction), Release to cut the signal."
+---
+
+Drives a hobby servo on a PWM-capable pin — To Angle for a positional servo (SG90-style, holds a 0-180° angle), Rotate for a continuous-rotation (360°) one (spins at a speed and direction), Release to cut the signal.
+
+<PackageInfo name="@henglosio/component-servo" version="1.0.0" platform="^1.0.0" />
+
+| Node | Kind | What it does |
+| --- | --- | --- |
+| [To Angle](#to-angle) | Action | Moves a positional servo to a fixed angle (0-180°) and holds it there. |
+| [Rotate](#rotate) | Action | Spins a continuous-rotation (360°) servo at the given speed and direction. |
+| [Release](#release) | Action | Cuts the signal: a positional servo stops holding its angle, a continuous one stops completely. |
+
+## Actions
+
+### To Angle
+
+Moves a positional servo to a fixed angle (0-180°) and holds it there.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Signal Pin** | Pin (PWM) | — | Board pin the servo's signal wire is connected to. |
+| **Angle** | Number | `90` | Target angle, in degrees (0-180). Values outside the range are clamped. |
+| **Min Pulse** | Number | `500` | *Advanced.* Pulse width at 0°, in microseconds. Raise it if the servo strains at 0°. |
+| **Max Pulse** | Number | `2500` | *Advanced.* Pulse width at 180°, in microseconds. Lower it if the servo strains at 180°. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `angle` | int | The clamped angle the servo was moved to, in degrees (0-180). |
+
+### Rotate
+
+Spins a continuous-rotation (360°) servo at the given speed and direction. Speed 0 stops it. The signal is held until the next action on the same pin.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Signal Pin** | Pin (PWM) | — | Board pin the servo's signal wire is connected to. |
+| **Speed** | Number | `50` | Rotation speed, 0 (stopped) to 100 (max). Values outside the range are clamped. |
+| **Direction** | One of: Clockwise, Counterclockwise | Clockwise | Rotation direction. |
+| **Stop Pulse** | Number | `1500` | *Advanced.* Pulse width where this servo stands still, in microseconds. Nudge it (e.g. 1480 or 1520) if it creeps at Speed 0. |
+| **Range** | Number | `500` | *Advanced.* Microseconds from Stop Pulse to full speed. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `speed` | int | The clamped speed the servo was set to, 0-100. |
+
+### Release
+
+Cuts the signal: a positional servo stops holding its angle, a continuous one stops completely.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Signal Pin** | Pin (PWM) | — | Board pin the servo's signal wire is connected to. |

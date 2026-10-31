@@ -1,0 +1,15 @@
+{
+	"name": "@henglosio/component-serial",
+	"version": "1.0.0",
+	"description": "Board-to-board serial (UART) component for HenglosIO",
+	"author": "Henglos",
+	"license": "SEE LICENSE IN LICENSE",
+	"type": "module",
+	"exports": {
+		"./manifest.yaml": "./workspace/manifest.yaml",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"workspace/**"
+	]
+}

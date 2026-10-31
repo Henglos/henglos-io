@@ -1,0 +1,51 @@
+{
+	"name": "@henglosio/workflow-ui",
+	"version": "1.0.0",
+	"description": "React components for drawing and editing HenglosIO workflows.",
+	"author": "Henglos",
+	"license": "SEE LICENSE IN LICENSE",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"default": "./src/index.ts"
+		},
+		"./scale.css": "./src/scale.css"
+	},
+	"scripts": {
+		"lint": "tsc --noEmit",
+		"storybook": "storybook dev -p 6007",
+		"build-storybook": "storybook build"
+	},
+	"dependencies": {
+		"@henglosio/ui": "workspace:*",
+		"@henglosio/workflow": "workspace:*",
+		"clsx": "^2.1.1"
+	},
+	"peerDependencies": {
+		"@xyflow/react": ">=12",
+		"lucide-react": ">=1",
+		"react": ">=19",
+		"react-dom": ">=19"
+	},
+	"devDependencies": {
+		"@storybook/addon-a11y": "10.5.0",
+		"@storybook/addon-docs": "10.5.0",
+		"@storybook/react-vite": "10.5.0",
+		"@tailwindcss/vite": "4.3.2",
+		"@types/react": "^19",
+		"@types/react-dom": "^19",
+		"@vitejs/plugin-react": "6.0.3",
+		"@xyflow/react": "^12.10.2",
+		"gsap": "^3.15.0",
+		"lucide-react": "^1.14.0",
+		"radix-ui": "^1.4.3",
+		"react": "19.2.4",
+		"react-dom": "19.2.4",
+		"storybook": "10.5.0",
+		"tailwindcss": "4.3.2",
+		"typescript": "^5",
+		"vite": "8.1.4"
+	}
+}

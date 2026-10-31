@@ -1,0 +1,27 @@
+/* The design system's scale (packages/ui/src/globals.css, @theme "escala
+   não-cor"), scoped: for a canvas embedded in a page with another scale (the
+   docs). Tailwind's utilities read these variables, so inside .hio-scale the
+   nodes are the size they are in the studio. Keep in sync with globals.css. */
+.hio-scale {
+	--spacing: 4px;
+
+	--radius-sm: 3px;
+	--radius-md: 6px;
+	--radius-lg: 8px;
+
+	--text-xs: 11px;
+	--text-xs--line-height: 16px;
+	--text-sm: 12px;
+	--text-sm--line-height: 16px;
+	--text-base: 13px;
+	--text-base--line-height: 20px;
+	--text-lg: 15px;
+	--text-lg--line-height: 20px;
+	--text-xl: 18px;
+	--text-xl--line-height: 24px;
+	--text-2xl: 24px;
+	--text-2xl--line-height: 32px;
+
+	font-size: var(--text-base);
+	line-height: var(--text-base--line-height);
+}

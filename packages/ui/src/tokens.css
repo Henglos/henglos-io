@@ -1,0 +1,201 @@
+/* Os tokens de cor do design system: superfícies, texto, linhas, accent,
+   estados — no tema escuro (padrão) e no claro ([data-theme="light"]) — e
+   as utilities do Tailwind que os usam (bg-canvas, text-fg, border-line…).
+   Só cores: o app (globals.css) e o site importam daqui; o resto do
+   globals.css (escala, base do body) é do app. */
+
+:root {
+	color-scheme: dark;
+
+	/* superfícies, de baixo p/ cima:
+	   canvas  fundo da página / área do grafo
+	   chrome  sidebars, topbars, activity bar
+	   panel   seções e cards da página (stats, tabelas, listas)
+	   raised  nós, botões, dialogs  (campos usam --field, translúcido)
+	   overlay popovers, menus, tooltips */
+	--canvas: #070807;
+	--chrome: #0c0c0e;
+	--panel: #121214;
+	--raised: #171719;
+	--overlay: #1d1d1f;
+
+	--hover: rgb(255 255 255 / 0.04);
+	--active: rgb(255 255 255 / 0.07);
+	--selected: rgb(53 211 99 / 0.13);
+	--selected-hover: rgb(53 211 99 / 0.2);
+
+	/* campos (input, select, checkbox…): translúcido — sempre um tom acima
+	   da superfície onde está (canvas, panel, nó, dialog) */
+	--field: rgb(255 255 255 / 0.035);
+	--field-hover: rgb(255 255 255 / 0.06);
+
+	--fg: #d9dadc; /* ≥11:1 */
+	--fg-secondary: #acacae; /* ≥7:1 */
+	--fg-muted: #8a8a8c; /* ≥4.6:1 */
+	--fg-faint: #555557; /* decorativo — nunca texto legível */
+	--fg-disabled: rgb(217 218 220 / 0.32);
+
+	--line-subtle: rgb(255 255 255 / 0.06);
+	--line: rgb(255 255 255 / 0.1);
+	--line-strong: rgb(255 255 255 / 0.16);
+	--line-control: #636466; /* 3:1 — inputs (WCAG 1.4.11) */
+
+	--accent: #35d363;
+	--accent-hover: #47e070;
+	--accent-active: #13c253;
+	--on-accent: #031c08;
+	--accent-fg: #43be61;
+	--accent-glow: #11ee66; /* neon: só glow, wire ativo, running */
+	--accent-subtle: rgb(53 211 99 / 0.13);
+	--accent-line: rgb(53 211 99 / 0.3);
+
+	--success: #3fb950;
+	--success-subtle: rgb(63 185 80 / 0.12);
+	--success-line: rgb(63 185 80 / 0.3);
+	--warning: #d59500;
+	--warning-subtle: rgb(213 149 0 / 0.12);
+	--warning-line: rgb(213 149 0 / 0.3);
+	--danger: #ff7777;
+	--danger-subtle: rgb(255 119 119 / 0.12);
+	--danger-line: rgb(255 119 119 / 0.3);
+	--info: #55a6f4;
+	--info-subtle: rgb(85 166 244 / 0.12);
+	--info-line: rgb(85 166 244 / 0.3);
+
+	--grid: rgb(255 255 255 / 0.05);
+	--wire: #3d3d40;
+	--wire-active: var(--accent-glow);
+	--port: #242425;
+
+	--cat-sensor: #d3886d;
+	--cat-actuator: #90a258;
+	--cat-logic: #9095d9;
+	--cat-comm: #c288bc;
+
+	--scrollbar: rgb(255 255 255 / 0.09);
+	--scrollbar-hover: rgb(255 255 255 / 0.16);
+	--focus: var(--accent);
+}
+
+[data-theme="light"] {
+	color-scheme: light;
+
+	--canvas: #ececee;
+	--chrome: #f5f5f7;
+	--panel: #fafafc;
+	--raised: #ffffff;
+	--overlay: #ffffff;
+
+	--hover: rgb(0 0 0 / 0.04);
+	--active: rgb(0 0 0 / 0.08);
+	--selected: rgb(53 211 99 / 0.16);
+	--selected-hover: rgb(53 211 99 / 0.24);
+
+	--field: rgb(0 0 0 / 0.03);
+	--field-hover: rgb(0 0 0 / 0.05);
+
+	--fg: #27272a;
+	--fg-secondary: #4b4b4e;
+	--fg-muted: #666669;
+	--fg-faint: #a7a7a9;
+	--fg-disabled: rgb(39 39 42 / 0.32);
+
+	--line-subtle: rgb(0 0 0 / 0.07);
+	--line: rgb(0 0 0 / 0.12);
+	--line-strong: rgb(0 0 0 / 0.2);
+	--line-control: #949497;
+
+	--accent-fg: #00742d;
+	--accent-line: #00993e;
+
+	--success: #1a7f37;
+	--success-subtle: rgb(26 127 55 / 0.1);
+	--success-line: rgb(26 127 55 / 0.3);
+	--warning: #855c00;
+	--warning-subtle: rgb(133 92 0 / 0.1);
+	--warning-line: rgb(133 92 0 / 0.3);
+	--danger: #b7323a;
+	--danger-subtle: rgb(183 50 58 / 0.1);
+	--danger-line: rgb(183 50 58 / 0.3);
+	--info: #0666b0;
+	--info-subtle: rgb(6 102 176 / 0.1);
+	--info-line: rgb(6 102 176 / 0.3);
+
+	--grid: rgb(0 0 0 / 0.07);
+	--wire: #b5b5b8;
+	--wire-active: var(--accent-line);
+	--port: #8e8e91;
+
+	--cat-sensor: #9b553d;
+	--cat-actuator: #5f6e25;
+	--cat-logic: #5f62a2;
+	--cat-comm: #8c5587;
+
+	--scrollbar: rgb(0 0 0 / 0.14);
+	--scrollbar-hover: rgb(0 0 0 / 0.24);
+	--focus: var(--accent-line); /* sólido no light, 3:1 */
+}
+
+/* ---------- cores → utilities do Tailwind ---------- */
+@theme inline {
+	--color-*: initial; /* remove a paleta default (slate, zinc...) — só tokens do sistema */
+	--color-transparent: transparent;
+	--color-current: currentColor;
+
+	--color-canvas: var(--canvas);
+	--color-chrome: var(--chrome);
+	--color-panel: var(--panel);
+	--color-raised: var(--raised);
+	--color-overlay: var(--overlay);
+
+	--color-hover: var(--hover);
+	--color-active: var(--active);
+	--color-selected: var(--selected);
+	--color-selected-hover: var(--selected-hover);
+
+	--color-field: var(--field);
+	--color-field-hover: var(--field-hover);
+
+	--color-fg: var(--fg);
+	--color-fg-secondary: var(--fg-secondary);
+	--color-fg-muted: var(--fg-muted);
+	--color-fg-faint: var(--fg-faint);
+	--color-fg-disabled: var(--fg-disabled);
+
+	--color-line-subtle: var(--line-subtle);
+	--color-line: var(--line);
+	--color-line-strong: var(--line-strong);
+	--color-line-control: var(--line-control);
+
+	--color-accent: var(--accent);
+	--color-accent-hover: var(--accent-hover);
+	--color-accent-active: var(--accent-active);
+	--color-on-accent: var(--on-accent);
+	--color-accent-fg: var(--accent-fg);
+	--color-accent-glow: var(--accent-glow);
+	--color-accent-subtle: var(--accent-subtle);
+	--color-accent-line: var(--accent-line);
+
+	--color-success: var(--success);
+	--color-success-subtle: var(--success-subtle);
+	--color-success-line: var(--success-line);
+	--color-warning: var(--warning);
+	--color-warning-subtle: var(--warning-subtle);
+	--color-warning-line: var(--warning-line);
+	--color-danger: var(--danger);
+	--color-danger-subtle: var(--danger-subtle);
+	--color-danger-line: var(--danger-line);
+	--color-info: var(--info);
+	--color-info-subtle: var(--info-subtle);
+	--color-info-line: var(--info-line);
+
+	--color-grid: var(--grid);
+	--color-wire: var(--wire);
+	--color-wire-active: var(--wire-active);
+	--color-port: var(--port);
+
+	--color-cat-sensor: var(--cat-sensor);
+	--color-cat-actuator: var(--cat-actuator);
+	--color-cat-logic: var(--cat-logic);
+	--color-cat-comm: var(--cat-comm);
+}

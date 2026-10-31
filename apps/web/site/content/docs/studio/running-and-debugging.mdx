@@ -1,0 +1,59 @@
+---
+title: Running and debugging
+description: Execute, run one action alone, or step through the flow.
+---
+
+Everything that touches the board goes through the driver and port selected in the studio's
+bottom bar. The board's own log (`print`, errors) shows in the logs panel while it runs.
+
+## Compile and upload
+
+**Compile** builds the platform and your workflow's components for the board's MicroPython
+version; **Upload** writes them to the board. After an upload, the board runs the stored program by
+itself on every boot — no driver needed.
+
+## Execute
+
+**Execute** runs the workflow live, driven from the studio: the host walks the graph and sends the
+board one action at a time. It's how you try a change without uploading again.
+
+## Run one action — ▶
+
+The **▶** on a node runs that action alone, outside the flow, with its current configurations. Its
+outputs appear right on the node: the output it ended on, each value it published (as a value or
+as hex), and a copy button.
+
+## Debug
+
+**Debug** runs the flow one action at a time:
+
+1. Start runs, and the flow pauses before the first action.
+2. The node that just ran is highlighted with its step and output — `Step 2 → Success` — and its
+   values under each output.
+3. The next node is marked with a **Continue** button. Press it (or Continue in the bottom bar) to
+   run it.
+
+<WorkflowPreview name="water-alarm" debug height={420} />
+
+While paused you can:
+
+- **Edit configurations** — Continue reads the workflow as it is when you press it.
+- **Edit published values** — the pencil on a value overwrites what the board holds, so the next
+  action reads your value.
+- **Stop** — ends the session and frees the port.
+
+The canvas follows the step, the wire to the next action flows, and the rest of the workflow fades
+back while you debug. Actions that ran earlier in the branch keep their values on screen — what an
+action passed on (Pass Context) can still be read further down.
+
+## Debug from a trigger — Listen
+
+On a trigger's node, **Listen** debugs from it: the session waits for the trigger to fire (press the
+button, send the request…), then pauses before each action of its branch as usual. Once the branch
+is over it listens again — until you **Stop**.
+
+## Restarting the driver
+
+A task can outlive the hosting that started it (it shows as *unknown* on the board indicator). The
+**Drivers** page's **Restart driver** ends whatever the driver runs and frees its boards' ports; it
+reconnects on its own a few seconds later.

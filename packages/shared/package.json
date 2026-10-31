@@ -1,0 +1,44 @@
+{
+	"name": "@henglosio/shared",
+	"version": "1.0.0",
+	"description": "Types, schemas and utilities shared across HenglosIO.",
+	"author": "Henglos",
+	"license": "SEE LICENSE IN LICENSE",
+	"type": "module",
+	"exports": {
+		".": {
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.cjs",
+			"types": "./dist/index.d.mts"
+		},
+		"./browser": {
+			"import": "./dist/browser.js",
+			"require": "./dist/browser.cjs",
+			"types": "./dist/browser.d.ts"
+		}
+	},
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"directories": {
+		"test": "tests"
+	},
+	"scripts": {
+		"build": "tsdown",
+		"test": "vitest run"
+	},
+	"devDependencies": {
+		"@types/node": "^22.0.0",
+		"tsdown": "latest",
+		"typescript": "^5.0.0",
+		"vitest": "^4.1.2"
+	},
+	"dependencies": {
+		"@henglosio/workflow": "workspace:*",
+		"colord": "^2.9.3",
+		"directory-lint": "^2.0.3",
+		"hmutate": "^1.0.0",
+		"nanoid": "^5.1.9",
+		"yaml": "^2.8.2",
+		"zod": "^4.6.7"
+	}
+}

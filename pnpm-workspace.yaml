@@ -1,0 +1,17 @@
+packages:
+  - 'apps/**'
+  - 'packages/*'
+allowBuilds:
+  '@prisma/engines': true
+  '@serialport/bindings-cpp': true
+  '@swc/core': true
+  argon2: true
+  cpu-features: true
+  esbuild: true
+  native-machine-id: true
+  prisma: true
+  protobufjs: true
+  ssh2: true
+  unrs-resolver: true
+  sharp: true
+  better-sqlite3: true

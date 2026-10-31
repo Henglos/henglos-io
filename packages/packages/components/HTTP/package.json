@@ -1,0 +1,16 @@
+{
+	"name": "@henglosio/component-http",
+	"version": "1.0.0",
+	"description": "HTTP requests and webhooks — call an API, pick a field of its JSON, save the body to a file; run a branch on an incoming request and respond — component for HenglosIO",
+	"author": "Henglos",
+	"license": "SEE LICENSE IN LICENSE",
+	"type": "module",
+	"exports": {
+		"./manifest.yaml": "./manifest.yaml",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"src/**/*.py",
+		"manifest.yaml"
+	]
+}

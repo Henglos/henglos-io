@@ -1,0 +1,147 @@
+---
+title: "IMU"
+description: "An accelerometer + gyroscope on I2C — the MPU-6050 (GY-521) and its family (MPU-6500, MPU-9250), found by itself or picked in Model."
+---
+
+An accelerometer + gyroscope on I2C — the MPU-6050 (GY-521) and its family (MPU-6500, MPU-9250), found by itself or picked in Model. Read gives acceleration (g), rotation (°/s) and temperature, Orientation a steady pitch and roll, Tilt branches on which way it leans, Motion on whether it's still, moving or falling, and Calibrate zeroes it.
+
+<PackageInfo name="@henglosio/component-imu" version="1.0.0" platform="^1.0.0" />
+
+| Node | Kind | What it does |
+| --- | --- | --- |
+| [Read](#read) | Action | The sensor's acceleration on each axis (g), rotation about each axis (°/s) and its temperature (°C). |
+| [Orientation](#orientation) | Action | Pitch and roll in degrees, steady and quick at once — the gyro for quick turns, gravity to keep it from drifting. |
+| [Tilt](#tilt) | Action | Branches on which way the sensor leans — Forward, Back, Left, Right, or Level within Threshold of flat. |
+| [Motion](#motion) | Action | Branches on what the sensor is doing — Still, Moving (it accelerates or turns), or Free Fall. |
+| [Calibrate](#calibrate) | Action | Zeroes the sensor while it rests — for every action on the same chip: the gyro's drift at rest, and with Level the accelerometer too (lying flat). |
+
+## Actions
+
+### Read
+
+The sensor's acceleration on each axis (g), rotation about each axis (°/s) and its temperature (°C).
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **SDA Pin** | Pin (digital out) | GPIO21 | **Required.** Board pin wired to the sensor's SDA. |
+| **SCL Pin** | Pin (digital out) | GPIO22 | **Required.** Board pin wired to the sensor's SCL. |
+| **Model** | One of: Auto, MPU-6050 (GY-521), MPU-6500, MPU-9250 / 9255 | Auto | The sensor's chip. Auto finds it by its ID — pick it when a clone answers with an ID Auto doesn't know (it then reads as an MPU-6050). |
+| **Address** | One of: Auto, 0x68 (AD0 low), 0x69 (AD0 high) | Auto | *Advanced.* The sensor's I2C address — 0x68 with AD0 to GND or unwired (most modules), 0x69 with AD0 to 3.3 V. Auto tries both. |
+| **Accel Range** | One of: ±2 g, ±4 g, ±8 g, ±16 g | ±2 g | *Advanced.* The most acceleration it measures — ±2 g is the finest; raise it for hits and fast moves, which read as stuck at the top otherwise. |
+| **Gyro Range** | One of: ±250 °/s, ±500 °/s, ±1000 °/s, ±2000 °/s | ±250 °/s | *Advanced.* The fastest rotation it measures — ±250 °/s is the finest; raise it for quick spins. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `ax` | float | Acceleration along X (forward), in g. Lying flat at rest it's 0. |
+| `ay` | float | Acceleration along Y (left), in g. Lying flat at rest it's 0. |
+| `az` | float | Acceleration along Z (up), in g. Lying flat at rest it's 1 — gravity. |
+| `gx` | float | Rotation about X, in °/s — positive as the right side dips. |
+| `gy` | float | Rotation about Y, in °/s — positive as the front dips. |
+| `gz` | float | Rotation about Z, in °/s — positive turning left (counterclockwise from above). |
+| `temperature` | float | The chip's temperature, in °C — a few degrees above the air around it. |
+| `model` | any | The chip found, as text — mpu6050, mpu6500 or mpu9250. |
+
+### Orientation
+
+Pitch and roll in degrees, steady and quick at once — the gyro for quick turns, gravity to keep it from drifting. Run it often (a loop): it builds on its last reading.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **SDA Pin** | Pin (digital out) | GPIO21 | **Required.** Board pin wired to the sensor's SDA. |
+| **SCL Pin** | Pin (digital out) | GPIO22 | **Required.** Board pin wired to the sensor's SCL. |
+| **Model** | One of: Auto, MPU-6050 (GY-521), MPU-6500, MPU-9250 / 9255 | Auto | The sensor's chip. Auto finds it by its ID — pick it when a clone answers with an ID Auto doesn't know (it then reads as an MPU-6050). |
+| **Address** | One of: Auto, 0x68 (AD0 low), 0x69 (AD0 high) | Auto | *Advanced.* The sensor's I2C address — 0x68 with AD0 to GND or unwired (most modules), 0x69 with AD0 to 3.3 V. Auto tries both. |
+| **Accel Range** | One of: ±2 g, ±4 g, ±8 g, ±16 g | ±2 g | *Advanced.* The most acceleration it measures — ±2 g is the finest; raise it for hits and fast moves, which read as stuck at the top otherwise. |
+| **Gyro Range** | One of: ±250 °/s, ±500 °/s, ±1000 °/s, ±2000 °/s | ±250 °/s | *Advanced.* The fastest rotation it measures — ±250 °/s is the finest; raise it for quick spins. |
+| **Gyro Weight** | Number (0 to 99.9) | `96` | *Advanced.* How much each reading trusts the gyro over gravity, in % — 0 to 99.9. Higher is smoother but corrects drift slower; 0 is gravity alone. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `pitch` | float | Front up or down, in degrees — positive as the front (X) dips. |
+| `roll` | float | Side to side, in degrees — positive as the right side dips. |
+
+### Tilt
+
+Branches on which way the sensor leans — Forward, Back, Left, Right, or Level within Threshold of flat. Split evenly: a diagonal goes to the side it leans most towards. A board connects 4 outputs of an action by default: leave one unconnected, or raise Outputs per action in Platform settings.
+
+Ends on **Forward**, **Back**, **Left**, **Right**, **Level** — or **Fallback** when it can't run.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **SDA Pin** | Pin (digital out) | GPIO21 | **Required.** Board pin wired to the sensor's SDA. |
+| **SCL Pin** | Pin (digital out) | GPIO22 | **Required.** Board pin wired to the sensor's SCL. |
+| **Model** | One of: Auto, MPU-6050 (GY-521), MPU-6500, MPU-9250 / 9255 | Auto | The sensor's chip. Auto finds it by its ID — pick it when a clone answers with an ID Auto doesn't know (it then reads as an MPU-6050). |
+| **Address** | One of: Auto, 0x68 (AD0 low), 0x69 (AD0 high) | Auto | *Advanced.* The sensor's I2C address — 0x68 with AD0 to GND or unwired (most modules), 0x69 with AD0 to 3.3 V. Auto tries both. |
+| **Threshold** | Number (1 to 90) | `20` | How far it has to lean to count, in degrees from flat — 1 to 90. Below it, Level. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `pitch` | float | Front up or down, in degrees — positive as the front dips. |
+| `roll` | float | Side to side, in degrees — positive as the right side dips. |
+| `lean` | float | How far from flat, in degrees, whichever way. |
+| `tilt` | any | Which way it leans, as text — forward, back, left, right or level. |
+
+### Motion
+
+Branches on what the sensor is doing — Still, Moving (it accelerates or turns), or Free Fall.
+
+Ends on **Still**, **Moving**, **Free Fall** — or **Fallback** when it can't run.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **SDA Pin** | Pin (digital out) | GPIO21 | **Required.** Board pin wired to the sensor's SDA. |
+| **SCL Pin** | Pin (digital out) | GPIO22 | **Required.** Board pin wired to the sensor's SCL. |
+| **Model** | One of: Auto, MPU-6050 (GY-521), MPU-6500, MPU-9250 / 9255 | Auto | The sensor's chip. Auto finds it by its ID — pick it when a clone answers with an ID Auto doesn't know (it then reads as an MPU-6050). |
+| **Address** | One of: Auto, 0x68 (AD0 low), 0x69 (AD0 high) | Auto | *Advanced.* The sensor's I2C address — 0x68 with AD0 to GND or unwired (most modules), 0x69 with AD0 to 3.3 V. Auto tries both. |
+| **Accel Range** | One of: ±2 g, ±4 g, ±8 g, ±16 g | ±2 g | *Advanced.* The most acceleration it measures — ±2 g is the finest; raise it for hits and fast moves, which read as stuck at the top otherwise. |
+| **Gyro Range** | One of: ±250 °/s, ±500 °/s, ±1000 °/s, ±2000 °/s | ±250 °/s | *Advanced.* The fastest rotation it measures — ±250 °/s is the finest; raise it for quick spins. |
+| **Accel Threshold** | Number (0.01 to 4) | `0.15` | *Advanced.* How far from gravity (1 g) the acceleration has to stray to count as Moving, in g — 0.01 to 4. |
+| **Gyro Threshold** | Number (1 to 1000) | `20` | *Advanced.* How fast it has to turn to count as Moving, in °/s — 1 to 1000. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `acceleration` | float | The total acceleration, in g — 1 at rest (gravity), near 0 falling. |
+| `rotation` | float | How fast it turns, in °/s, about any axis. |
+| `motion` | any | What it's doing, as text — still, moving or free fall. |
+
+### Calibrate
+
+Zeroes the sensor while it rests — for every action on the same chip: the gyro's drift at rest, and with Level the accelerometer too (lying flat). Goes out Fallback, changing nothing, if it moved while measuring.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **SDA Pin** | Pin (digital out) | GPIO21 | **Required.** Board pin wired to the sensor's SDA. |
+| **SCL Pin** | Pin (digital out) | GPIO22 | **Required.** Board pin wired to the sensor's SCL. |
+| **Model** | One of: Auto, MPU-6050 (GY-521), MPU-6500, MPU-9250 / 9255 | Auto | The sensor's chip. Auto finds it by its ID — pick it when a clone answers with an ID Auto doesn't know (it then reads as an MPU-6050). |
+| **Address** | One of: Auto, 0x68 (AD0 low), 0x69 (AD0 high) | Auto | *Advanced.* The sensor's I2C address — 0x68 with AD0 to GND or unwired (most modules), 0x69 with AD0 to 3.3 V. Auto tries both. |
+| **Samples** | Number (10 to 500) | `100` | *Advanced.* Readings averaged, 5 ms apart — 10 to 500. 100 takes half a second. |
+| **Level** | On / off | Lying flat | The sensor is lying flat — zero the accelerometer too, so flat reads exactly (0, 0, 1 g). Off: only the gyro. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `gx_offset` | float | The gyro's X reading at rest, now subtracted — °/s. |
+| `gy_offset` | float | The gyro's Y reading at rest, now subtracted — °/s. |
+| `gz_offset` | float | The gyro's Z reading at rest, now subtracted — °/s. |
+| `ax_offset` | float | The accelerometer's X offset, now subtracted — g. |
+| `ay_offset` | float | The accelerometer's Y offset, now subtracted — g. |
+| `az_offset` | float | The accelerometer's Z offset (its reading flat minus 1 g), now subtracted — g. |

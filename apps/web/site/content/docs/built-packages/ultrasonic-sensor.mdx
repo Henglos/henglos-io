@@ -1,0 +1,60 @@
+---
+title: "Ultrasonic Sensor"
+description: "Measures distance with an HC-SR04-style ultrasonic sensor (also JSN-SR04T and other 4-pin modules) — Measure publishes how far the nearest object is, Detect branches on whether something is closer than a threshold."
+---
+
+Measures distance with an HC-SR04-style ultrasonic sensor (also JSN-SR04T and other 4-pin modules) — Measure publishes how far the nearest object is, Detect branches on whether something is closer than a threshold. The HC-SR04's Echo is 5 V: on a 3.3 V board (ESP32) wire it through a voltage divider (e.g. 1 kΩ / 2 kΩ), or use a 3.3 V module.
+
+<PackageInfo name="@henglosio/component-ultrasonicsensor" version="1.0.0" platform="^1.0.0" />
+
+| Node | Kind | What it does |
+| --- | --- | --- |
+| [Measure](#measure) | Action | Pings and publishes the distance to the nearest object. |
+| [Detect](#detect) | Action | Pings and goes out Near when something is closer than Threshold, Far otherwise (nothing in range counts as Far). |
+
+## Actions
+
+### Measure
+
+Pings and publishes the distance to the nearest object. No echo (nothing in range) goes out Fallback.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Trigger Pin** | Pin (digital out) | — | Board pin wired to the sensor's Trig. |
+| **Echo Pin** | Pin (digital in) | — | Board pin wired to the sensor's Echo (through a divider on a 3.3 V board). |
+| **Unit** | One of: Centimeters, Millimeters, Inches | Centimeters | Unit of the distance it publishes. |
+| **Timeout** | Number | `30` | *Advanced.* How long to wait for the echo, in milliseconds. 30 covers ~5 m; lower it to give up sooner on far objects. |
+| **Temperature** | Number | `20` | *Advanced.* Air temperature, in °C — sound travels faster in warm air. 20 is fine indoors. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `distance` | float | Distance to the nearest object, in Unit. |
+| `echo` | int | How long the echo took to come back, in microseconds. |
+
+### Detect
+
+Pings and goes out Near when something is closer than Threshold, Far otherwise (nothing in range counts as Far).
+
+Ends on **Near**, **Far** — or **Fallback** when it can't run.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Trigger Pin** | Pin (digital out) | — | Board pin wired to the sensor's Trig. |
+| **Echo Pin** | Pin (digital in) | — | Board pin wired to the sensor's Echo (through a divider on a 3.3 V board). |
+| **Threshold** | Number | `20` | Closer than this (in Unit) goes out Near. |
+| **Unit** | One of: Centimeters, Millimeters, Inches | Centimeters | Unit of Threshold and of the distance it publishes. |
+| **Timeout** | Number | `30` | *Advanced.* How long to wait for the echo, in milliseconds. 30 covers ~5 m. |
+| **Temperature** | Number | `20` | *Advanced.* Air temperature, in °C — sound travels faster in warm air. 20 is fine indoors. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `distance` | float | Distance to the nearest object, in Unit — only when an echo came back. |
+| `near` | bool | Whether something was closer than Threshold. |

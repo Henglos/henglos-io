@@ -1,0 +1,64 @@
+{
+  "name": "@henglosio/driver",
+  "version": "1.0.0",
+  "description": "The HenglosIO driver: the agent on the machine the boards are plugged into.",
+  "author": "Henglos",
+  "license": "SEE LICENSE IN LICENSE",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./commands": {
+      "types": "./dist/commands.d.mts",
+      "default": "./dist/commands.mjs"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "start": "node dist/main.mjs",
+    "start:debug": "node -r reflect-metadata -r tsconfig-paths/register --loader ts-node/esm --inspect --watch src/main.ts",
+    "start:dev": "node -r reflect-metadata -r tsconfig-paths/register --loader ts-node/esm --watch src/main.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:connection": "tsx scripts/test-connection.ts",
+    "test:round-trip": "tsx scripts/test-round-trip.ts",
+    "probe": "tsx scripts/probe-board.ts"
+  },
+  "devDependencies": {
+    "@swc-node/register": "^1.11.1",
+    "@swc/core": "^1.15.43",
+    "@types/dockerode": "^4.0.1",
+    "@types/node": "^22.10.7",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "tsdown": "latest",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "@henglosio/rfc2217": "workspace:*",
+    "@henglosio/runner": "workspace:*",
+    "@henglosio/shared": "workspace:*",
+    "@hono/node-server": "^1.19.11",
+    "@pybricks/mpy-cross-v6": "2.0.0",
+    "@types/pacote": "^11.1.8",
+    "auto-launch": "^5.0.6",
+    "axios": "^1.15.0",
+    "commander": "^14.0.3",
+    "daemonize-process": "^4.1.1",
+    "dockerode": "^4.0.10",
+    "hono": "^4.12.22",
+    "native-machine-id": "^0.3.11",
+    "open": "^11.0.0",
+    "p-queue": "^9.3.0",
+    "pacote": "^21.5.0",
+    "reflect-metadata": "^0.2.2",
+    "serialport": "^13.0.0",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "tar": "^7.5.13",
+    "tsyringe": "^4.10.0",
+    "yaml": "^2.8.2",
+    "zod": "^4.6.7"
+  }
+}

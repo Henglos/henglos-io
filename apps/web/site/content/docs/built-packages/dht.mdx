@@ -1,0 +1,67 @@
+---
+title: "DHT"
+description: "A DHT11 or DHT22 (AM2302) temperature and humidity sensor on one data pin: Read gives both — with how hot it feels and the dew point — and Climate Trigger runs a branch when one of them goes past a limit."
+---
+
+A DHT11 or DHT22 (AM2302) temperature and humidity sensor on one data pin: Read gives both — with how hot it feels and the dew point — and Climate Trigger runs a branch when one of them goes past a limit.
+
+<PackageInfo name="@henglosio/component-dht" version="1.0.0" platform="^1.0.0" />
+
+| Node | Kind | What it does |
+| --- | --- | --- |
+| [Climate Trigger](#climate-trigger) | Trigger | Runs its branch when the temperature or the humidity goes above (or below) Limit — read every Interval. |
+| [Read](#read) | Action | The temperature and the humidity — with how hot it feels (heat index) and the dew point. |
+
+## Triggers
+
+### Climate Trigger
+
+Runs its branch when the temperature or the humidity goes above (or below) Limit — read every Interval. It fires again only once the value came back past Hysteresis, so one sitting right on Limit doesn't fire over and over. Past Limit when the program starts counts as getting there.
+
+A trigger: no input, one **Out** — the first action of its branch.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Data Pin** | Pin (digital in + digital out) | GPIO4 | **Required.** Board pin wired to the sensor's data (DATA / S / OUT). A bare sensor needs a 10 kΩ pull-up from it to 3.3 V; a module has one. |
+| **Model** | One of: DHT11, DHT22 / AM2302 | DHT11 | Which sensor it is — DHT11 (blue, 0-50 °C, 1 reading a second) or DHT22 / AM2302 (white, -40-80 °C, finer, 1 every 2 s). |
+| **Watch** | One of: Temperature, Humidity | Temperature | Which value it watches. |
+| **When** | One of: Goes above Limit, Goes below Limit | Goes above Limit | Which way past Limit fires it. |
+| **Limit** | Number | `30` | **Required.** The temperature (in Unit) or humidity (%) it fires past. |
+| **Hysteresis** | Number (from 0) | `1` | *Advanced.* How far back past Limit the value has to come before it can fire again — in Unit or %. |
+| **Interval** | Number (from 1000) | `5000` | How often it reads, in ms — at least the sensor's own (1000 for a DHT11, 2000 for a DHT22). |
+| **Unit** | One of: Celsius (°C), Fahrenheit (°F) | Celsius (°C) | What temperature, heat_index and dew_point are in. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `temperature` | float | The temperature, in Unit — a DHT11 reads it in whole degrees. |
+| `humidity` | float | The relative humidity, 0 to 100 %. |
+| `heat_index` | float | How hot it feels, in Unit — the temperature itself in cool air, higher when it's hot and humid. |
+| `dew_point` | float | The temperature the air would fog (and surfaces sweat) at, in Unit. |
+
+## Actions
+
+### Read
+
+The temperature and the humidity — with how hot it feels (heat index) and the dew point. Fallback when the sensor doesn't answer, with the reason in error.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Data Pin** | Pin (digital in + digital out) | GPIO4 | **Required.** Board pin wired to the sensor's data (DATA / S / OUT). A bare sensor needs a 10 kΩ pull-up from it to 3.3 V; a module has one. |
+| **Model** | One of: DHT11, DHT22 / AM2302 | DHT11 | Which sensor it is — DHT11 (blue, 0-50 °C, 1 reading a second) or DHT22 / AM2302 (white, -40-80 °C, finer, 1 every 2 s). |
+| **Unit** | One of: Celsius (°C), Fahrenheit (°F) | Celsius (°C) | What temperature, heat_index and dew_point are in. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `temperature` | float | The temperature, in Unit — a DHT11 reads it in whole degrees. |
+| `humidity` | float | The relative humidity, 0 to 100 %. |
+| `heat_index` | float | How hot it feels, in Unit — the temperature itself in cool air, higher when it's hot and humid. |
+| `dew_point` | float | The temperature the air would fog (and surfaces sweat) at, in Unit. |
+| `error` | str | Why it's Fallback — no_pin, no_answer (the wiring, the pull-up, the Model picked or its power); empty otherwise. |

@@ -1,0 +1,17 @@
+{
+  "name": "henglosio",
+  "version": "1.0.0",
+  "description": "HenglosIO — build, flash and run workflows on microcontroller boards.",
+  "author": "Henglos",
+  "license": "SEE LICENSE IN LICENSE",
+  "private": true,
+  "packageManager": "pnpm@11.13.0",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint"
+  },
+  "devDependencies": {
+    "turbo": "^2.8.9"
+  }
+}

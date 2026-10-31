@@ -1,0 +1,88 @@
+name: Esp32 Generic
+description: Board Description
+pins:
+  - gpio: 0
+    type: [digital_in, digital_out, analog_in, pwm, touch]
+    displayName: GPIO0
+  - gpio: 1
+    type: [digital_in, digital_out, pwm]
+    displayName: GPIO1
+  - gpio: 2
+    type: [digital_in, digital_out, analog_in, pwm, touch]
+    displayName: GPIO2
+  - gpio: 3
+    type: [digital_in, digital_out, pwm]
+    displayName: GPIO3
+  - gpio: 4
+    type: [digital_in, digital_out, analog_in, pwm, touch, uart]
+    displayName: GPIO4
+  - gpio: 5
+    type: [digital_in, digital_out, pwm]
+    displayName: GPIO5
+  - gpio: 12
+    type: [digital_in, digital_out, analog_in, pwm, touch]
+    displayName: GPIO12
+  - gpio: 13
+    type: [digital_in, digital_out, analog_in, pwm, touch, uart]
+    displayName: GPIO13
+  - gpio: 14
+    type: [digital_in, digital_out, analog_in, pwm, touch, uart]
+    displayName: GPIO14
+  - gpio: 15
+    type: [digital_in, digital_out, analog_in, pwm, touch]
+    displayName: GPIO15
+  - gpio: 16
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GPIO16
+  - gpio: 17
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GPIO17
+  - gpio: 18
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GPIO18
+  - gpio: 19
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GPIO19
+  - gpio: 21
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GPIO21
+  - gpio: 22
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GPIO22
+  - gpio: 23
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GPIO23
+  - gpio: 25
+    type: [digital_in, digital_out, analog_in, analog_out, pwm, uart]
+    displayName: GPIO25
+  - gpio: 26
+    type: [digital_in, digital_out, analog_in, analog_out, pwm, uart]
+    displayName: GPIO26
+  - gpio: 27
+    type: [digital_in, digital_out, analog_in, pwm, touch, uart]
+    displayName: GPIO27
+  - gpio: 32
+    type: [digital_in, digital_out, analog_in, pwm, touch, uart]
+    displayName: GPIO32
+  - gpio: 33
+    type: [digital_in, digital_out, analog_in, pwm, touch, uart]
+    displayName: GPIO33
+  - gpio: 34
+    type: [digital_in, analog_in]
+    displayName: GPIO34
+  - gpio: 35
+    type: [digital_in, analog_in]
+    displayName: GPIO35
+  - gpio: 36
+    type: [digital_in, analog_in]
+    displayName: GPIO36
+  - gpio: 39
+    type: [digital_in, analog_in]
+    displayName: GPIO39
+connection:
+  serial:
+    # Control-link baud. The board applies the persisted value (NVS "hio_serial",
+    # written by the SET_CONNECTION command) on boot, falling back to the first
+    # entry here. 115200 must stay first — it's the bootstrap/fallback baud the
+    # daemon probes at, and HIO_DEFAULT_BAUDRATE in HIOSDK/common/defaults.h.
+    baudrates: [115200, 9600, 19200, 38400, 57600, 230400, 460800, 921600]

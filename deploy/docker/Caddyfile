@@ -1,0 +1,18 @@
+# One address for the whole of Henglos IO: /io/* to the hosting (the API at
+# /io/api, the sockets at /io/ws, the collaborative editing at /io/collab),
+# the rest to the studio.
+#
+# HIO_SITE_ADDRESS (docker-compose.yaml) picks the address: a domain gets
+# HTTPS automatically, :80 serves plain HTTP.
+
+{$HIO_SITE_ADDRESS::80} {
+	encode zstd gzip
+
+	handle /io/* {
+		reverse_proxy hosting:3333
+	}
+
+	handle {
+		reverse_proxy studio:5173
+	}
+}

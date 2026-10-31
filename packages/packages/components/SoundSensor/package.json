@@ -1,0 +1,16 @@
+{
+	"name": "@henglosio/component-soundsensor",
+	"version": "1.0.0",
+	"description": "Sound sensor (KY-037 / KY-038 microphone module and the like) component for HenglosIO",
+	"author": "Henglos",
+	"license": "SEE LICENSE IN LICENSE",
+	"type": "module",
+	"exports": {
+		"./manifest.yaml": "./manifest.yaml",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"src/**/*.py",
+		"manifest.yaml"
+	]
+}

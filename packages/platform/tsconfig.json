@@ -1,0 +1,15 @@
+{
+  // Only for the Runner (runner/build.ts) — the runtime itself is Python.
+  "compilerOptions": {
+    "module": "nodenext",
+    "target": "esnext",
+    "types": ["node"],
+    "strict": true,
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "isolatedModules": true,
+    "skipLibCheck": true
+  },
+  "include": ["runner"]
+}

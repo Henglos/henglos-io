@@ -1,0 +1,25 @@
+{
+	"name": "@henglosio/platform",
+	"version": "1.0.0",
+	"description": "HenglosIO runtime for MicroPython boards.",
+	"author": "Henglos",
+	"license": "SEE LICENSE IN LICENSE",
+	"type": "module",
+	"files": [
+		"manifest.yaml",
+		"hio/**/*.py",
+		"main.py",
+		"boot.py",
+		"runner/build.js"
+	],
+	"scripts": {
+		"build": "bun build ./runner/build.ts --outfile ./runner/build.js --target node",
+		"test": "python -m pytest -q test && bun test runner",
+		"build:mpy": "python scripts/build.py"
+	},
+	"devDependencies": {
+		"@henglosio/runner": "workspace:*",
+		"@types/node": "^22.0.0",
+		"yaml": "2.8.2"
+	}
+}

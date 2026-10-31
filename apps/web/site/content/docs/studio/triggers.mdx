@@ -1,0 +1,66 @@
+---
+title: Triggers
+description: What starts a branch of the flow — Start, and the components' triggers.
+---
+
+A **trigger** is a node that starts a branch of the flow on its own — the way **Start** does at
+boot. It has no input (nothing leads into it) and a single output, **Out**: the first action of its
+branch. On the canvas a trigger has a round left side, a green mark and the **Trigger** tag.
+
+<WorkflowPreview name="triggers" height={520} />
+
+Here **Start** connects the WiFi once; then two triggers each run a branch of their own: a request
+on `/led` drives an LED and is answered, and a **Timer Trigger** blinks another LED every second.
+
+## Start
+
+Every workflow has **Start**: the boot trigger. Its **Mode** decides what it does:
+
+- **Loop** — its branch runs again every time it reaches an action with nothing wired after it.
+- **Once** — its branch runs once, at boot; after that the board only answers the other triggers.
+
+## The components' triggers
+
+Components add triggers next to their actions — they're listed first, with the green mark, in every
+picker:
+
+| Trigger | Component | Fires when |
+| --- | --- | --- |
+| **Pin Trigger** | GPIO | A pin changes — rising, falling or both, with debounce and an internal pull-up/down. |
+| **Timer Trigger** | Time | Every *Interval* milliseconds. |
+| **Request Trigger** | HTTP | A request comes in on *Port* under a base *Path* — `/api` takes `/api/led/on` too (`subpath`, `segments`). Answer it with **Respond**; a branch that doesn't answers `200`. |
+| **Code Trigger** | IR | A remote's code is received — any code, or only the protocol / address / command set. |
+| **Water Trigger** | Water Sensor | The sensor gets wet, dries off, or either. |
+| **Sound Trigger** | Sound Sensor | A sound — a clap, a knock — then it waits *Cooldown*. |
+| **Climate Trigger** | DHT | The temperature or humidity goes above (or below) a limit, with hysteresis. |
+
+A trigger publishes what happened — a request's `method`, `path` and `query`, a pin's `level`, a
+timer's `count` — for the actions of its branch to bind to, like any output.
+
+## Branches side by side
+
+On the board, Start's branch and every trigger's branch are tasks of their own:
+
+- A trigger that fires runs its branch **right away** — even while Start's branch waits in a Delay,
+  a request or another action that waits.
+- Each branch has its **own values**: what one branch publishes never shows up in another. What
+  they share are the workflow's [variables](/docs/studio/variables).
+- A trigger runs **one branch at a time**: an event that comes while its branch still runs waits in
+  the trigger (a pin's edge, a request in the socket's queue) and fires once the branch is over.
+  Two different triggers run in parallel.
+
+<Callout title="Actions that wait">
+  Branches take turns whenever an action waits (`await` — a Delay, a network call, a sleep). An
+  action that keeps the processor busy without waiting holds every branch while it runs.
+</Callout>
+
+## Debugging from a trigger
+
+On a trigger's node, **Listen** opens a debug session from it: the session waits for the trigger to
+fire, pauses before each action of its branch, and goes back to listening once the branch is over.
+See [Running and debugging](/docs/studio/running-and-debugging).
+
+## A trigger of your own
+
+A trigger is part of a component, declared under `triggers:` in its manifest and written as an
+`HIOTrigger` — see [Building a component](/docs/packages/building-a-component#triggers).

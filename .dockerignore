@@ -1,0 +1,22 @@
+# The images build from the repository's root (docker build -f apps/<app>/Dockerfile .):
+# everything below is rebuilt inside, or never belongs in an image.
+
+**/node_modules
+**/dist
+**/.next
+**/out
+**/.turbo
+**/.source
+**/*.tsbuildinfo
+**/coverage
+
+# Local state and secrets
+**/.env
+**/.env.*
+!**/example.env
+apps/hosting/data
+
+.git
+.vscode
+.idea
+**/*.log

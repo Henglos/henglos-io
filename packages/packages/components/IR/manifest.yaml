@@ -1,0 +1,215 @@
+kind: component
+name: IR
+schemaVersion: 1
+
+dependences:
+  platform: ^1.0.0
+
+schema:
+
+  displayName: IR
+  description: >
+    Infrared remote control, both ways — Send a remote's code from an IR LED
+    (to a TV, an air conditioner, another board), Receive the codes a remote
+    sends to a receiver module (VS1838B, TSOP38238), and Match one to branch
+    when a given button is pressed — or let a Code Trigger start a branch of
+    its own when it is. NEC (and extended NEC) and Samsung.
+
+  # Wire ids come from the lowercased displayNames (computeWireActionId /
+  # computeWireConfigId in @henglosio/workflow) — each script's @action and
+  # context.get() names must match: "ir/<action>", "<action>/<config>".
+  # The configs the actions share are written once (YAML anchors).
+  #
+  # Protocol-independent: the actions speak (protocol, address, command); each
+  # protocol is its timings in src/protocols.py.
+  #
+  # Defaults: the LED on GPIO26 (through a transistor — see the README), the
+  # receiver on GPIO27.
+
+  actions:
+
+    - displayName: Send
+      description: Sends a remote's code from an IR LED — once, or as a held button with Repeats.
+      script: src/send.py
+      configurations:
+        - displayName: TX Pin
+          description: Board pin driving the IR LED — through a transistor for range (a pin alone lights it for a meter or so).
+          type: pin
+          from: board
+          filterBy: [digital_out]
+          required: true
+          defaultValue: { gpio: 26, type: [digital_in, digital_out], displayName: GPIO26 }
+        - displayName: Protocol
+          description: How the code is sent — NEC is what most remotes use (TV boxes, LED strips, cheap kits); Samsung for Samsung TVs.
+          type: options
+          defaultValue: nec
+          options:
+            - displayName: NEC
+              value: nec
+            - displayName: Samsung
+              value: samsung
+        - &address
+          displayName: Address
+          description: >
+            The device the code is for, as Receive shows it — hex ("0x00") or
+            decimal. NEC takes up to 0xFFFF (extended NEC past 0xFF), Samsung
+            up to 0xFF.
+          type: string
+          defaultValue: "0x00"
+          placeholder: e.g. 0x00
+        - &command
+          displayName: Command
+          description: The button, as Receive shows it — hex ("0x45") or decimal, up to 0xFF.
+          type: string
+          required: true
+          defaultValue: "0x45"
+          placeholder: e.g. 0x45
+        - displayName: Repeats
+          description: Frames sent after the code as a held button sends them, ~108 ms apart — 0 to 50. 0 is a single press.
+          type: number
+          defaultValue: "0"
+          placeholder: 0–50
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 50 }
+        - displayName: Carrier
+          advanced: true
+          description: The light's blink rate, in kHz — 38 for almost every remote; 36 or 40 for a few. 30 to 60.
+          type: number
+          defaultValue: "38"
+          placeholder: 30–60 kHz
+          patterns:
+            - { name: Min, value: 30 }
+            - { name: Max, value: 60 }
+
+    - displayName: Receive
+      description: >
+        Waits for a remote's code and gives its protocol, address and command —
+        Out with it, or Fallback when none came in time. Point a remote at the
+        receiver and run it to learn a button's code.
+      script: src/receive.py
+      configurations:
+        - &rx
+          displayName: RX Pin
+          description: Board pin wired to the receiver module's OUT (also called DATA or S).
+          type: pin
+          from: board
+          filterBy: [digital_in]
+          required: true
+          defaultValue: { gpio: 27, type: [digital_in, digital_out], displayName: GPIO27 }
+        - &timeout
+          displayName: Timeout
+          description: How long it waits for a code, in ms — 10 to 60000. The flow waits meanwhile.
+          type: number
+          defaultValue: "1000"
+          placeholder: 10–60000 ms
+          patterns:
+            - { name: Min, value: 10 }
+            - { name: Max, value: 60000 }
+        - &repeats
+          displayName: Repeats
+          advanced: true
+          description: Whether a held button's repeats count as codes too (marked repeat) — off, a held button is one press.
+          type: toggle
+          label: Held button repeats
+          defaultValue: false
+      outputSchema:
+        - &protocolOut
+          name: protocol
+          type: any
+          description: The code's protocol, as text — nec or samsung.
+        - &addressOut
+          name: address
+          type: int
+          description: The device it's for.
+        - &commandOut
+          name: command
+          type: int
+          description: The button.
+        - &codeOut
+          name: code
+          type: any
+          description: All of it as text — "nec 0x00 0x45" — what Send and Match take.
+        - &repeatOut
+          name: repeat
+          type: bool
+          description: Whether it's a held button's repeat (with Repeats on).
+
+    - displayName: Match
+      description: >
+        Waits for a remote's code and branches on whether it's the one set —
+        Match, Other (another button), or Timeout. Find the button's code with
+        Receive first.
+      script: src/match.py
+      configurations:
+        - *rx
+        - displayName: Protocol
+          description: The protocol it has to be — Any takes either.
+          type: options
+          defaultValue: any
+          options:
+            - displayName: Any
+              value: any
+            - displayName: NEC
+              value: nec
+            - displayName: Samsung
+              value: samsung
+        - displayName: Address
+          description: The device it has to be for, hex or decimal — empty for any.
+          type: string
+          defaultValue: ""
+          placeholder: any
+        - *command
+        - *timeout
+        - *repeats
+      outputs:
+        - { id: match, name: Match }
+        - { id: other, name: Other }
+        - { id: timeout, name: Timeout }
+      outputSchema:
+        - *protocolOut
+        - *addressOut
+        - *commandOut
+        - *codeOut
+        - *repeatOut
+
+  # What starts a branch of the flow on its own — no input, only Out.
+  triggers:
+
+    - displayName: Code Trigger
+      description: >
+        Runs its branch when a remote's code comes in — any code, or only the
+        one set (Protocol, Address, Command). A button on the remote starting
+        its own part of the flow, whatever else the board is doing.
+      script: src/code_trigger.py
+      configurations:
+        - *rx
+        - displayName: Protocol
+          description: The protocol it has to be — Any takes either.
+          type: options
+          defaultValue: any
+          options:
+            - displayName: Any
+              value: any
+            - displayName: NEC
+              value: nec
+            - displayName: Samsung
+              value: samsung
+        - displayName: Address
+          description: The device it has to be for, hex or decimal — empty for any.
+          type: string
+          defaultValue: ""
+          placeholder: any
+        - displayName: Command
+          description: The button it has to be, hex ("0x45") or decimal — empty for any button.
+          type: string
+          defaultValue: ""
+          placeholder: any
+        - *repeats
+      outputSchema:
+        - *protocolOut
+        - *addressOut
+        - *commandOut
+        - *codeOut
+        - *repeatOut
+

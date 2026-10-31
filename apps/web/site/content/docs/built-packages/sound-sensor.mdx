@@ -1,0 +1,96 @@
+---
+title: "Sound Sensor"
+description: "A microphone module with a comparator (KY-037 / KY-038 and the like — AO, DO, +, G): Read gives how loud it is, Detect branches Loud or Quiet, and Sound Trigger runs a branch on a sound — a clap, a knock."
+---
+
+A microphone module with a comparator (KY-037 / KY-038 and the like — AO, DO, +, G): Read gives how loud it is, Detect branches Loud or Quiet, and Sound Trigger runs a branch on a sound — a clap, a knock.
+
+<PackageInfo name="@henglosio/component-soundsensor" version="1.0.0" platform="^1.0.0" />
+
+| Node | Kind | What it does |
+| --- | --- | --- |
+| [Sound Trigger](#sound-trigger) | Trigger | Runs its branch on a sound — a clap, a knock — then waits Cooldown before it can fire again. |
+| [Read](#read) | Action | How loud it is — level from 0 to 100 % (how far the microphone's signal swung over Window), and loud once it reaches Threshold or the module's DO is on. |
+| [Detect](#detect) | Action | Branches Loud or Quiet — level past Threshold over Window (Analog Pin), or the module's DO on (Digital Pin); either, with both. |
+
+## Triggers
+
+### Sound Trigger
+
+Runs its branch on a sound — a clap, a knock — then waits Cooldown before it can fire again. With a Digital Pin, the module's DO is caught the moment it flips (nothing is missed); without one, Analog Pin is listened to every Interval.
+
+A trigger: no input, one **Out** — the first action of its branch.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Digital Pin** | Pin (digital in) | — | Board pin wired to the module's DO — the best for short sounds; set its threshold with the module's trimpot. Empty to listen on Analog Pin. |
+| **Analog Pin** | Pin (analog in) | GPIO39 | Board pin wired to the module's AO — used when there's no Digital Pin. |
+| **Threshold** | Number (1 to 100) | `30` | The level that counts as loud, in % — 1 to 100. With Analog Pin. |
+| **Cooldown** | Number (from 0) | `300` | How long after a sound before it can fire again, in ms — one clap and its echo are one run. |
+| **Active** | One of: High, Low | High | *Advanced.* Which DO level means sound — High on most modules (its LED lights up with it), Low on some. |
+| **Window** | Number (1 to 200) | `20` | *Advanced.* With Analog Pin, how long each listen is, in ms — 1 to 200. It holds the board that long, so keep it short. |
+| **Interval** | Number (from 10) | `100` | *Advanced.* With Analog Pin, how often it listens, in ms — 10 at least. |
+| **Full Scale** | Number (1 to 65535) | `16384` | *Advanced.* The swing (peak, 0 to 65535) that counts as 100 % — lower it if loud sounds barely move level; raise it if level is stuck at 100. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `level` | float | How loud, 0 to 100 % of Full Scale — with Analog Pin. |
+| `loud` | bool | Always true — it fired on a sound. |
+| `at` | int | When the sound came — the board's clock, in ms. |
+
+## Actions
+
+### Read
+
+How loud it is — level from 0 to 100 % (how far the microphone's signal swung over Window), and loud once it reaches Threshold or the module's DO is on.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Analog Pin** | Pin (analog in) | GPIO39 | Board pin wired to the module's AO — how loud. An analog input; GPIO32-39 keep working with Wi-Fi on. Empty to use DO only. |
+| **Digital Pin** | Pin (digital in) | — | Board pin wired to the module's DO — on past the threshold set on its trimpot (detected). Optional. |
+| **Threshold** | Number (1 to 100) | `30` | The level that counts as loud, in % — 1 to 100. With Analog Pin. |
+| **Window** | Number (5 to 1000) | `50` | *Advanced.* How long it listens, in ms — 5 to 1000. Longer catches a sound that comes and goes; it holds the flow that long. |
+| **Full Scale** | Number (1 to 65535) | `16384` | *Advanced.* The swing (peak, 0 to 65535) that counts as 100 % — lower it if loud sounds barely move level; raise it if level is stuck at 100. |
+| **Active** | One of: High, Low | High | *Advanced.* Which DO level means sound — High on most modules (its LED lights up with it), Low on some. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `level` | float | How loud, 0 to 100 % of Full Scale — with Analog Pin. |
+| `peak` | int | How far AO swung over Window, 0 to 65535 — to set Full Scale. Near 0 in silence. |
+| `detected` | bool | Whether the module's DO is on — with Digital Pin. |
+| `loud` | bool | Whether level reached Threshold, or DO is on. |
+| `error` | str | no_pin when neither pin is set; empty otherwise. |
+
+### Detect
+
+Branches Loud or Quiet — level past Threshold over Window (Analog Pin), or the module's DO on (Digital Pin); either, with both.
+
+Ends on **Loud**, **Quiet** — or **Fallback** when it can't run.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Analog Pin** | Pin (analog in) | GPIO39 | Board pin wired to the module's AO — how loud. An analog input; GPIO32-39 keep working with Wi-Fi on. Empty to use DO only. |
+| **Digital Pin** | Pin (digital in) | — | Board pin wired to the module's DO — on past the threshold set on its trimpot (detected). Optional. |
+| **Threshold** | Number (1 to 100) | `30` | The level that counts as loud, in % — 1 to 100. With Analog Pin. |
+| **Window** | Number (5 to 1000) | `50` | *Advanced.* How long it listens, in ms — 5 to 1000. Longer catches a sound that comes and goes; it holds the flow that long. |
+| **Full Scale** | Number (1 to 65535) | `16384` | *Advanced.* The swing (peak, 0 to 65535) that counts as 100 % — lower it if loud sounds barely move level; raise it if level is stuck at 100. |
+| **Active** | One of: High, Low | High | *Advanced.* Which DO level means sound — High on most modules (its LED lights up with it), Low on some. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `level` | float | How loud, 0 to 100 % of Full Scale — with Analog Pin. |
+| `peak` | int | How far AO swung over Window, 0 to 65535 — to set Full Scale. Near 0 in silence. |
+| `detected` | bool | Whether the module's DO is on — with Digital Pin. |
+| `loud` | bool | Whether level reached Threshold, or DO is on. |

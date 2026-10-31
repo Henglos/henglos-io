@@ -1,0 +1,2240 @@
+{
+	"name": "Servo sweep",
+	"description": "Sweeps a servo three times, then fades an LED in.",
+	"board": {
+		"id": "bba3b4ac-615e-4cd4-bbe1-4931806362a9",
+		"packageId": "board",
+		"base": {
+			"name": "Esp32 Generic",
+			"description": "Board Description",
+			"pins": [
+				{
+					"gpio": 0,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch"
+					],
+					"displayName": "GPIO0"
+				},
+				{
+					"gpio": 1,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm"
+					],
+					"displayName": "GPIO1"
+				},
+				{
+					"gpio": 2,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch"
+					],
+					"displayName": "GPIO2"
+				},
+				{
+					"gpio": 3,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm"
+					],
+					"displayName": "GPIO3"
+				},
+				{
+					"gpio": 4,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO4"
+				},
+				{
+					"gpio": 5,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm"
+					],
+					"displayName": "GPIO5"
+				},
+				{
+					"gpio": 12,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch"
+					],
+					"displayName": "GPIO12"
+				},
+				{
+					"gpio": 13,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO13"
+				},
+				{
+					"gpio": 14,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO14"
+				},
+				{
+					"gpio": 15,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch"
+					],
+					"displayName": "GPIO15"
+				},
+				{
+					"gpio": 16,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO16"
+				},
+				{
+					"gpio": 17,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO17"
+				},
+				{
+					"gpio": 18,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO18"
+				},
+				{
+					"gpio": 19,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO19"
+				},
+				{
+					"gpio": 21,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO21"
+				},
+				{
+					"gpio": 22,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO22"
+				},
+				{
+					"gpio": 23,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO23"
+				},
+				{
+					"gpio": 25,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"analog_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO25"
+				},
+				{
+					"gpio": 26,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"analog_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO26"
+				},
+				{
+					"gpio": 27,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO27"
+				},
+				{
+					"gpio": 32,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO32"
+				},
+				{
+					"gpio": 33,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO33"
+				},
+				{
+					"gpio": 34,
+					"type": [
+						"digital_in",
+						"analog_in"
+					],
+					"displayName": "GPIO34"
+				},
+				{
+					"gpio": 35,
+					"type": [
+						"digital_in",
+						"analog_in"
+					],
+					"displayName": "GPIO35"
+				},
+				{
+					"gpio": 36,
+					"type": [
+						"digital_in",
+						"analog_in"
+					],
+					"displayName": "GPIO36"
+				},
+				{
+					"gpio": 39,
+					"type": [
+						"digital_in",
+						"analog_in"
+					],
+					"displayName": "GPIO39"
+				}
+			],
+			"connection": {
+				"serial": {
+					"baudrates": [
+						115200,
+						9600,
+						19200,
+						38400,
+						57600,
+						230400,
+						460800,
+						921600
+					]
+				}
+			},
+			"capabilities": [
+				"wifi",
+				"bluetooth"
+			]
+		},
+		"configurations": [],
+		"connection": null,
+		"actions": []
+	},
+	"start": {
+		"id": "aca5cf69-501a-495a-9733-c4d37d429022",
+		"componentId": "core",
+		"alias": "Start",
+		"base": {
+			"displayName": "Start",
+			"description": "Entry point of the workflow — runs first; connect its output to the first action in the flow.",
+			"outputs": [
+				{
+					"id": "start",
+					"name": "Start"
+				}
+			],
+			"configurations": [
+				{
+					"displayName": "Mode",
+					"description": "Whether the workflow keeps looping back to Start after finishing, or runs through once.",
+					"type": "options",
+					"defaultValue": "loop",
+					"options": [
+						{
+							"displayName": "Loop",
+							"value": "loop"
+						},
+						{
+							"displayName": "Once",
+							"value": "once"
+						}
+					]
+				}
+			]
+		},
+		"configurations": [
+			{
+				"id": "bc8e32c3-5e95-421b-b758-a400735b641e",
+				"base": {
+					"displayName": "Mode",
+					"description": "Whether the workflow keeps looping back to Start after finishing, or runs through once.",
+					"type": "options",
+					"defaultValue": "loop",
+					"options": [
+						{
+							"displayName": "Loop",
+							"value": "loop"
+						},
+						{
+							"displayName": "Once",
+							"value": "once"
+						}
+					]
+				},
+				"binding": null,
+				"value": "once"
+			}
+		],
+		"inputs": [
+			{
+				"id": "5db42d10-f4b9-4a1e-834b-aac2f079f3f1",
+				"base": {
+					"id": "default",
+					"name": "In"
+				}
+			}
+		],
+		"outputs": [
+			{
+				"id": "b2e8b145-f09f-4198-a836-e9603370d845",
+				"base": {
+					"id": "start",
+					"name": "Start"
+				}
+			}
+		],
+		"x": 0,
+		"y": 140
+	},
+	"components": [
+		{
+			"id": "core:logic",
+			"packageId": "core:logic",
+			"alias": "Logic",
+			"base": {
+				"displayName": "Logic",
+				"description": "Branch the flow: If, Switch and Repeat — built in, nothing to install.",
+				"actions": [
+					{
+						"displayName": "If",
+						"description": "Goes out True or False, depending on a condition — or on two, joined with AND / OR.",
+						"script": "",
+						"outputs": [
+							{
+								"id": "true",
+								"name": "True"
+							},
+							{
+								"id": "false",
+								"name": "False"
+							}
+						],
+						"configurations": [
+							{
+								"displayName": "Value",
+								"description": "What to test. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"placeholder": "e.g. bind distance"
+							},
+							{
+								"displayName": "Condition",
+								"description": "How to test it.",
+								"type": "options",
+								"defaultValue": "eq",
+								"options": [
+									{
+										"categoryName": "Compare",
+										"options": [
+											{
+												"displayName": "is equal to",
+												"value": "eq"
+											},
+											{
+												"displayName": "is not equal to",
+												"value": "ne"
+											},
+											{
+												"displayName": "is greater than",
+												"value": "gt"
+											},
+											{
+												"displayName": "is greater than or equal to",
+												"value": "gte"
+											},
+											{
+												"displayName": "is less than",
+												"value": "lt"
+											},
+											{
+												"displayName": "is less than or equal to",
+												"value": "lte"
+											}
+										]
+									},
+									{
+										"categoryName": "Text",
+										"options": [
+											{
+												"displayName": "contains",
+												"value": "contains"
+											},
+											{
+												"displayName": "does not contain",
+												"value": "not_contains"
+											},
+											{
+												"displayName": "starts with",
+												"value": "starts_with"
+											},
+											{
+												"displayName": "ends with",
+												"value": "ends_with"
+											}
+										]
+									},
+									{
+										"categoryName": "State",
+										"options": [
+											{
+												"displayName": "is true",
+												"value": "is_true"
+											},
+											{
+												"displayName": "is false",
+												"value": "is_false"
+											},
+											{
+												"displayName": "is empty",
+												"value": "is_empty"
+											},
+											{
+												"displayName": "is not empty",
+												"value": "is_not_empty"
+											}
+										]
+									}
+								]
+							},
+							{
+								"displayName": "Compare to",
+								"description": "What Value is compared with. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"placeholder": "e.g. 10",
+								"displayOptions": {
+									"hide": {
+										"Condition": [
+											"is_true",
+											"is_false",
+											"is_empty",
+											"is_not_empty"
+										]
+									}
+								}
+							},
+							{
+								"displayName": "Combine",
+								"description": "Add a second condition: both must hold (AND), or either one (OR).",
+								"type": "options",
+								"defaultValue": "none",
+								"options": [
+									{
+										"displayName": "Single condition",
+										"value": "none"
+									},
+									{
+										"displayName": "AND",
+										"value": "and"
+									},
+									{
+										"displayName": "OR",
+										"value": "or"
+									}
+								]
+							},
+							{
+								"displayName": "Value 2",
+								"description": "What the second condition tests. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"displayOptions": {
+									"show": {
+										"Combine": [
+											"and",
+											"or"
+										]
+									}
+								}
+							},
+							{
+								"displayName": "Condition 2",
+								"description": "How to test Value 2.",
+								"type": "options",
+								"defaultValue": "eq",
+								"options": [
+									{
+										"categoryName": "Compare",
+										"options": [
+											{
+												"displayName": "is equal to",
+												"value": "eq"
+											},
+											{
+												"displayName": "is not equal to",
+												"value": "ne"
+											},
+											{
+												"displayName": "is greater than",
+												"value": "gt"
+											},
+											{
+												"displayName": "is greater than or equal to",
+												"value": "gte"
+											},
+											{
+												"displayName": "is less than",
+												"value": "lt"
+											},
+											{
+												"displayName": "is less than or equal to",
+												"value": "lte"
+											}
+										]
+									},
+									{
+										"categoryName": "Text",
+										"options": [
+											{
+												"displayName": "contains",
+												"value": "contains"
+											},
+											{
+												"displayName": "does not contain",
+												"value": "not_contains"
+											},
+											{
+												"displayName": "starts with",
+												"value": "starts_with"
+											},
+											{
+												"displayName": "ends with",
+												"value": "ends_with"
+											}
+										]
+									},
+									{
+										"categoryName": "State",
+										"options": [
+											{
+												"displayName": "is true",
+												"value": "is_true"
+											},
+											{
+												"displayName": "is false",
+												"value": "is_false"
+											},
+											{
+												"displayName": "is empty",
+												"value": "is_empty"
+											},
+											{
+												"displayName": "is not empty",
+												"value": "is_not_empty"
+											}
+										]
+									}
+								],
+								"displayOptions": {
+									"show": {
+										"Combine": [
+											"and",
+											"or"
+										]
+									}
+								}
+							},
+							{
+								"displayName": "Compare to 2",
+								"description": "What Value 2 is compared with. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"displayOptions": {
+									"show": {
+										"Combine": [
+											"and",
+											"or"
+										]
+									},
+									"hide": {
+										"Condition 2": [
+											"is_true",
+											"is_false",
+											"is_empty",
+											"is_not_empty"
+										]
+									}
+								}
+							}
+						]
+					},
+					{
+						"displayName": "Switch",
+						"description": "Routes the flow by value: out the first case that matches, or Default when none does.",
+						"script": "",
+						"outputs": [
+							{
+								"id": "case_1",
+								"name": "Case 1"
+							},
+							{
+								"id": "case_2",
+								"name": "Case 2"
+							},
+							{
+								"id": "case_3",
+								"name": "Case 3"
+							},
+							{
+								"id": "otherwise",
+								"name": "Default"
+							}
+						],
+						"configurations": [
+							{
+								"displayName": "Value",
+								"description": "What to route on. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"placeholder": "e.g. bind mode"
+							},
+							{
+								"displayName": "Match",
+								"description": "How Value is matched against each case.",
+								"type": "options",
+								"defaultValue": "eq",
+								"options": [
+									{
+										"categoryName": "Compare",
+										"options": [
+											{
+												"displayName": "is equal to",
+												"value": "eq"
+											},
+											{
+												"displayName": "is not equal to",
+												"value": "ne"
+											},
+											{
+												"displayName": "is greater than",
+												"value": "gt"
+											},
+											{
+												"displayName": "is greater than or equal to",
+												"value": "gte"
+											},
+											{
+												"displayName": "is less than",
+												"value": "lt"
+											},
+											{
+												"displayName": "is less than or equal to",
+												"value": "lte"
+											}
+										]
+									},
+									{
+										"categoryName": "Text",
+										"options": [
+											{
+												"displayName": "contains",
+												"value": "contains"
+											},
+											{
+												"displayName": "does not contain",
+												"value": "not_contains"
+											},
+											{
+												"displayName": "starts with",
+												"value": "starts_with"
+											},
+											{
+												"displayName": "ends with",
+												"value": "ends_with"
+											}
+										]
+									}
+								]
+							},
+							{
+								"displayName": "Case 1",
+								"description": "Out Case 1 when Value matches this. Empty: never.",
+								"type": "string",
+								"placeholder": "e.g. 1"
+							},
+							{
+								"displayName": "Case 2",
+								"description": "Out Case 2 when Value matches this. Empty: never.",
+								"type": "string"
+							},
+							{
+								"displayName": "Case 3",
+								"description": "Out Case 3 when Value matches this. Empty: never.",
+								"type": "string"
+							}
+						]
+					},
+					{
+						"displayName": "Repeat",
+						"description": "Runs the Loop branch a number of times, then goes out Done. Wire the loop's last action back into Repeat.",
+						"script": "",
+						"outputs": [
+							{
+								"id": "loop",
+								"name": "Loop"
+							},
+							{
+								"id": "done",
+								"name": "Done"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "iteration",
+								"type": "int",
+								"description": "Which time round this is — 1 on the first loop."
+							}
+						],
+						"configurations": [
+							{
+								"displayName": "Times",
+								"description": "How many times the Loop branch runs before Done.",
+								"type": "number",
+								"defaultValue": "3",
+								"required": true
+							}
+						]
+					}
+				]
+			},
+			"actions": [
+				{
+					"id": "9abd6e62-9157-48f1-8617-857ff86f80b4",
+					"componentId": "core:logic",
+					"alias": "Repeat",
+					"base": {
+						"displayName": "Repeat",
+						"description": "Runs the Loop branch a number of times, then goes out Done. Wire the loop's last action back into Repeat.",
+						"script": "",
+						"outputs": [
+							{
+								"id": "loop",
+								"name": "Loop"
+							},
+							{
+								"id": "done",
+								"name": "Done"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "iteration",
+								"type": "int",
+								"description": "Which time round this is — 1 on the first loop."
+							}
+						],
+						"configurations": [
+							{
+								"displayName": "Times",
+								"description": "How many times the Loop branch runs before Done.",
+								"type": "number",
+								"defaultValue": "3",
+								"required": true
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "70bde868-e6a5-42e5-bddd-b87639cc7616",
+							"base": {
+								"displayName": "Times",
+								"description": "How many times the Loop branch runs before Done.",
+								"type": "number",
+								"defaultValue": "3",
+								"required": true
+							},
+							"binding": null,
+							"value": "3"
+						}
+					],
+					"inputs": [
+						{
+							"id": "349cb72a-9c0b-48e6-9230-9bf39253ddca",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "f3f3b9e9-4902-4cc7-a7e6-366f65ab766e",
+							"base": {
+								"id": "loop",
+								"name": "Loop"
+							}
+						},
+						{
+							"id": "52b0dad6-2d8d-43e2-beb1-2347bbea0e08",
+							"base": {
+								"id": "done",
+								"name": "Done"
+							}
+						}
+					],
+					"x": 360,
+					"y": 140
+				}
+			]
+		},
+		{
+			"id": "18d59c27-a5c1-4831-a15d-d8535fbdbcb4",
+			"packageId": "servo",
+			"alias": "Servo",
+			"base": {
+				"displayName": "Servo",
+				"description": "Drives a hobby servo on a PWM-capable pin — To Angle for a positional servo (SG90-style, holds a 0-180° angle), Rotate for a continuous-rotation (360°) one (spins at a speed and direction), Release to cut the signal.\n",
+				"actions": [
+					{
+						"displayName": "To Angle",
+						"description": "Moves a positional servo to a fixed angle (0-180°) and holds it there.",
+						"script": "src/to_angle.py",
+						"configurations": [
+							{
+								"displayName": "Signal Pin",
+								"description": "Board pin the servo's signal wire is connected to.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"pwm"
+								]
+							},
+							{
+								"displayName": "Angle",
+								"description": "Target angle, in degrees (0-180). Values outside the range are clamped.",
+								"type": "number",
+								"defaultValue": "90"
+							},
+							{
+								"displayName": "Min Pulse",
+								"advanced": true,
+								"description": "Pulse width at 0°, in microseconds. Raise it if the servo strains at 0°.",
+								"type": "number",
+								"defaultValue": "500"
+							},
+							{
+								"displayName": "Max Pulse",
+								"advanced": true,
+								"description": "Pulse width at 180°, in microseconds. Lower it if the servo strains at 180°.",
+								"type": "number",
+								"defaultValue": "2500"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "angle",
+								"type": "int",
+								"description": "The clamped angle the servo was moved to, in degrees (0-180)."
+							}
+						]
+					},
+					{
+						"displayName": "Rotate",
+						"description": "Spins a continuous-rotation (360°) servo at the given speed and direction. Speed 0 stops it. The signal is held until the next action on the same pin.\n",
+						"script": "src/rotate.py",
+						"configurations": [
+							{
+								"displayName": "Signal Pin",
+								"description": "Board pin the servo's signal wire is connected to.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"pwm"
+								]
+							},
+							{
+								"displayName": "Speed",
+								"description": "Rotation speed, 0 (stopped) to 100 (max). Values outside the range are clamped.",
+								"type": "number",
+								"defaultValue": "50"
+							},
+							{
+								"displayName": "Direction",
+								"description": "Rotation direction.",
+								"type": "options",
+								"defaultValue": "clockwise",
+								"options": [
+									{
+										"displayName": "Clockwise",
+										"value": "clockwise"
+									},
+									{
+										"displayName": "Counterclockwise",
+										"value": "counterclockwise"
+									}
+								]
+							},
+							{
+								"displayName": "Stop Pulse",
+								"advanced": true,
+								"description": "Pulse width where this servo stands still, in microseconds. Nudge it (e.g. 1480 or 1520) if it creeps at Speed 0.",
+								"type": "number",
+								"defaultValue": "1500"
+							},
+							{
+								"displayName": "Range",
+								"advanced": true,
+								"description": "Microseconds from Stop Pulse to full speed.",
+								"type": "number",
+								"defaultValue": "500"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "speed",
+								"type": "int",
+								"description": "The clamped speed the servo was set to, 0-100."
+							}
+						]
+					},
+					{
+						"displayName": "Release",
+						"description": "Cuts the signal: a positional servo stops holding its angle, a continuous one stops completely.\n",
+						"script": "src/release.py",
+						"configurations": [
+							{
+								"displayName": "Signal Pin",
+								"description": "Board pin the servo's signal wire is connected to.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"pwm"
+								]
+							}
+						]
+					}
+				]
+			},
+			"actions": [
+				{
+					"id": "87dfd11c-cc47-4da1-84d8-db998313e590",
+					"componentId": "18d59c27-a5c1-4831-a15d-d8535fbdbcb4",
+					"alias": "To Angle",
+					"base": {
+						"displayName": "To Angle",
+						"description": "Moves a positional servo to a fixed angle (0-180°) and holds it there.",
+						"script": "src/to_angle.py",
+						"configurations": [
+							{
+								"displayName": "Signal Pin",
+								"description": "Board pin the servo's signal wire is connected to.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"pwm"
+								]
+							},
+							{
+								"displayName": "Angle",
+								"description": "Target angle, in degrees (0-180). Values outside the range are clamped.",
+								"type": "number",
+								"defaultValue": "90"
+							},
+							{
+								"displayName": "Min Pulse",
+								"advanced": true,
+								"description": "Pulse width at 0°, in microseconds. Raise it if the servo strains at 0°.",
+								"type": "number",
+								"defaultValue": "500"
+							},
+							{
+								"displayName": "Max Pulse",
+								"advanced": true,
+								"description": "Pulse width at 180°, in microseconds. Lower it if the servo strains at 180°.",
+								"type": "number",
+								"defaultValue": "2500"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "angle",
+								"type": "int",
+								"description": "The clamped angle the servo was moved to, in degrees (0-180)."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "958e4f95-1299-4b7a-84f3-7ef0dcc6d9e3",
+							"base": {
+								"displayName": "Signal Pin",
+								"description": "Board pin the servo's signal wire is connected to.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"pwm"
+								]
+							},
+							"binding": null,
+							"value": {
+								"gpio": 13,
+								"type": [
+									"digital_in",
+									"digital_out",
+									"analog_in",
+									"pwm",
+									"touch",
+									"uart"
+								],
+								"displayName": "GPIO13"
+							}
+						},
+						{
+							"id": "9a60286c-fefd-44d7-8503-069f9c461c81",
+							"base": {
+								"displayName": "Angle",
+								"description": "Target angle, in degrees (0-180). Values outside the range are clamped.",
+								"type": "number",
+								"defaultValue": "90"
+							},
+							"binding": null,
+							"value": "0"
+						},
+						{
+							"id": "00d3739f-7c55-44ba-af16-96fcf9388c81",
+							"base": {
+								"displayName": "Min Pulse",
+								"advanced": true,
+								"description": "Pulse width at 0°, in microseconds. Raise it if the servo strains at 0°.",
+								"type": "number",
+								"defaultValue": "500"
+							},
+							"binding": null,
+							"value": "500"
+						},
+						{
+							"id": "76b95ffc-c03a-4740-9749-307726f58971",
+							"base": {
+								"displayName": "Max Pulse",
+								"advanced": true,
+								"description": "Pulse width at 180°, in microseconds. Lower it if the servo strains at 180°.",
+								"type": "number",
+								"defaultValue": "2500"
+							},
+							"binding": null,
+							"value": "2500"
+						}
+					],
+					"inputs": [
+						{
+							"id": "34180f1d-37bc-4a48-9aa6-55bbd9ac7b1c",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "1c0dd8c7-2aff-450b-bc33-08bb42884a6c",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 720,
+					"y": 120
+				},
+				{
+					"id": "818b85dc-fdaf-4b72-b73e-e040a9d0c91a",
+					"componentId": "18d59c27-a5c1-4831-a15d-d8535fbdbcb4",
+					"alias": "To Angle",
+					"base": {
+						"displayName": "To Angle",
+						"description": "Moves a positional servo to a fixed angle (0-180°) and holds it there.",
+						"script": "src/to_angle.py",
+						"configurations": [
+							{
+								"displayName": "Signal Pin",
+								"description": "Board pin the servo's signal wire is connected to.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"pwm"
+								]
+							},
+							{
+								"displayName": "Angle",
+								"description": "Target angle, in degrees (0-180). Values outside the range are clamped.",
+								"type": "number",
+								"defaultValue": "90"
+							},
+							{
+								"displayName": "Min Pulse",
+								"advanced": true,
+								"description": "Pulse width at 0°, in microseconds. Raise it if the servo strains at 0°.",
+								"type": "number",
+								"defaultValue": "500"
+							},
+							{
+								"displayName": "Max Pulse",
+								"advanced": true,
+								"description": "Pulse width at 180°, in microseconds. Lower it if the servo strains at 180°.",
+								"type": "number",
+								"defaultValue": "2500"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "angle",
+								"type": "int",
+								"description": "The clamped angle the servo was moved to, in degrees (0-180)."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "3d755ad2-362c-42da-8b2c-bc8779090b87",
+							"base": {
+								"displayName": "Signal Pin",
+								"description": "Board pin the servo's signal wire is connected to.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"pwm"
+								]
+							},
+							"binding": null,
+							"value": {
+								"gpio": 13,
+								"type": [
+									"digital_in",
+									"digital_out",
+									"analog_in",
+									"pwm",
+									"touch",
+									"uart"
+								],
+								"displayName": "GPIO13"
+							}
+						},
+						{
+							"id": "21a189bb-2884-4596-856d-d68acc6d6c88",
+							"base": {
+								"displayName": "Angle",
+								"description": "Target angle, in degrees (0-180). Values outside the range are clamped.",
+								"type": "number",
+								"defaultValue": "90"
+							},
+							"binding": null,
+							"value": "180"
+						},
+						{
+							"id": "eb0f435f-2311-4523-89ec-e55fb0c43a87",
+							"base": {
+								"displayName": "Min Pulse",
+								"advanced": true,
+								"description": "Pulse width at 0°, in microseconds. Raise it if the servo strains at 0°.",
+								"type": "number",
+								"defaultValue": "500"
+							},
+							"binding": null,
+							"value": "500"
+						},
+						{
+							"id": "1f0cf278-9c7c-4c93-9012-1000366e577c",
+							"base": {
+								"displayName": "Max Pulse",
+								"advanced": true,
+								"description": "Pulse width at 180°, in microseconds. Lower it if the servo strains at 180°.",
+								"type": "number",
+								"defaultValue": "2500"
+							},
+							"binding": null,
+							"value": "2500"
+						}
+					],
+					"inputs": [
+						{
+							"id": "e3598f92-291f-470b-8c7e-920c438cef83",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "89f96160-04c9-4f93-ba92-5cfaab12ec49",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 1440,
+					"y": 120
+				}
+			]
+		},
+		{
+			"id": "8e6cc4c4-70c8-428d-8689-6049bffb9e20",
+			"packageId": "time",
+			"alias": "Time",
+			"base": {
+				"displayName": "Time",
+				"description": "Waits, measures and paces: delays, the board's clock, timers and intervals that run part of a loop on a fixed rhythm.\n",
+				"actions": [
+					{
+						"displayName": "Delay",
+						"description": "Waits for the given duration, then continues.",
+						"script": "src/delay.py",
+						"configurations": [
+							{
+								"displayName": "Duration",
+								"description": "How long to wait, in Unit.",
+								"type": "number",
+								"defaultValue": "1000"
+							},
+							{
+								"displayName": "Unit",
+								"description": "Unit of Duration.",
+								"type": "options",
+								"defaultValue": "ms",
+								"options": [
+									{
+										"displayName": "Milliseconds",
+										"value": "ms"
+									},
+									{
+										"displayName": "Seconds",
+										"value": "s"
+									},
+									{
+										"displayName": "Minutes",
+										"value": "min"
+									}
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "duration",
+								"type": "int",
+								"description": "The time waited, in milliseconds."
+							}
+						]
+					},
+					{
+						"displayName": "Uptime",
+						"description": "Reads the board's clock — milliseconds since it started.",
+						"script": "src/uptime.py",
+						"outputSchema": [
+							{
+								"name": "uptime",
+								"type": "int",
+								"description": "Milliseconds since the board started (wraps around after ~12 days)."
+							}
+						]
+					},
+					{
+						"displayName": "Start Timer",
+						"description": "Starts (or restarts) a named timer. Read it later with Elapsed.",
+						"script": "src/start_timer.py",
+						"configurations": [
+							{
+								"displayName": "Name",
+								"description": "Which timer — Elapsed reads it by this same name.",
+								"type": "string",
+								"defaultValue": "timer"
+							}
+						]
+					},
+					{
+						"displayName": "Elapsed",
+						"description": "How long since Start Timer started the timer with this name.",
+						"script": "src/elapsed.py",
+						"configurations": [
+							{
+								"displayName": "Name",
+								"description": "The timer to read, as named in Start Timer.",
+								"type": "string",
+								"defaultValue": "timer"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "elapsed",
+								"type": "int",
+								"description": "Milliseconds since the timer started."
+							}
+						]
+					},
+					{
+						"displayName": "Every",
+						"description": "Goes out Due once every interval, Waiting the rest of the time — runs part of a looping program on a fixed rhythm without blocking the rest.\n",
+						"script": "src/every.py",
+						"configurations": [
+							{
+								"displayName": "Interval",
+								"description": "How often to go out Due, in Unit.",
+								"type": "number",
+								"defaultValue": "1000"
+							},
+							{
+								"displayName": "Unit",
+								"description": "Unit of Interval.",
+								"type": "options",
+								"defaultValue": "ms",
+								"options": [
+									{
+										"displayName": "Milliseconds",
+										"value": "ms"
+									},
+									{
+										"displayName": "Seconds",
+										"value": "s"
+									},
+									{
+										"displayName": "Minutes",
+										"value": "min"
+									}
+								]
+							},
+							{
+								"displayName": "Name",
+								"advanced": true,
+								"description": "Tells several Every apart — each name keeps its own rhythm.",
+								"type": "string",
+								"defaultValue": "every"
+							}
+						],
+						"outputs": [
+							{
+								"id": "due",
+								"name": "Due"
+							},
+							{
+								"id": "wait",
+								"name": "Waiting"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "elapsed",
+								"type": "int",
+								"description": "Milliseconds since the last time it went out Due."
+							}
+						]
+					}
+				],
+				"triggers": [
+					{
+						"displayName": "Timer Trigger",
+						"icon": "alarm-clock",
+						"description": "Runs its branch every Interval — on its own, alongside whatever Start does.",
+						"script": "src/timer_trigger.py",
+						"configurations": [
+							{
+								"displayName": "Interval",
+								"description": "Time between runs, in milliseconds (10 at least).",
+								"type": "number",
+								"defaultValue": "1000",
+								"required": true,
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 10
+									}
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "count",
+								"type": "int",
+								"description": "How many times it fired since the program started."
+							}
+						]
+					}
+				]
+			},
+			"actions": [
+				{
+					"id": "0b76b0eb-eb57-4a34-bda6-6ea0d3974c0e",
+					"componentId": "8e6cc4c4-70c8-428d-8689-6049bffb9e20",
+					"alias": "Delay",
+					"base": {
+						"displayName": "Delay",
+						"description": "Waits for the given duration, then continues.",
+						"script": "src/delay.py",
+						"configurations": [
+							{
+								"displayName": "Duration",
+								"description": "How long to wait, in Unit.",
+								"type": "number",
+								"defaultValue": "1000"
+							},
+							{
+								"displayName": "Unit",
+								"description": "Unit of Duration.",
+								"type": "options",
+								"defaultValue": "ms",
+								"options": [
+									{
+										"displayName": "Milliseconds",
+										"value": "ms"
+									},
+									{
+										"displayName": "Seconds",
+										"value": "s"
+									},
+									{
+										"displayName": "Minutes",
+										"value": "min"
+									}
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "duration",
+								"type": "int",
+								"description": "The time waited, in milliseconds."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "910dedc7-3d6d-4adc-9a97-3dbdd4dd3780",
+							"base": {
+								"displayName": "Duration",
+								"description": "How long to wait, in Unit.",
+								"type": "number",
+								"defaultValue": "1000"
+							},
+							"binding": null,
+							"value": "600"
+						},
+						{
+							"id": "eb7c3d87-6ec6-4e84-adec-437efb5bad52",
+							"base": {
+								"displayName": "Unit",
+								"description": "Unit of Duration.",
+								"type": "options",
+								"defaultValue": "ms",
+								"options": [
+									{
+										"displayName": "Milliseconds",
+										"value": "ms"
+									},
+									{
+										"displayName": "Seconds",
+										"value": "s"
+									},
+									{
+										"displayName": "Minutes",
+										"value": "min"
+									}
+								]
+							},
+							"binding": null,
+							"value": "ms"
+						}
+					],
+					"inputs": [
+						{
+							"id": "b0c42a11-5a9a-4d40-9994-7603b3f8e3d8",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "b0adabfe-2b52-423b-a752-ed3681f362b3",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 1080,
+					"y": 120
+				},
+				{
+					"id": "ec788f04-0171-4c61-9ff6-042f6a3b4530",
+					"componentId": "8e6cc4c4-70c8-428d-8689-6049bffb9e20",
+					"alias": "Delay",
+					"base": {
+						"displayName": "Delay",
+						"description": "Waits for the given duration, then continues.",
+						"script": "src/delay.py",
+						"configurations": [
+							{
+								"displayName": "Duration",
+								"description": "How long to wait, in Unit.",
+								"type": "number",
+								"defaultValue": "1000"
+							},
+							{
+								"displayName": "Unit",
+								"description": "Unit of Duration.",
+								"type": "options",
+								"defaultValue": "ms",
+								"options": [
+									{
+										"displayName": "Milliseconds",
+										"value": "ms"
+									},
+									{
+										"displayName": "Seconds",
+										"value": "s"
+									},
+									{
+										"displayName": "Minutes",
+										"value": "min"
+									}
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "duration",
+								"type": "int",
+								"description": "The time waited, in milliseconds."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "f9a91f13-8610-447c-9c34-6b3e9dea0e9a",
+							"base": {
+								"displayName": "Duration",
+								"description": "How long to wait, in Unit.",
+								"type": "number",
+								"defaultValue": "1000"
+							},
+							"binding": null,
+							"value": "600"
+						},
+						{
+							"id": "62f65f1a-3722-4112-9aa1-e6d402b42883",
+							"base": {
+								"displayName": "Unit",
+								"description": "Unit of Duration.",
+								"type": "options",
+								"defaultValue": "ms",
+								"options": [
+									{
+										"displayName": "Milliseconds",
+										"value": "ms"
+									},
+									{
+										"displayName": "Seconds",
+										"value": "s"
+									},
+									{
+										"displayName": "Minutes",
+										"value": "min"
+									}
+								]
+							},
+							"binding": null,
+							"value": "ms"
+						}
+					],
+					"inputs": [
+						{
+							"id": "ee9a478b-5a17-4526-aa5b-8f2ee76c8a6f",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "ff164b9a-196d-413b-8fcf-4fe7b7c197e4",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 1800,
+					"y": 120
+				}
+			]
+		},
+		{
+			"id": "373346b0-37c1-4613-ad6c-49b4d73ee882",
+			"packageId": "pwm",
+			"alias": "PWM",
+			"base": {
+				"displayName": "PWM",
+				"description": "A PWM signal on a pin — for dimming a LED, setting a DC motor's speed (through a driver or transistor), driving a buzzer. Write sets a duty and holds it, Fade moves to one smoothly over a time, Stop cuts the signal. For servos, use the Servo component.\n",
+				"actions": [
+					{
+						"displayName": "Write",
+						"description": "Puts a PWM signal on the pin — Duty % of the time on — and holds it until the next action on the pin.",
+						"script": "src/write.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "Board pin the signal goes out on — only PWM-capable pins are listed.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"pwm"
+								],
+								"required": true
+							},
+							{
+								"displayName": "Duty",
+								"description": "How much of the time the pin is on, from 0 (off) to 100 (fully on), in %. Decimals are fine (12.5). Bind it to follow a sensor.\n",
+								"type": "number",
+								"defaultValue": "50",
+								"placeholder": "0–100 %",
+								"required": true,
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 100
+									}
+								]
+							},
+							{
+								"displayName": "Frequency",
+								"description": "Signal frequency, from 1 to 40000 Hz. 1000 suits LEDs; motors run quieter at 20000 (out of hearing); on a buzzer it's the note.\n",
+								"type": "number",
+								"defaultValue": "1000",
+								"placeholder": "1–40000 Hz",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 40000
+									}
+								]
+							},
+							{
+								"displayName": "Scale",
+								"advanced": true,
+								"description": "How Duty maps to the signal. Perceived brightness follows how the eye sees light, so a LED dims evenly (50% looks half as bright); keep Linear for motors and buzzers.\n",
+								"type": "options",
+								"defaultValue": "linear",
+								"options": [
+									{
+										"displayName": "Linear",
+										"value": "linear"
+									},
+									{
+										"displayName": "Perceived brightness",
+										"value": "perceived"
+									}
+								]
+							},
+							{
+								"displayName": "Invert",
+								"advanced": true,
+								"description": "On for a load that's on when the pin is LOW — a LED wired from 3.3 V to the pin, an active-low driver. 100% is then fully on.\n",
+								"type": "toggle",
+								"label": "Active low",
+								"defaultValue": false
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "duty",
+								"type": "float",
+								"description": "The duty set, in % (0–100)."
+							},
+							{
+								"name": "frequency",
+								"type": "int",
+								"description": "The frequency set, in Hz."
+							}
+						]
+					},
+					{
+						"displayName": "Fade",
+						"description": "Moves the pin's duty smoothly to To over Duration, then holds it — a LED fading in or out, a motor easing up.",
+						"script": "src/fade.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "Board pin the signal goes out on — only PWM-capable pins are listed.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"pwm"
+								],
+								"required": true
+							},
+							{
+								"displayName": "To",
+								"description": "The duty to end at, from 0 to 100, in %.",
+								"type": "number",
+								"defaultValue": "100",
+								"placeholder": "0–100 %",
+								"required": true,
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 100
+									}
+								]
+							},
+							{
+								"displayName": "Duration",
+								"description": "How long the fade takes, in milliseconds — 0 jumps straight to To, up to 600000 (10 minutes). The flow waits for it, like a Delay.\n",
+								"type": "number",
+								"defaultValue": "1000",
+								"placeholder": "ms",
+								"required": true,
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 600000
+									}
+								]
+							},
+							{
+								"displayName": "From",
+								"advanced": true,
+								"description": "The duty to start at, from 0 to 100, in %. Leave it empty to start where the pin is now (what the last Write or Fade left it at — 0 if none).\n",
+								"type": "number",
+								"placeholder": "current",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 100
+									}
+								]
+							},
+							{
+								"displayName": "Frequency",
+								"description": "Signal frequency, from 1 to 40000 Hz. 1000 suits LEDs; motors run quieter at 20000 (out of hearing); on a buzzer it's the note.\n",
+								"type": "number",
+								"defaultValue": "1000",
+								"placeholder": "1–40000 Hz",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 40000
+									}
+								]
+							},
+							{
+								"displayName": "Scale",
+								"advanced": true,
+								"description": "How Duty maps to the signal. Perceived brightness follows how the eye sees light, so a LED dims evenly (50% looks half as bright); keep Linear for motors and buzzers.\n",
+								"type": "options",
+								"defaultValue": "linear",
+								"options": [
+									{
+										"displayName": "Linear",
+										"value": "linear"
+									},
+									{
+										"displayName": "Perceived brightness",
+										"value": "perceived"
+									}
+								]
+							},
+							{
+								"displayName": "Invert",
+								"advanced": true,
+								"description": "On for a load that's on when the pin is LOW — a LED wired from 3.3 V to the pin, an active-low driver. 100% is then fully on.\n",
+								"type": "toggle",
+								"label": "Active low",
+								"defaultValue": false
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "duty",
+								"type": "float",
+								"description": "The duty it ended at (To), in %."
+							}
+						]
+					},
+					{
+						"displayName": "Stop",
+						"description": "Cuts the signal and frees the pin.",
+						"script": "src/stop.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "Board pin the signal goes out on — only PWM-capable pins are listed.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"pwm"
+								],
+								"required": true
+							},
+							{
+								"displayName": "Hold Low",
+								"description": "Drive the pin LOW after stopping, so what's on it stays off. Off: the pin is left floating (an input).\n",
+								"type": "toggle",
+								"label": "LOW after",
+								"defaultValue": true
+							}
+						]
+					}
+				]
+			},
+			"actions": [
+				{
+					"id": "5d27766a-cf2f-4498-baa6-4ecc67ca655c",
+					"componentId": "373346b0-37c1-4613-ad6c-49b4d73ee882",
+					"alias": "Fade",
+					"base": {
+						"displayName": "Fade",
+						"description": "Moves the pin's duty smoothly to To over Duration, then holds it — a LED fading in or out, a motor easing up.",
+						"script": "src/fade.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "Board pin the signal goes out on — only PWM-capable pins are listed.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"pwm"
+								],
+								"required": true
+							},
+							{
+								"displayName": "To",
+								"description": "The duty to end at, from 0 to 100, in %.",
+								"type": "number",
+								"defaultValue": "100",
+								"placeholder": "0–100 %",
+								"required": true,
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 100
+									}
+								]
+							},
+							{
+								"displayName": "Duration",
+								"description": "How long the fade takes, in milliseconds — 0 jumps straight to To, up to 600000 (10 minutes). The flow waits for it, like a Delay.\n",
+								"type": "number",
+								"defaultValue": "1000",
+								"placeholder": "ms",
+								"required": true,
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 600000
+									}
+								]
+							},
+							{
+								"displayName": "From",
+								"advanced": true,
+								"description": "The duty to start at, from 0 to 100, in %. Leave it empty to start where the pin is now (what the last Write or Fade left it at — 0 if none).\n",
+								"type": "number",
+								"placeholder": "current",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 100
+									}
+								]
+							},
+							{
+								"displayName": "Frequency",
+								"description": "Signal frequency, from 1 to 40000 Hz. 1000 suits LEDs; motors run quieter at 20000 (out of hearing); on a buzzer it's the note.\n",
+								"type": "number",
+								"defaultValue": "1000",
+								"placeholder": "1–40000 Hz",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 40000
+									}
+								]
+							},
+							{
+								"displayName": "Scale",
+								"advanced": true,
+								"description": "How Duty maps to the signal. Perceived brightness follows how the eye sees light, so a LED dims evenly (50% looks half as bright); keep Linear for motors and buzzers.\n",
+								"type": "options",
+								"defaultValue": "linear",
+								"options": [
+									{
+										"displayName": "Linear",
+										"value": "linear"
+									},
+									{
+										"displayName": "Perceived brightness",
+										"value": "perceived"
+									}
+								]
+							},
+							{
+								"displayName": "Invert",
+								"advanced": true,
+								"description": "On for a load that's on when the pin is LOW — a LED wired from 3.3 V to the pin, an active-low driver. 100% is then fully on.\n",
+								"type": "toggle",
+								"label": "Active low",
+								"defaultValue": false
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "duty",
+								"type": "float",
+								"description": "The duty it ended at (To), in %."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "79f99e9d-1f6d-4089-a4c1-46cb51b304ed",
+							"base": {
+								"displayName": "Pin",
+								"description": "Board pin the signal goes out on — only PWM-capable pins are listed.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"pwm"
+								],
+								"required": true
+							},
+							"binding": null,
+							"value": {
+								"gpio": 2,
+								"type": [
+									"digital_in",
+									"digital_out",
+									"analog_in",
+									"pwm",
+									"touch"
+								],
+								"displayName": "GPIO2"
+							}
+						},
+						{
+							"id": "e2aca29a-ed39-45b0-8d2a-c8d80719d27c",
+							"base": {
+								"displayName": "To",
+								"description": "The duty to end at, from 0 to 100, in %.",
+								"type": "number",
+								"defaultValue": "100",
+								"placeholder": "0–100 %",
+								"required": true,
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 100
+									}
+								]
+							},
+							"binding": null,
+							"value": "100"
+						},
+						{
+							"id": "637ed6d7-cce3-4843-b93e-3b43c59b4240",
+							"base": {
+								"displayName": "Duration",
+								"description": "How long the fade takes, in milliseconds — 0 jumps straight to To, up to 600000 (10 minutes). The flow waits for it, like a Delay.\n",
+								"type": "number",
+								"defaultValue": "1000",
+								"placeholder": "ms",
+								"required": true,
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 600000
+									}
+								]
+							},
+							"binding": null,
+							"value": "1500"
+						},
+						{
+							"id": "fe68a2ab-609a-402c-a542-615af0bfa9cb",
+							"base": {
+								"displayName": "From",
+								"advanced": true,
+								"description": "The duty to start at, from 0 to 100, in %. Leave it empty to start where the pin is now (what the last Write or Fade left it at — 0 if none).\n",
+								"type": "number",
+								"placeholder": "current",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 100
+									}
+								]
+							},
+							"binding": null
+						},
+						{
+							"id": "0a658b58-2c87-48f5-83c1-a5179fc3eec5",
+							"base": {
+								"displayName": "Frequency",
+								"description": "Signal frequency, from 1 to 40000 Hz. 1000 suits LEDs; motors run quieter at 20000 (out of hearing); on a buzzer it's the note.\n",
+								"type": "number",
+								"defaultValue": "1000",
+								"placeholder": "1–40000 Hz",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 40000
+									}
+								]
+							},
+							"binding": null,
+							"value": "1000"
+						},
+						{
+							"id": "73f13db2-e1a9-4c32-ac37-dc2a3afe30df",
+							"base": {
+								"displayName": "Scale",
+								"advanced": true,
+								"description": "How Duty maps to the signal. Perceived brightness follows how the eye sees light, so a LED dims evenly (50% looks half as bright); keep Linear for motors and buzzers.\n",
+								"type": "options",
+								"defaultValue": "linear",
+								"options": [
+									{
+										"displayName": "Linear",
+										"value": "linear"
+									},
+									{
+										"displayName": "Perceived brightness",
+										"value": "perceived"
+									}
+								]
+							},
+							"binding": null,
+							"value": "linear"
+						},
+						{
+							"id": "1839b114-20a5-4c1e-afb1-44b30e3f1d76",
+							"base": {
+								"displayName": "Invert",
+								"advanced": true,
+								"description": "On for a load that's on when the pin is LOW — a LED wired from 3.3 V to the pin, an active-low driver. 100% is then fully on.\n",
+								"type": "toggle",
+								"label": "Active low",
+								"defaultValue": false
+							},
+							"binding": null,
+							"value": false
+						}
+					],
+					"inputs": [
+						{
+							"id": "55b06d84-ce0e-4b38-9468-aa706e36c69c",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "d1cc7eb8-b412-4716-abd5-28452ec2311f",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 720,
+					"y": -120
+				}
+			]
+		}
+	],
+	"connections": [
+		{
+			"id": "55edd9d3-554d-460a-be66-cecfc8ce6010",
+			"source": "aca5cf69-501a-495a-9733-c4d37d429022",
+			"target": "9abd6e62-9157-48f1-8617-857ff86f80b4",
+			"sourceHandle": "b2e8b145-f09f-4198-a836-e9603370d845",
+			"targetHandle": "349cb72a-9c0b-48e6-9230-9bf39253ddca"
+		},
+		{
+			"id": "b45e5798-505e-4922-88bf-6b434e721d32",
+			"source": "9abd6e62-9157-48f1-8617-857ff86f80b4",
+			"target": "87dfd11c-cc47-4da1-84d8-db998313e590",
+			"sourceHandle": "f3f3b9e9-4902-4cc7-a7e6-366f65ab766e",
+			"targetHandle": "34180f1d-37bc-4a48-9aa6-55bbd9ac7b1c"
+		},
+		{
+			"id": "74849e63-95a2-4c4b-b005-7ccfe8cfbb86",
+			"source": "87dfd11c-cc47-4da1-84d8-db998313e590",
+			"target": "0b76b0eb-eb57-4a34-bda6-6ea0d3974c0e",
+			"sourceHandle": "1c0dd8c7-2aff-450b-bc33-08bb42884a6c",
+			"targetHandle": "b0c42a11-5a9a-4d40-9994-7603b3f8e3d8"
+		},
+		{
+			"id": "437dd746-3a91-4332-930e-b51e99e4f726",
+			"source": "0b76b0eb-eb57-4a34-bda6-6ea0d3974c0e",
+			"target": "818b85dc-fdaf-4b72-b73e-e040a9d0c91a",
+			"sourceHandle": "b0adabfe-2b52-423b-a752-ed3681f362b3",
+			"targetHandle": "e3598f92-291f-470b-8c7e-920c438cef83"
+		},
+		{
+			"id": "19ad3007-657a-4e1f-a5f2-3110d2ecaf1b",
+			"source": "818b85dc-fdaf-4b72-b73e-e040a9d0c91a",
+			"target": "ec788f04-0171-4c61-9ff6-042f6a3b4530",
+			"sourceHandle": "89f96160-04c9-4f93-ba92-5cfaab12ec49",
+			"targetHandle": "ee9a478b-5a17-4526-aa5b-8f2ee76c8a6f"
+		},
+		{
+			"id": "15648ee4-4425-4d69-a275-4163b502e22d",
+			"source": "ec788f04-0171-4c61-9ff6-042f6a3b4530",
+			"target": "9abd6e62-9157-48f1-8617-857ff86f80b4",
+			"sourceHandle": "ff164b9a-196d-413b-8fcf-4fe7b7c197e4",
+			"targetHandle": "349cb72a-9c0b-48e6-9230-9bf39253ddca"
+		},
+		{
+			"id": "6b2fe37f-8e71-4d57-9cae-b6226d8b476e",
+			"source": "9abd6e62-9157-48f1-8617-857ff86f80b4",
+			"target": "5d27766a-cf2f-4498-baa6-4ecc67ca655c",
+			"sourceHandle": "52b0dad6-2d8d-43e2-beb1-2347bbea0e08",
+			"targetHandle": "55b06d84-ce0e-4b38-9468-aa706e36c69c"
+		}
+	]
+}

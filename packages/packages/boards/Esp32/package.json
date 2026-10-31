@@ -1,0 +1,16 @@
+{
+	"name": "@henglosio/board-esp32",
+	"version": "1.0.0",
+	"description": "Esp32 board package for HenglosIO",
+	"author": "Henglos",
+	"license": "SEE LICENSE IN LICENSE",
+	"type": "module",
+	"exports": {
+		"./manifest.yaml": "./workspace/manifest.yaml",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"workspace/manifest.yaml",
+		"workspace/board.schema.yaml"
+	]
+}

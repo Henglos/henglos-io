@@ -1,0 +1,2978 @@
+{
+	"name": "Water alarm",
+	"description": "A leak sounds the alarm; a button silences it.",
+	"board": {
+		"id": "dee255b9-8b15-4397-8240-6092afaf0c54",
+		"packageId": "board",
+		"base": {
+			"name": "Esp32 Generic",
+			"description": "Board Description",
+			"pins": [
+				{
+					"gpio": 0,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch"
+					],
+					"displayName": "GPIO0"
+				},
+				{
+					"gpio": 1,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm"
+					],
+					"displayName": "GPIO1"
+				},
+				{
+					"gpio": 2,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch"
+					],
+					"displayName": "GPIO2"
+				},
+				{
+					"gpio": 3,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm"
+					],
+					"displayName": "GPIO3"
+				},
+				{
+					"gpio": 4,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO4"
+				},
+				{
+					"gpio": 5,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm"
+					],
+					"displayName": "GPIO5"
+				},
+				{
+					"gpio": 12,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch"
+					],
+					"displayName": "GPIO12"
+				},
+				{
+					"gpio": 13,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO13"
+				},
+				{
+					"gpio": 14,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO14"
+				},
+				{
+					"gpio": 15,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch"
+					],
+					"displayName": "GPIO15"
+				},
+				{
+					"gpio": 16,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO16"
+				},
+				{
+					"gpio": 17,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO17"
+				},
+				{
+					"gpio": 18,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO18"
+				},
+				{
+					"gpio": 19,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO19"
+				},
+				{
+					"gpio": 21,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO21"
+				},
+				{
+					"gpio": 22,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO22"
+				},
+				{
+					"gpio": 23,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO23"
+				},
+				{
+					"gpio": 25,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"analog_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO25"
+				},
+				{
+					"gpio": 26,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"analog_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO26"
+				},
+				{
+					"gpio": 27,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO27"
+				},
+				{
+					"gpio": 32,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO32"
+				},
+				{
+					"gpio": 33,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO33"
+				},
+				{
+					"gpio": 34,
+					"type": [
+						"digital_in",
+						"analog_in"
+					],
+					"displayName": "GPIO34"
+				},
+				{
+					"gpio": 35,
+					"type": [
+						"digital_in",
+						"analog_in"
+					],
+					"displayName": "GPIO35"
+				},
+				{
+					"gpio": 36,
+					"type": [
+						"digital_in",
+						"analog_in"
+					],
+					"displayName": "GPIO36"
+				},
+				{
+					"gpio": 39,
+					"type": [
+						"digital_in",
+						"analog_in"
+					],
+					"displayName": "GPIO39"
+				}
+			],
+			"connection": {
+				"serial": {
+					"baudrates": [
+						115200,
+						9600,
+						19200,
+						38400,
+						57600,
+						230400,
+						460800,
+						921600
+					]
+				}
+			},
+			"capabilities": [
+				"wifi",
+				"bluetooth"
+			]
+		},
+		"configurations": [],
+		"connection": null,
+		"actions": []
+	},
+	"start": {
+		"id": "9197b7b4-1795-443f-a0a7-b033383da8a5",
+		"componentId": "core",
+		"alias": "Start",
+		"base": {
+			"displayName": "Start",
+			"description": "Entry point of the workflow — runs first; connect its output to the first action in the flow.",
+			"outputs": [
+				{
+					"id": "start",
+					"name": "Start"
+				}
+			],
+			"configurations": [
+				{
+					"displayName": "Mode",
+					"description": "Whether the workflow keeps looping back to Start after finishing, or runs through once.",
+					"type": "options",
+					"defaultValue": "loop",
+					"options": [
+						{
+							"displayName": "Loop",
+							"value": "loop"
+						},
+						{
+							"displayName": "Once",
+							"value": "once"
+						}
+					]
+				}
+			]
+		},
+		"configurations": [
+			{
+				"id": "94db584e-1830-4628-8681-9c7321818b8b",
+				"base": {
+					"displayName": "Mode",
+					"description": "Whether the workflow keeps looping back to Start after finishing, or runs through once.",
+					"type": "options",
+					"defaultValue": "loop",
+					"options": [
+						{
+							"displayName": "Loop",
+							"value": "loop"
+						},
+						{
+							"displayName": "Once",
+							"value": "once"
+						}
+					]
+				},
+				"binding": null,
+				"value": "loop"
+			}
+		],
+		"inputs": [
+			{
+				"id": "4729e22a-c3d8-45b6-846b-abdca05b2f17",
+				"base": {
+					"id": "default",
+					"name": "In"
+				}
+			}
+		],
+		"outputs": [
+			{
+				"id": "fc03d112-9542-4239-887d-92c363a29618",
+				"base": {
+					"id": "start",
+					"name": "Start"
+				}
+			}
+		],
+		"x": 0,
+		"y": 60
+	},
+	"components": [
+		{
+			"id": "core:logic",
+			"packageId": "core:logic",
+			"alias": "Logic",
+			"base": {
+				"displayName": "Logic",
+				"description": "Branch the flow: If, Switch and Repeat — built in, nothing to install.",
+				"actions": [
+					{
+						"displayName": "If",
+						"description": "Goes out True or False, depending on a condition — or on two, joined with AND / OR.",
+						"script": "",
+						"outputs": [
+							{
+								"id": "true",
+								"name": "True"
+							},
+							{
+								"id": "false",
+								"name": "False"
+							}
+						],
+						"configurations": [
+							{
+								"displayName": "Value",
+								"description": "What to test. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"placeholder": "e.g. bind distance"
+							},
+							{
+								"displayName": "Condition",
+								"description": "How to test it.",
+								"type": "options",
+								"defaultValue": "eq",
+								"options": [
+									{
+										"categoryName": "Compare",
+										"options": [
+											{
+												"displayName": "is equal to",
+												"value": "eq"
+											},
+											{
+												"displayName": "is not equal to",
+												"value": "ne"
+											},
+											{
+												"displayName": "is greater than",
+												"value": "gt"
+											},
+											{
+												"displayName": "is greater than or equal to",
+												"value": "gte"
+											},
+											{
+												"displayName": "is less than",
+												"value": "lt"
+											},
+											{
+												"displayName": "is less than or equal to",
+												"value": "lte"
+											}
+										]
+									},
+									{
+										"categoryName": "Text",
+										"options": [
+											{
+												"displayName": "contains",
+												"value": "contains"
+											},
+											{
+												"displayName": "does not contain",
+												"value": "not_contains"
+											},
+											{
+												"displayName": "starts with",
+												"value": "starts_with"
+											},
+											{
+												"displayName": "ends with",
+												"value": "ends_with"
+											}
+										]
+									},
+									{
+										"categoryName": "State",
+										"options": [
+											{
+												"displayName": "is true",
+												"value": "is_true"
+											},
+											{
+												"displayName": "is false",
+												"value": "is_false"
+											},
+											{
+												"displayName": "is empty",
+												"value": "is_empty"
+											},
+											{
+												"displayName": "is not empty",
+												"value": "is_not_empty"
+											}
+										]
+									}
+								]
+							},
+							{
+								"displayName": "Compare to",
+								"description": "What Value is compared with. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"placeholder": "e.g. 10",
+								"displayOptions": {
+									"hide": {
+										"Condition": [
+											"is_true",
+											"is_false",
+											"is_empty",
+											"is_not_empty"
+										]
+									}
+								}
+							},
+							{
+								"displayName": "Combine",
+								"description": "Add a second condition: both must hold (AND), or either one (OR).",
+								"type": "options",
+								"defaultValue": "none",
+								"options": [
+									{
+										"displayName": "Single condition",
+										"value": "none"
+									},
+									{
+										"displayName": "AND",
+										"value": "and"
+									},
+									{
+										"displayName": "OR",
+										"value": "or"
+									}
+								]
+							},
+							{
+								"displayName": "Value 2",
+								"description": "What the second condition tests. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"displayOptions": {
+									"show": {
+										"Combine": [
+											"and",
+											"or"
+										]
+									}
+								}
+							},
+							{
+								"displayName": "Condition 2",
+								"description": "How to test Value 2.",
+								"type": "options",
+								"defaultValue": "eq",
+								"options": [
+									{
+										"categoryName": "Compare",
+										"options": [
+											{
+												"displayName": "is equal to",
+												"value": "eq"
+											},
+											{
+												"displayName": "is not equal to",
+												"value": "ne"
+											},
+											{
+												"displayName": "is greater than",
+												"value": "gt"
+											},
+											{
+												"displayName": "is greater than or equal to",
+												"value": "gte"
+											},
+											{
+												"displayName": "is less than",
+												"value": "lt"
+											},
+											{
+												"displayName": "is less than or equal to",
+												"value": "lte"
+											}
+										]
+									},
+									{
+										"categoryName": "Text",
+										"options": [
+											{
+												"displayName": "contains",
+												"value": "contains"
+											},
+											{
+												"displayName": "does not contain",
+												"value": "not_contains"
+											},
+											{
+												"displayName": "starts with",
+												"value": "starts_with"
+											},
+											{
+												"displayName": "ends with",
+												"value": "ends_with"
+											}
+										]
+									},
+									{
+										"categoryName": "State",
+										"options": [
+											{
+												"displayName": "is true",
+												"value": "is_true"
+											},
+											{
+												"displayName": "is false",
+												"value": "is_false"
+											},
+											{
+												"displayName": "is empty",
+												"value": "is_empty"
+											},
+											{
+												"displayName": "is not empty",
+												"value": "is_not_empty"
+											}
+										]
+									}
+								],
+								"displayOptions": {
+									"show": {
+										"Combine": [
+											"and",
+											"or"
+										]
+									}
+								}
+							},
+							{
+								"displayName": "Compare to 2",
+								"description": "What Value 2 is compared with. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"displayOptions": {
+									"show": {
+										"Combine": [
+											"and",
+											"or"
+										]
+									},
+									"hide": {
+										"Condition 2": [
+											"is_true",
+											"is_false",
+											"is_empty",
+											"is_not_empty"
+										]
+									}
+								}
+							}
+						]
+					},
+					{
+						"displayName": "Switch",
+						"description": "Routes the flow by value: out the first case that matches, or Default when none does.",
+						"script": "",
+						"outputs": [
+							{
+								"id": "case_1",
+								"name": "Case 1"
+							},
+							{
+								"id": "case_2",
+								"name": "Case 2"
+							},
+							{
+								"id": "case_3",
+								"name": "Case 3"
+							},
+							{
+								"id": "otherwise",
+								"name": "Default"
+							}
+						],
+						"configurations": [
+							{
+								"displayName": "Value",
+								"description": "What to route on. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"placeholder": "e.g. bind mode"
+							},
+							{
+								"displayName": "Match",
+								"description": "How Value is matched against each case.",
+								"type": "options",
+								"defaultValue": "eq",
+								"options": [
+									{
+										"categoryName": "Compare",
+										"options": [
+											{
+												"displayName": "is equal to",
+												"value": "eq"
+											},
+											{
+												"displayName": "is not equal to",
+												"value": "ne"
+											},
+											{
+												"displayName": "is greater than",
+												"value": "gt"
+											},
+											{
+												"displayName": "is greater than or equal to",
+												"value": "gte"
+											},
+											{
+												"displayName": "is less than",
+												"value": "lt"
+											},
+											{
+												"displayName": "is less than or equal to",
+												"value": "lte"
+											}
+										]
+									},
+									{
+										"categoryName": "Text",
+										"options": [
+											{
+												"displayName": "contains",
+												"value": "contains"
+											},
+											{
+												"displayName": "does not contain",
+												"value": "not_contains"
+											},
+											{
+												"displayName": "starts with",
+												"value": "starts_with"
+											},
+											{
+												"displayName": "ends with",
+												"value": "ends_with"
+											}
+										]
+									}
+								]
+							},
+							{
+								"displayName": "Case 1",
+								"description": "Out Case 1 when Value matches this. Empty: never.",
+								"type": "string",
+								"placeholder": "e.g. 1"
+							},
+							{
+								"displayName": "Case 2",
+								"description": "Out Case 2 when Value matches this. Empty: never.",
+								"type": "string"
+							},
+							{
+								"displayName": "Case 3",
+								"description": "Out Case 3 when Value matches this. Empty: never.",
+								"type": "string"
+							}
+						]
+					},
+					{
+						"displayName": "Repeat",
+						"description": "Runs the Loop branch a number of times, then goes out Done. Wire the loop's last action back into Repeat.",
+						"script": "",
+						"outputs": [
+							{
+								"id": "loop",
+								"name": "Loop"
+							},
+							{
+								"id": "done",
+								"name": "Done"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "iteration",
+								"type": "int",
+								"description": "Which time round this is — 1 on the first loop."
+							}
+						],
+						"configurations": [
+							{
+								"displayName": "Times",
+								"description": "How many times the Loop branch runs before Done.",
+								"type": "number",
+								"defaultValue": "3",
+								"required": true
+							}
+						]
+					}
+				]
+			},
+			"actions": [
+				{
+					"id": "fb832ac7-99a7-4d15-a52d-0b29a049aa58",
+					"componentId": "core:logic",
+					"alias": "If",
+					"base": {
+						"displayName": "If",
+						"description": "Goes out True or False, depending on a condition — or on two, joined with AND / OR.",
+						"script": "",
+						"outputs": [
+							{
+								"id": "true",
+								"name": "True"
+							},
+							{
+								"id": "false",
+								"name": "False"
+							}
+						],
+						"configurations": [
+							{
+								"displayName": "Value",
+								"description": "What to test. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"placeholder": "e.g. bind distance"
+							},
+							{
+								"displayName": "Condition",
+								"description": "How to test it.",
+								"type": "options",
+								"defaultValue": "eq",
+								"options": [
+									{
+										"categoryName": "Compare",
+										"options": [
+											{
+												"displayName": "is equal to",
+												"value": "eq"
+											},
+											{
+												"displayName": "is not equal to",
+												"value": "ne"
+											},
+											{
+												"displayName": "is greater than",
+												"value": "gt"
+											},
+											{
+												"displayName": "is greater than or equal to",
+												"value": "gte"
+											},
+											{
+												"displayName": "is less than",
+												"value": "lt"
+											},
+											{
+												"displayName": "is less than or equal to",
+												"value": "lte"
+											}
+										]
+									},
+									{
+										"categoryName": "Text",
+										"options": [
+											{
+												"displayName": "contains",
+												"value": "contains"
+											},
+											{
+												"displayName": "does not contain",
+												"value": "not_contains"
+											},
+											{
+												"displayName": "starts with",
+												"value": "starts_with"
+											},
+											{
+												"displayName": "ends with",
+												"value": "ends_with"
+											}
+										]
+									},
+									{
+										"categoryName": "State",
+										"options": [
+											{
+												"displayName": "is true",
+												"value": "is_true"
+											},
+											{
+												"displayName": "is false",
+												"value": "is_false"
+											},
+											{
+												"displayName": "is empty",
+												"value": "is_empty"
+											},
+											{
+												"displayName": "is not empty",
+												"value": "is_not_empty"
+											}
+										]
+									}
+								]
+							},
+							{
+								"displayName": "Compare to",
+								"description": "What Value is compared with. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"placeholder": "e.g. 10",
+								"displayOptions": {
+									"hide": {
+										"Condition": [
+											"is_true",
+											"is_false",
+											"is_empty",
+											"is_not_empty"
+										]
+									}
+								}
+							},
+							{
+								"displayName": "Combine",
+								"description": "Add a second condition: both must hold (AND), or either one (OR).",
+								"type": "options",
+								"defaultValue": "none",
+								"options": [
+									{
+										"displayName": "Single condition",
+										"value": "none"
+									},
+									{
+										"displayName": "AND",
+										"value": "and"
+									},
+									{
+										"displayName": "OR",
+										"value": "or"
+									}
+								]
+							},
+							{
+								"displayName": "Value 2",
+								"description": "What the second condition tests. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"displayOptions": {
+									"show": {
+										"Combine": [
+											"and",
+											"or"
+										]
+									}
+								}
+							},
+							{
+								"displayName": "Condition 2",
+								"description": "How to test Value 2.",
+								"type": "options",
+								"defaultValue": "eq",
+								"options": [
+									{
+										"categoryName": "Compare",
+										"options": [
+											{
+												"displayName": "is equal to",
+												"value": "eq"
+											},
+											{
+												"displayName": "is not equal to",
+												"value": "ne"
+											},
+											{
+												"displayName": "is greater than",
+												"value": "gt"
+											},
+											{
+												"displayName": "is greater than or equal to",
+												"value": "gte"
+											},
+											{
+												"displayName": "is less than",
+												"value": "lt"
+											},
+											{
+												"displayName": "is less than or equal to",
+												"value": "lte"
+											}
+										]
+									},
+									{
+										"categoryName": "Text",
+										"options": [
+											{
+												"displayName": "contains",
+												"value": "contains"
+											},
+											{
+												"displayName": "does not contain",
+												"value": "not_contains"
+											},
+											{
+												"displayName": "starts with",
+												"value": "starts_with"
+											},
+											{
+												"displayName": "ends with",
+												"value": "ends_with"
+											}
+										]
+									},
+									{
+										"categoryName": "State",
+										"options": [
+											{
+												"displayName": "is true",
+												"value": "is_true"
+											},
+											{
+												"displayName": "is false",
+												"value": "is_false"
+											},
+											{
+												"displayName": "is empty",
+												"value": "is_empty"
+											},
+											{
+												"displayName": "is not empty",
+												"value": "is_not_empty"
+											}
+										]
+									}
+								],
+								"displayOptions": {
+									"show": {
+										"Combine": [
+											"and",
+											"or"
+										]
+									}
+								}
+							},
+							{
+								"displayName": "Compare to 2",
+								"description": "What Value 2 is compared with. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"displayOptions": {
+									"show": {
+										"Combine": [
+											"and",
+											"or"
+										]
+									},
+									"hide": {
+										"Condition 2": [
+											"is_true",
+											"is_false",
+											"is_empty",
+											"is_not_empty"
+										]
+									}
+								}
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "2f7b02a1-891f-4f87-bb34-41334b86896b",
+							"base": {
+								"displayName": "Value",
+								"description": "What to test. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"placeholder": "e.g. bind distance"
+							},
+							"binding": {
+								"actionId": "2db24805-67cb-4a9b-add2-d743862cf6d4",
+								"outputName": "wet"
+							}
+						},
+						{
+							"id": "a00cf7fe-8a39-4e58-8db6-c92e132d7b00",
+							"base": {
+								"displayName": "Condition",
+								"description": "How to test it.",
+								"type": "options",
+								"defaultValue": "eq",
+								"options": [
+									{
+										"categoryName": "Compare",
+										"options": [
+											{
+												"displayName": "is equal to",
+												"value": "eq"
+											},
+											{
+												"displayName": "is not equal to",
+												"value": "ne"
+											},
+											{
+												"displayName": "is greater than",
+												"value": "gt"
+											},
+											{
+												"displayName": "is greater than or equal to",
+												"value": "gte"
+											},
+											{
+												"displayName": "is less than",
+												"value": "lt"
+											},
+											{
+												"displayName": "is less than or equal to",
+												"value": "lte"
+											}
+										]
+									},
+									{
+										"categoryName": "Text",
+										"options": [
+											{
+												"displayName": "contains",
+												"value": "contains"
+											},
+											{
+												"displayName": "does not contain",
+												"value": "not_contains"
+											},
+											{
+												"displayName": "starts with",
+												"value": "starts_with"
+											},
+											{
+												"displayName": "ends with",
+												"value": "ends_with"
+											}
+										]
+									},
+									{
+										"categoryName": "State",
+										"options": [
+											{
+												"displayName": "is true",
+												"value": "is_true"
+											},
+											{
+												"displayName": "is false",
+												"value": "is_false"
+											},
+											{
+												"displayName": "is empty",
+												"value": "is_empty"
+											},
+											{
+												"displayName": "is not empty",
+												"value": "is_not_empty"
+											}
+										]
+									}
+								]
+							},
+							"binding": null,
+							"value": "is_true"
+						},
+						{
+							"id": "656ba736-8f4b-4376-9c2b-ecaf9fd9ed86",
+							"base": {
+								"displayName": "Compare to",
+								"description": "What Value is compared with. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"placeholder": "e.g. 10",
+								"displayOptions": {
+									"hide": {
+										"Condition": [
+											"is_true",
+											"is_false",
+											"is_empty",
+											"is_not_empty"
+										]
+									}
+								}
+							},
+							"binding": null
+						},
+						{
+							"id": "34cc95c4-f4a5-4dac-9da2-5057ecfdbbc5",
+							"base": {
+								"displayName": "Combine",
+								"description": "Add a second condition: both must hold (AND), or either one (OR).",
+								"type": "options",
+								"defaultValue": "none",
+								"options": [
+									{
+										"displayName": "Single condition",
+										"value": "none"
+									},
+									{
+										"displayName": "AND",
+										"value": "and"
+									},
+									{
+										"displayName": "OR",
+										"value": "or"
+									}
+								]
+							},
+							"binding": null,
+							"value": "none"
+						},
+						{
+							"id": "7e43ff64-a797-4258-928c-bb05a2fc5340",
+							"base": {
+								"displayName": "Value 2",
+								"description": "What the second condition tests. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"displayOptions": {
+									"show": {
+										"Combine": [
+											"and",
+											"or"
+										]
+									}
+								}
+							},
+							"binding": null
+						},
+						{
+							"id": "481e722d-2ad3-4b17-87f1-f5bd2998d17d",
+							"base": {
+								"displayName": "Condition 2",
+								"description": "How to test Value 2.",
+								"type": "options",
+								"defaultValue": "eq",
+								"options": [
+									{
+										"categoryName": "Compare",
+										"options": [
+											{
+												"displayName": "is equal to",
+												"value": "eq"
+											},
+											{
+												"displayName": "is not equal to",
+												"value": "ne"
+											},
+											{
+												"displayName": "is greater than",
+												"value": "gt"
+											},
+											{
+												"displayName": "is greater than or equal to",
+												"value": "gte"
+											},
+											{
+												"displayName": "is less than",
+												"value": "lt"
+											},
+											{
+												"displayName": "is less than or equal to",
+												"value": "lte"
+											}
+										]
+									},
+									{
+										"categoryName": "Text",
+										"options": [
+											{
+												"displayName": "contains",
+												"value": "contains"
+											},
+											{
+												"displayName": "does not contain",
+												"value": "not_contains"
+											},
+											{
+												"displayName": "starts with",
+												"value": "starts_with"
+											},
+											{
+												"displayName": "ends with",
+												"value": "ends_with"
+											}
+										]
+									},
+									{
+										"categoryName": "State",
+										"options": [
+											{
+												"displayName": "is true",
+												"value": "is_true"
+											},
+											{
+												"displayName": "is false",
+												"value": "is_false"
+											},
+											{
+												"displayName": "is empty",
+												"value": "is_empty"
+											},
+											{
+												"displayName": "is not empty",
+												"value": "is_not_empty"
+											}
+										]
+									}
+								],
+								"displayOptions": {
+									"show": {
+										"Combine": [
+											"and",
+											"or"
+										]
+									}
+								}
+							},
+							"binding": null,
+							"value": "eq"
+						},
+						{
+							"id": "7f7b7643-d8d6-4dc4-ba21-db330ca369ba",
+							"base": {
+								"displayName": "Compare to 2",
+								"description": "What Value 2 is compared with. A literal, or bind it to an output, a variable or a script.",
+								"type": "string",
+								"displayOptions": {
+									"show": {
+										"Combine": [
+											"and",
+											"or"
+										]
+									},
+									"hide": {
+										"Condition 2": [
+											"is_true",
+											"is_false",
+											"is_empty",
+											"is_not_empty"
+										]
+									}
+								}
+							},
+							"binding": null
+						}
+					],
+					"inputs": [
+						{
+							"id": "ec66b176-f9f6-42fc-afee-190280654369",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "72e625f9-6511-4dde-87f6-96f13aaa6253",
+							"base": {
+								"id": "true",
+								"name": "True"
+							}
+						},
+						{
+							"id": "7a27da9f-24c3-4c0b-ad25-4bb31b507973",
+							"base": {
+								"id": "false",
+								"name": "False"
+							}
+						}
+					],
+					"x": 720,
+					"y": 0
+				}
+			]
+		},
+		{
+			"id": "b622006f-9a3b-4f16-8a41-0301642cc21d",
+			"packageId": "water sensor",
+			"alias": "Water Sensor",
+			"base": {
+				"displayName": "Water Sensor",
+				"description": "An analog water level / leak sensor (the S + - module and the like): Read gives how much of it is under water, Detect branches Wet or Dry, Water Trigger runs a branch when it gets wet (or dries off), and Calibrate measures its Dry and Wet levels.\n",
+				"actions": [
+					{
+						"displayName": "Read",
+						"icon": "droplets",
+						"description": "How much of the sensor is under water — level from 0 (dry) to 100 % (as deep as it goes), wet once it reaches Threshold, and the raw reading.",
+						"script": "src/read.py",
+						"configurations": [
+							{
+								"displayName": "Signal Pin",
+								"description": "Board pin wired to the sensor's S — an analog input; GPIO32-39 keep working with Wi-Fi on.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"analog_in"
+								],
+								"required": true,
+								"defaultValue": {
+									"gpio": 36,
+									"type": [
+										"digital_in",
+										"analog_in"
+									],
+									"displayName": "GPIO36"
+								}
+							},
+							{
+								"displayName": "Power Pin",
+								"description": "Board pin wired to the sensor's + — powered only while it reads, so its traces don't corrode. Empty, wire + to 3.3 V.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							{
+								"displayName": "Threshold",
+								"description": "The level it counts as wet from, in % — 1 to 100.",
+								"type": "number",
+								"defaultValue": "10",
+								"placeholder": "1–100 %",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 100
+									}
+								]
+							},
+							{
+								"displayName": "Samples",
+								"advanced": true,
+								"description": "Readings averaged, 1 to 64 — more is steadier, a little slower.",
+								"type": "number",
+								"defaultValue": "8",
+								"placeholder": "1–64",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 64
+									}
+								]
+							},
+							{
+								"displayName": "Dry Level",
+								"advanced": true,
+								"description": "The raw reading out of the water (0 %), 0 to 65535 — until Calibrate measures it on the sensor.",
+								"type": "number",
+								"defaultValue": "0",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 65535
+									}
+								]
+							},
+							{
+								"displayName": "Wet Level",
+								"advanced": true,
+								"description": "The raw reading as deep as it goes (100 %), 0 to 65535 — until Calibrate measures it on the sensor.",
+								"type": "number",
+								"defaultValue": "35000",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 65535
+									}
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "level",
+								"type": "float",
+								"description": "How much of it is under water, 0 (dry) to 100 %."
+							},
+							{
+								"name": "wet",
+								"type": "bool",
+								"description": "Whether level reached Threshold."
+							},
+							{
+								"name": "raw",
+								"type": "int",
+								"description": "The voltage read, 0 (0 V) to 65535 (3.3 V) — to check the wiring and calibrate."
+							}
+						]
+					},
+					{
+						"displayName": "Detect",
+						"icon": "droplet",
+						"description": "Branches Wet or Dry — whether the level reaches Threshold. A leak under the sink, a full tank, rain.",
+						"script": "src/detect.py",
+						"configurations": [
+							{
+								"displayName": "Signal Pin",
+								"description": "Board pin wired to the sensor's S — an analog input; GPIO32-39 keep working with Wi-Fi on.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"analog_in"
+								],
+								"required": true,
+								"defaultValue": {
+									"gpio": 36,
+									"type": [
+										"digital_in",
+										"analog_in"
+									],
+									"displayName": "GPIO36"
+								}
+							},
+							{
+								"displayName": "Power Pin",
+								"description": "Board pin wired to the sensor's + — powered only while it reads, so its traces don't corrode. Empty, wire + to 3.3 V.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							{
+								"displayName": "Threshold",
+								"description": "The level it counts as wet from, in % — 1 to 100.",
+								"type": "number",
+								"defaultValue": "10",
+								"placeholder": "1–100 %",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 100
+									}
+								]
+							},
+							{
+								"displayName": "Samples",
+								"advanced": true,
+								"description": "Readings averaged, 1 to 64 — more is steadier, a little slower.",
+								"type": "number",
+								"defaultValue": "8",
+								"placeholder": "1–64",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 64
+									}
+								]
+							},
+							{
+								"displayName": "Dry Level",
+								"advanced": true,
+								"description": "The raw reading out of the water (0 %), 0 to 65535 — until Calibrate measures it on the sensor.",
+								"type": "number",
+								"defaultValue": "0",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 65535
+									}
+								]
+							},
+							{
+								"displayName": "Wet Level",
+								"advanced": true,
+								"description": "The raw reading as deep as it goes (100 %), 0 to 65535 — until Calibrate measures it on the sensor.",
+								"type": "number",
+								"defaultValue": "35000",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 65535
+									}
+								]
+							}
+						],
+						"outputs": [
+							{
+								"id": "wet",
+								"name": "Wet"
+							},
+							{
+								"id": "dry",
+								"name": "Dry"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "level",
+								"type": "float",
+								"description": "How much of it is under water, 0 (dry) to 100 %."
+							},
+							{
+								"name": "raw",
+								"type": "int",
+								"description": "The voltage read, 0 (0 V) to 65535 (3.3 V) — to check the wiring and calibrate."
+							}
+						]
+					},
+					{
+						"displayName": "Calibrate",
+						"icon": "gauge",
+						"description": "Takes the reading now as the sensor's Dry level (out of the water) or Wet level (as deep as it goes), for Read, Detect and Water Trigger on the same Signal pin — run it once with each. Kept on the board (/data/water_sensor.json): it stays across runs and restarts.\n",
+						"script": "src/calibrate.py",
+						"configurations": [
+							{
+								"displayName": "Signal Pin",
+								"description": "Board pin wired to the sensor's S — an analog input; GPIO32-39 keep working with Wi-Fi on.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"analog_in"
+								],
+								"required": true,
+								"defaultValue": {
+									"gpio": 36,
+									"type": [
+										"digital_in",
+										"analog_in"
+									],
+									"displayName": "GPIO36"
+								}
+							},
+							{
+								"displayName": "Power Pin",
+								"description": "Board pin wired to the sensor's + — powered only while it reads, so its traces don't corrode. Empty, wire + to 3.3 V.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							{
+								"displayName": "Point",
+								"description": "Which level this reading is — the sensor out of the water (Dry), or under it as deep as it goes (Wet).",
+								"type": "options",
+								"defaultValue": "dry",
+								"options": [
+									{
+										"displayName": "Dry",
+										"value": "dry"
+									},
+									{
+										"displayName": "Wet",
+										"value": "wet"
+									}
+								]
+							},
+							{
+								"displayName": "Samples",
+								"advanced": true,
+								"description": "Readings averaged, 1 to 64.",
+								"type": "number",
+								"defaultValue": "16",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 64
+									}
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "raw",
+								"type": "int",
+								"description": "The voltage read, 0 (0 V) to 65535 (3.3 V) — to check the wiring and calibrate."
+							},
+							{
+								"name": "dry",
+								"type": "int",
+								"description": "The Dry level set so far."
+							},
+							{
+								"name": "wet",
+								"type": "int",
+								"description": "The Wet level set so far."
+							}
+						]
+					}
+				],
+				"triggers": [
+					{
+						"displayName": "Water Trigger",
+						"icon": "siren",
+						"description": "Runs its branch when the sensor gets wet — a leak, a tank full — or dries off, or either; read every Interval. Already wet when the program starts counts as getting wet.\n",
+						"script": "src/water_trigger.py",
+						"configurations": [
+							{
+								"displayName": "Signal Pin",
+								"description": "Board pin wired to the sensor's S — an analog input; GPIO32-39 keep working with Wi-Fi on.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"analog_in"
+								],
+								"required": true,
+								"defaultValue": {
+									"gpio": 36,
+									"type": [
+										"digital_in",
+										"analog_in"
+									],
+									"displayName": "GPIO36"
+								}
+							},
+							{
+								"displayName": "Power Pin",
+								"description": "Board pin wired to the sensor's + — powered only while it reads, so its traces don't corrode. Empty, wire + to 3.3 V.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							{
+								"displayName": "Threshold",
+								"description": "The level it counts as wet from, in % — 1 to 100.",
+								"type": "number",
+								"defaultValue": "10",
+								"placeholder": "1–100 %",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 100
+									}
+								]
+							},
+							{
+								"displayName": "Fires On",
+								"description": "Which change runs the branch.",
+								"type": "options",
+								"defaultValue": "wet",
+								"options": [
+									{
+										"displayName": "Getting wet",
+										"value": "wet"
+									},
+									{
+										"displayName": "Drying off",
+										"value": "dry"
+									},
+									{
+										"displayName": "Both",
+										"value": "both"
+									}
+								]
+							},
+							{
+								"displayName": "Interval",
+								"description": "How often it reads, in ms — 50 at least.",
+								"type": "number",
+								"defaultValue": "500",
+								"placeholder": "500 ms",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 50
+									}
+								]
+							},
+							{
+								"displayName": "Samples",
+								"advanced": true,
+								"description": "Readings averaged, 1 to 64 — more is steadier, a little slower.",
+								"type": "number",
+								"defaultValue": "8",
+								"placeholder": "1–64",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 64
+									}
+								]
+							},
+							{
+								"displayName": "Dry Level",
+								"advanced": true,
+								"description": "The raw reading out of the water (0 %), 0 to 65535 — until Calibrate measures it on the sensor.",
+								"type": "number",
+								"defaultValue": "0",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 65535
+									}
+								]
+							},
+							{
+								"displayName": "Wet Level",
+								"advanced": true,
+								"description": "The raw reading as deep as it goes (100 %), 0 to 65535 — until Calibrate measures it on the sensor.",
+								"type": "number",
+								"defaultValue": "35000",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 65535
+									}
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "level",
+								"type": "float",
+								"description": "How much of it is under water, 0 (dry) to 100 %."
+							},
+							{
+								"name": "wet",
+								"type": "bool",
+								"description": "Whether it's wet now — true when it fired on getting wet."
+							},
+							{
+								"name": "raw",
+								"type": "int",
+								"description": "The voltage read, 0 (0 V) to 65535 (3.3 V) — to check the wiring and calibrate."
+							}
+						]
+					}
+				]
+			},
+			"actions": [
+				{
+					"id": "2db24805-67cb-4a9b-add2-d743862cf6d4",
+					"componentId": "b622006f-9a3b-4f16-8a41-0301642cc21d",
+					"alias": "Read",
+					"base": {
+						"displayName": "Read",
+						"icon": "droplets",
+						"description": "How much of the sensor is under water — level from 0 (dry) to 100 % (as deep as it goes), wet once it reaches Threshold, and the raw reading.",
+						"script": "src/read.py",
+						"configurations": [
+							{
+								"displayName": "Signal Pin",
+								"description": "Board pin wired to the sensor's S — an analog input; GPIO32-39 keep working with Wi-Fi on.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"analog_in"
+								],
+								"required": true,
+								"defaultValue": {
+									"gpio": 36,
+									"type": [
+										"digital_in",
+										"analog_in"
+									],
+									"displayName": "GPIO36"
+								}
+							},
+							{
+								"displayName": "Power Pin",
+								"description": "Board pin wired to the sensor's + — powered only while it reads, so its traces don't corrode. Empty, wire + to 3.3 V.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							{
+								"displayName": "Threshold",
+								"description": "The level it counts as wet from, in % — 1 to 100.",
+								"type": "number",
+								"defaultValue": "10",
+								"placeholder": "1–100 %",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 100
+									}
+								]
+							},
+							{
+								"displayName": "Samples",
+								"advanced": true,
+								"description": "Readings averaged, 1 to 64 — more is steadier, a little slower.",
+								"type": "number",
+								"defaultValue": "8",
+								"placeholder": "1–64",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 64
+									}
+								]
+							},
+							{
+								"displayName": "Dry Level",
+								"advanced": true,
+								"description": "The raw reading out of the water (0 %), 0 to 65535 — until Calibrate measures it on the sensor.",
+								"type": "number",
+								"defaultValue": "0",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 65535
+									}
+								]
+							},
+							{
+								"displayName": "Wet Level",
+								"advanced": true,
+								"description": "The raw reading as deep as it goes (100 %), 0 to 65535 — until Calibrate measures it on the sensor.",
+								"type": "number",
+								"defaultValue": "35000",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 65535
+									}
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "level",
+								"type": "float",
+								"description": "How much of it is under water, 0 (dry) to 100 %."
+							},
+							{
+								"name": "wet",
+								"type": "bool",
+								"description": "Whether level reached Threshold."
+							},
+							{
+								"name": "raw",
+								"type": "int",
+								"description": "The voltage read, 0 (0 V) to 65535 (3.3 V) — to check the wiring and calibrate."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "6b54426d-13c3-4315-ba56-647776f1df91",
+							"base": {
+								"displayName": "Signal Pin",
+								"description": "Board pin wired to the sensor's S — an analog input; GPIO32-39 keep working with Wi-Fi on.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"analog_in"
+								],
+								"required": true,
+								"defaultValue": {
+									"gpio": 36,
+									"type": [
+										"digital_in",
+										"analog_in"
+									],
+									"displayName": "GPIO36"
+								}
+							},
+							"binding": null,
+							"value": {
+								"gpio": 36,
+								"type": [
+									"digital_in",
+									"analog_in"
+								],
+								"displayName": "GPIO36"
+							}
+						},
+						{
+							"id": "7acfccee-c0c8-40f8-b0f8-27572aa6fdda",
+							"base": {
+								"displayName": "Power Pin",
+								"description": "Board pin wired to the sensor's + — powered only while it reads, so its traces don't corrode. Empty, wire + to 3.3 V.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							"binding": null
+						},
+						{
+							"id": "3fbb0ceb-ae84-48a1-82f3-c91d1dce9756",
+							"base": {
+								"displayName": "Threshold",
+								"description": "The level it counts as wet from, in % — 1 to 100.",
+								"type": "number",
+								"defaultValue": "10",
+								"placeholder": "1–100 %",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 100
+									}
+								]
+							},
+							"binding": null,
+							"value": "10"
+						},
+						{
+							"id": "02da5b1d-fbdb-454d-b2ab-0d9fe4ad7e0a",
+							"base": {
+								"displayName": "Samples",
+								"advanced": true,
+								"description": "Readings averaged, 1 to 64 — more is steadier, a little slower.",
+								"type": "number",
+								"defaultValue": "8",
+								"placeholder": "1–64",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 1
+									},
+									{
+										"name": "Max",
+										"value": 64
+									}
+								]
+							},
+							"binding": null,
+							"value": "8"
+						},
+						{
+							"id": "49fd37b4-90fb-45c8-92ef-7f2b67de04fb",
+							"base": {
+								"displayName": "Dry Level",
+								"advanced": true,
+								"description": "The raw reading out of the water (0 %), 0 to 65535 — until Calibrate measures it on the sensor.",
+								"type": "number",
+								"defaultValue": "0",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 65535
+									}
+								]
+							},
+							"binding": null,
+							"value": "0"
+						},
+						{
+							"id": "c24e4e33-5222-4db5-b567-df25ccb20e44",
+							"base": {
+								"displayName": "Wet Level",
+								"advanced": true,
+								"description": "The raw reading as deep as it goes (100 %), 0 to 65535 — until Calibrate measures it on the sensor.",
+								"type": "number",
+								"defaultValue": "35000",
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 0
+									},
+									{
+										"name": "Max",
+										"value": 65535
+									}
+								]
+							},
+							"binding": null,
+							"value": "35000"
+						}
+					],
+					"inputs": [
+						{
+							"id": "3564647c-97b6-4f60-bedb-4d6a251cd63e",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "462488c8-67e0-40bf-aa02-a465c11d39da",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 360,
+					"y": 0
+				}
+			]
+		},
+		{
+			"id": "3e1bb175-e9c5-4356-a15f-dd017fa0da78",
+			"packageId": "gpio",
+			"alias": "GPIO",
+			"base": {
+				"displayName": "GPIO",
+				"description": "Directly reads or drives a single digital pin on the board.  Use this when no more specific component (Servo, etc) fits what you're wiring up.\n",
+				"actions": [
+					{
+						"displayName": "Write",
+						"description": "Sets the pin as output and drives it to the given digital value.",
+						"script": "src/write.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							{
+								"displayName": "Value",
+								"description": "Value of GPIO send.",
+								"type": "toggle",
+								"label": "HIGH",
+								"defaultValue": false
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "value",
+								"type": "bool",
+								"description": "The digital value that was written (0 = LOW, 1 = HIGH)."
+							}
+						]
+					},
+					{
+						"displayName": "Read",
+						"description": "Sets the pin as input and reads its current digital value.",
+						"script": "src/read.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_in"
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "value",
+								"type": "bool",
+								"description": "The digital value read from the pin (0 = LOW, 1 = HIGH)."
+							}
+						]
+					}
+				],
+				"triggers": [
+					{
+						"displayName": "Pin Trigger",
+						"icon": "toggle-right",
+						"description": "Runs its branch when a pin changes — a button pressed, a sensor going high.",
+						"script": "src/pin_trigger.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "The pin to watch.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_in"
+								],
+								"required": true
+							},
+							{
+								"displayName": "Edge",
+								"description": "Which change fires it.",
+								"type": "options",
+								"defaultValue": "rising",
+								"options": [
+									{
+										"displayName": "Rising (low → high)",
+										"value": "rising"
+									},
+									{
+										"displayName": "Falling (high → low)",
+										"value": "falling"
+									},
+									{
+										"displayName": "Both",
+										"value": "both"
+									}
+								]
+							},
+							{
+								"displayName": "Pull",
+								"description": "The board's internal resistor — Up for a button wired to ground.",
+								"type": "options",
+								"defaultValue": "none",
+								"options": [
+									{
+										"displayName": "None",
+										"value": "none"
+									},
+									{
+										"displayName": "Up",
+										"value": "up"
+									},
+									{
+										"displayName": "Down",
+										"value": "down"
+									}
+								]
+							},
+							{
+								"displayName": "Debounce",
+								"description": "Changes closer than this to the last one are ignored (a button bounces), in ms.",
+								"type": "number",
+								"defaultValue": "50"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "level",
+								"type": "bool",
+								"description": "The pin right after the change."
+							},
+							{
+								"name": "at",
+								"type": "int",
+								"description": "When it changed — the board's clock, in ms."
+							}
+						]
+					}
+				]
+			},
+			"actions": [
+				{
+					"id": "1441b07e-6131-4e9a-9977-9e09ade6e5b1",
+					"componentId": "3e1bb175-e9c5-4356-a15f-dd017fa0da78",
+					"alias": "Write",
+					"base": {
+						"displayName": "Write",
+						"description": "Sets the pin as output and drives it to the given digital value.",
+						"script": "src/write.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							{
+								"displayName": "Value",
+								"description": "Value of GPIO send.",
+								"type": "toggle",
+								"label": "HIGH",
+								"defaultValue": false
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "value",
+								"type": "bool",
+								"description": "The digital value that was written (0 = LOW, 1 = HIGH)."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "8a61e7c8-5d64-46de-95cd-7eee53eed84f",
+							"base": {
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							"binding": null,
+							"value": {
+								"gpio": 2,
+								"type": [
+									"digital_in",
+									"digital_out",
+									"analog_in",
+									"pwm",
+									"touch"
+								],
+								"displayName": "GPIO2"
+							}
+						},
+						{
+							"id": "31761664-2226-4c47-8096-a217d38f4d6a",
+							"base": {
+								"displayName": "Value",
+								"description": "Value of GPIO send.",
+								"type": "toggle",
+								"label": "HIGH",
+								"defaultValue": false
+							},
+							"binding": null,
+							"value": false
+						}
+					],
+					"inputs": [
+						{
+							"id": "b1db9439-a434-4121-96e7-aefc82694733",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "2de43800-80df-4e1d-86ce-68b35a90fd0c",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 1080,
+					"y": -80
+				},
+				{
+					"kind": "trigger",
+					"id": "70492e95-671f-47d3-a3c7-a2d334b64adb",
+					"componentId": "3e1bb175-e9c5-4356-a15f-dd017fa0da78",
+					"alias": "Pin Trigger",
+					"base": {
+						"displayName": "Pin Trigger",
+						"icon": "toggle-right",
+						"description": "Runs its branch when a pin changes — a button pressed, a sensor going high.",
+						"script": "src/pin_trigger.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "The pin to watch.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_in"
+								],
+								"required": true
+							},
+							{
+								"displayName": "Edge",
+								"description": "Which change fires it.",
+								"type": "options",
+								"defaultValue": "rising",
+								"options": [
+									{
+										"displayName": "Rising (low → high)",
+										"value": "rising"
+									},
+									{
+										"displayName": "Falling (high → low)",
+										"value": "falling"
+									},
+									{
+										"displayName": "Both",
+										"value": "both"
+									}
+								]
+							},
+							{
+								"displayName": "Pull",
+								"description": "The board's internal resistor — Up for a button wired to ground.",
+								"type": "options",
+								"defaultValue": "none",
+								"options": [
+									{
+										"displayName": "None",
+										"value": "none"
+									},
+									{
+										"displayName": "Up",
+										"value": "up"
+									},
+									{
+										"displayName": "Down",
+										"value": "down"
+									}
+								]
+							},
+							{
+								"displayName": "Debounce",
+								"description": "Changes closer than this to the last one are ignored (a button bounces), in ms.",
+								"type": "number",
+								"defaultValue": "50"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "level",
+								"type": "bool",
+								"description": "The pin right after the change."
+							},
+							{
+								"name": "at",
+								"type": "int",
+								"description": "When it changed — the board's clock, in ms."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "7390316b-76de-4099-833e-271f5ae515fb",
+							"base": {
+								"displayName": "Pin",
+								"description": "The pin to watch.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_in"
+								],
+								"required": true
+							},
+							"binding": null,
+							"value": {
+								"gpio": 4,
+								"type": [
+									"digital_in",
+									"digital_out",
+									"analog_in",
+									"pwm",
+									"touch",
+									"uart"
+								],
+								"displayName": "GPIO4"
+							}
+						},
+						{
+							"id": "745fe92d-15b6-4118-ade5-3d2eb8540883",
+							"base": {
+								"displayName": "Edge",
+								"description": "Which change fires it.",
+								"type": "options",
+								"defaultValue": "rising",
+								"options": [
+									{
+										"displayName": "Rising (low → high)",
+										"value": "rising"
+									},
+									{
+										"displayName": "Falling (high → low)",
+										"value": "falling"
+									},
+									{
+										"displayName": "Both",
+										"value": "both"
+									}
+								]
+							},
+							"binding": null,
+							"value": "rising"
+						},
+						{
+							"id": "c8870fb7-24bf-4c50-825e-d9e998702da3",
+							"base": {
+								"displayName": "Pull",
+								"description": "The board's internal resistor — Up for a button wired to ground.",
+								"type": "options",
+								"defaultValue": "none",
+								"options": [
+									{
+										"displayName": "None",
+										"value": "none"
+									},
+									{
+										"displayName": "Up",
+										"value": "up"
+									},
+									{
+										"displayName": "Down",
+										"value": "down"
+									}
+								]
+							},
+							"binding": null,
+							"value": "up"
+						},
+						{
+							"id": "6c6b6fb5-4cb1-40db-82b7-ae74c095284c",
+							"base": {
+								"displayName": "Debounce",
+								"description": "Changes closer than this to the last one are ignored (a button bounces), in ms.",
+								"type": "number",
+								"defaultValue": "50"
+							},
+							"binding": null,
+							"value": "50"
+						}
+					],
+					"inputs": [],
+					"outputs": [
+						{
+							"id": "16114c9c-42f7-4d43-9d43-8309b9f96711",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 0,
+					"y": 460
+				},
+				{
+					"id": "3465c33f-9860-4d68-b5b9-49f45b54f2d5",
+					"componentId": "3e1bb175-e9c5-4356-a15f-dd017fa0da78",
+					"alias": "Write",
+					"base": {
+						"displayName": "Write",
+						"description": "Sets the pin as output and drives it to the given digital value.",
+						"script": "src/write.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							{
+								"displayName": "Value",
+								"description": "Value of GPIO send.",
+								"type": "toggle",
+								"label": "HIGH",
+								"defaultValue": false
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "value",
+								"type": "bool",
+								"description": "The digital value that was written (0 = LOW, 1 = HIGH)."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "deb0315f-891e-4891-bf4c-a1617e7dd96b",
+							"base": {
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							"binding": null,
+							"value": {
+								"gpio": 2,
+								"type": [
+									"digital_in",
+									"digital_out",
+									"analog_in",
+									"pwm",
+									"touch"
+								],
+								"displayName": "GPIO2"
+							}
+						},
+						{
+							"id": "b76d8da0-2c08-41db-8522-1ad2d068d9f7",
+							"base": {
+								"displayName": "Value",
+								"description": "Value of GPIO send.",
+								"type": "toggle",
+								"label": "HIGH",
+								"defaultValue": false
+							},
+							"binding": null,
+							"value": false
+						}
+					],
+					"inputs": [
+						{
+							"id": "8bb7c00e-62bb-47c3-89b3-e1f3f5969324",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "604fedac-69a8-465e-904c-43e943669b98",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 360,
+					"y": 460
+				}
+			]
+		},
+		{
+			"id": "cc2d6238-276a-49cc-995e-5b30ccbded2b",
+			"packageId": "time",
+			"alias": "Time",
+			"base": {
+				"displayName": "Time",
+				"description": "Waits, measures and paces: delays, the board's clock, timers and intervals that run part of a loop on a fixed rhythm.\n",
+				"actions": [
+					{
+						"displayName": "Delay",
+						"description": "Waits for the given duration, then continues.",
+						"script": "src/delay.py",
+						"configurations": [
+							{
+								"displayName": "Duration",
+								"description": "How long to wait, in Unit.",
+								"type": "number",
+								"defaultValue": "1000"
+							},
+							{
+								"displayName": "Unit",
+								"description": "Unit of Duration.",
+								"type": "options",
+								"defaultValue": "ms",
+								"options": [
+									{
+										"displayName": "Milliseconds",
+										"value": "ms"
+									},
+									{
+										"displayName": "Seconds",
+										"value": "s"
+									},
+									{
+										"displayName": "Minutes",
+										"value": "min"
+									}
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "duration",
+								"type": "int",
+								"description": "The time waited, in milliseconds."
+							}
+						]
+					},
+					{
+						"displayName": "Uptime",
+						"description": "Reads the board's clock — milliseconds since it started.",
+						"script": "src/uptime.py",
+						"outputSchema": [
+							{
+								"name": "uptime",
+								"type": "int",
+								"description": "Milliseconds since the board started (wraps around after ~12 days)."
+							}
+						]
+					},
+					{
+						"displayName": "Start Timer",
+						"description": "Starts (or restarts) a named timer. Read it later with Elapsed.",
+						"script": "src/start_timer.py",
+						"configurations": [
+							{
+								"displayName": "Name",
+								"description": "Which timer — Elapsed reads it by this same name.",
+								"type": "string",
+								"defaultValue": "timer"
+							}
+						]
+					},
+					{
+						"displayName": "Elapsed",
+						"description": "How long since Start Timer started the timer with this name.",
+						"script": "src/elapsed.py",
+						"configurations": [
+							{
+								"displayName": "Name",
+								"description": "The timer to read, as named in Start Timer.",
+								"type": "string",
+								"defaultValue": "timer"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "elapsed",
+								"type": "int",
+								"description": "Milliseconds since the timer started."
+							}
+						]
+					},
+					{
+						"displayName": "Every",
+						"description": "Goes out Due once every interval, Waiting the rest of the time — runs part of a looping program on a fixed rhythm without blocking the rest.\n",
+						"script": "src/every.py",
+						"configurations": [
+							{
+								"displayName": "Interval",
+								"description": "How often to go out Due, in Unit.",
+								"type": "number",
+								"defaultValue": "1000"
+							},
+							{
+								"displayName": "Unit",
+								"description": "Unit of Interval.",
+								"type": "options",
+								"defaultValue": "ms",
+								"options": [
+									{
+										"displayName": "Milliseconds",
+										"value": "ms"
+									},
+									{
+										"displayName": "Seconds",
+										"value": "s"
+									},
+									{
+										"displayName": "Minutes",
+										"value": "min"
+									}
+								]
+							},
+							{
+								"displayName": "Name",
+								"advanced": true,
+								"description": "Tells several Every apart — each name keeps its own rhythm.",
+								"type": "string",
+								"defaultValue": "every"
+							}
+						],
+						"outputs": [
+							{
+								"id": "due",
+								"name": "Due"
+							},
+							{
+								"id": "wait",
+								"name": "Waiting"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "elapsed",
+								"type": "int",
+								"description": "Milliseconds since the last time it went out Due."
+							}
+						]
+					}
+				],
+				"triggers": [
+					{
+						"displayName": "Timer Trigger",
+						"icon": "alarm-clock",
+						"description": "Runs its branch every Interval — on its own, alongside whatever Start does.",
+						"script": "src/timer_trigger.py",
+						"configurations": [
+							{
+								"displayName": "Interval",
+								"description": "Time between runs, in milliseconds (10 at least).",
+								"type": "number",
+								"defaultValue": "1000",
+								"required": true,
+								"patterns": [
+									{
+										"name": "Min",
+										"value": 10
+									}
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "count",
+								"type": "int",
+								"description": "How many times it fired since the program started."
+							}
+						]
+					}
+				]
+			},
+			"actions": [
+				{
+					"id": "0bbced38-0bd5-470f-b5b8-a18ad982a995",
+					"componentId": "cc2d6238-276a-49cc-995e-5b30ccbded2b",
+					"alias": "Delay",
+					"base": {
+						"displayName": "Delay",
+						"description": "Waits for the given duration, then continues.",
+						"script": "src/delay.py",
+						"configurations": [
+							{
+								"displayName": "Duration",
+								"description": "How long to wait, in Unit.",
+								"type": "number",
+								"defaultValue": "1000"
+							},
+							{
+								"displayName": "Unit",
+								"description": "Unit of Duration.",
+								"type": "options",
+								"defaultValue": "ms",
+								"options": [
+									{
+										"displayName": "Milliseconds",
+										"value": "ms"
+									},
+									{
+										"displayName": "Seconds",
+										"value": "s"
+									},
+									{
+										"displayName": "Minutes",
+										"value": "min"
+									}
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "duration",
+								"type": "int",
+								"description": "The time waited, in milliseconds."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "51e1777e-c61b-4896-88b7-093c5e969ee4",
+							"base": {
+								"displayName": "Duration",
+								"description": "How long to wait, in Unit.",
+								"type": "number",
+								"defaultValue": "1000"
+							},
+							"binding": null,
+							"value": "1000"
+						},
+						{
+							"id": "faa088f7-6dd4-46e4-988a-ab3133f9eb57",
+							"base": {
+								"displayName": "Unit",
+								"description": "Unit of Duration.",
+								"type": "options",
+								"defaultValue": "ms",
+								"options": [
+									{
+										"displayName": "Milliseconds",
+										"value": "ms"
+									},
+									{
+										"displayName": "Seconds",
+										"value": "s"
+									},
+									{
+										"displayName": "Minutes",
+										"value": "min"
+									}
+								]
+							},
+							"binding": null,
+							"value": "ms"
+						}
+					],
+					"inputs": [
+						{
+							"id": "89c9cf40-5fbd-4fb6-80e2-0681fd10ce9f",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "648e6b28-0ed5-4f92-a174-b6a3b887f15b",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 1080,
+					"y": 220
+				}
+			]
+		}
+	],
+	"connections": [
+		{
+			"id": "03c0b187-1159-4266-9e76-193a8d973adb",
+			"source": "9197b7b4-1795-443f-a0a7-b033383da8a5",
+			"target": "2db24805-67cb-4a9b-add2-d743862cf6d4",
+			"sourceHandle": "fc03d112-9542-4239-887d-92c363a29618",
+			"targetHandle": "3564647c-97b6-4f60-bedb-4d6a251cd63e"
+		},
+		{
+			"id": "71fc810e-b61f-4d39-8833-83522378aa27",
+			"source": "2db24805-67cb-4a9b-add2-d743862cf6d4",
+			"target": "fb832ac7-99a7-4d15-a52d-0b29a049aa58",
+			"sourceHandle": "462488c8-67e0-40bf-aa02-a465c11d39da",
+			"targetHandle": "ec66b176-f9f6-42fc-afee-190280654369"
+		},
+		{
+			"id": "aa2fc669-bbc5-4b60-aac4-096458d9c320",
+			"source": "fb832ac7-99a7-4d15-a52d-0b29a049aa58",
+			"target": "1441b07e-6131-4e9a-9977-9e09ade6e5b1",
+			"sourceHandle": "72e625f9-6511-4dde-87f6-96f13aaa6253",
+			"targetHandle": "b1db9439-a434-4121-96e7-aefc82694733"
+		},
+		{
+			"id": "d89045c7-77f5-413e-9b50-2c1aa5d626e8",
+			"source": "fb832ac7-99a7-4d15-a52d-0b29a049aa58",
+			"target": "0bbced38-0bd5-470f-b5b8-a18ad982a995",
+			"sourceHandle": "7a27da9f-24c3-4c0b-ad25-4bb31b507973",
+			"targetHandle": "89c9cf40-5fbd-4fb6-80e2-0681fd10ce9f"
+		},
+		{
+			"id": "9d16d3e6-6bda-45d2-bbfd-c0bc8e51904e",
+			"source": "70492e95-671f-47d3-a3c7-a2d334b64adb",
+			"target": "3465c33f-9860-4d68-b5b9-49f45b54f2d5",
+			"sourceHandle": "16114c9c-42f7-4d43-9d43-8309b9f96711",
+			"targetHandle": "8bb7c00e-62bb-47c3-89b3-e1f3f5969324"
+		}
+	]
+}

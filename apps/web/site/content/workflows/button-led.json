@@ -1,0 +1,713 @@
+{
+	"name": "Button → LED",
+	"description": "Mirrors a button on an LED.",
+	"board": {
+		"id": "f757199d-b1f6-41ca-8847-78e1c8a0850a",
+		"packageId": "board",
+		"base": {
+			"name": "Esp32 Generic",
+			"description": "Board Description",
+			"pins": [
+				{
+					"gpio": 0,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch"
+					],
+					"displayName": "GPIO0"
+				},
+				{
+					"gpio": 1,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm"
+					],
+					"displayName": "GPIO1"
+				},
+				{
+					"gpio": 2,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch"
+					],
+					"displayName": "GPIO2"
+				},
+				{
+					"gpio": 3,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm"
+					],
+					"displayName": "GPIO3"
+				},
+				{
+					"gpio": 4,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO4"
+				},
+				{
+					"gpio": 5,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm"
+					],
+					"displayName": "GPIO5"
+				},
+				{
+					"gpio": 12,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch"
+					],
+					"displayName": "GPIO12"
+				},
+				{
+					"gpio": 13,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO13"
+				},
+				{
+					"gpio": 14,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO14"
+				},
+				{
+					"gpio": 15,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch"
+					],
+					"displayName": "GPIO15"
+				},
+				{
+					"gpio": 16,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO16"
+				},
+				{
+					"gpio": 17,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO17"
+				},
+				{
+					"gpio": 18,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO18"
+				},
+				{
+					"gpio": 19,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO19"
+				},
+				{
+					"gpio": 21,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO21"
+				},
+				{
+					"gpio": 22,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO22"
+				},
+				{
+					"gpio": 23,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO23"
+				},
+				{
+					"gpio": 25,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"analog_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO25"
+				},
+				{
+					"gpio": 26,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"analog_out",
+						"pwm",
+						"uart"
+					],
+					"displayName": "GPIO26"
+				},
+				{
+					"gpio": 27,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO27"
+				},
+				{
+					"gpio": 32,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO32"
+				},
+				{
+					"gpio": 33,
+					"type": [
+						"digital_in",
+						"digital_out",
+						"analog_in",
+						"pwm",
+						"touch",
+						"uart"
+					],
+					"displayName": "GPIO33"
+				},
+				{
+					"gpio": 34,
+					"type": [
+						"digital_in",
+						"analog_in"
+					],
+					"displayName": "GPIO34"
+				},
+				{
+					"gpio": 35,
+					"type": [
+						"digital_in",
+						"analog_in"
+					],
+					"displayName": "GPIO35"
+				},
+				{
+					"gpio": 36,
+					"type": [
+						"digital_in",
+						"analog_in"
+					],
+					"displayName": "GPIO36"
+				},
+				{
+					"gpio": 39,
+					"type": [
+						"digital_in",
+						"analog_in"
+					],
+					"displayName": "GPIO39"
+				}
+			],
+			"connection": {
+				"serial": {
+					"baudrates": [
+						115200,
+						9600,
+						19200,
+						38400,
+						57600,
+						230400,
+						460800,
+						921600
+					]
+				}
+			},
+			"capabilities": [
+				"wifi",
+				"bluetooth"
+			]
+		},
+		"configurations": [],
+		"connection": null,
+		"actions": []
+	},
+	"start": {
+		"id": "1cc8cc83-4cf3-4141-901f-513d5bef92d2",
+		"componentId": "core",
+		"alias": "Start",
+		"base": {
+			"displayName": "Start",
+			"description": "Entry point of the workflow — runs first; connect its output to the first action in the flow.",
+			"outputs": [
+				{
+					"id": "start",
+					"name": "Start"
+				}
+			],
+			"configurations": [
+				{
+					"displayName": "Mode",
+					"description": "Whether the workflow keeps looping back to Start after finishing, or runs through once.",
+					"type": "options",
+					"defaultValue": "loop",
+					"options": [
+						{
+							"displayName": "Loop",
+							"value": "loop"
+						},
+						{
+							"displayName": "Once",
+							"value": "once"
+						}
+					]
+				}
+			]
+		},
+		"configurations": [
+			{
+				"id": "372d61b7-ce41-4934-8ba7-f8f4cb8aafc5",
+				"base": {
+					"displayName": "Mode",
+					"description": "Whether the workflow keeps looping back to Start after finishing, or runs through once.",
+					"type": "options",
+					"defaultValue": "loop",
+					"options": [
+						{
+							"displayName": "Loop",
+							"value": "loop"
+						},
+						{
+							"displayName": "Once",
+							"value": "once"
+						}
+					]
+				},
+				"binding": null,
+				"value": "loop"
+			}
+		],
+		"inputs": [
+			{
+				"id": "38e9eacd-7102-4a2a-bc80-a5b20ead922c",
+				"base": {
+					"id": "default",
+					"name": "In"
+				}
+			}
+		],
+		"outputs": [
+			{
+				"id": "2dfff2e8-2489-4230-93ae-aa58d062023b",
+				"base": {
+					"id": "start",
+					"name": "Start"
+				}
+			}
+		],
+		"x": 0,
+		"y": 40
+	},
+	"components": [
+		{
+			"id": "75c4d8c4-5727-44fe-9c69-caf6412eb53c",
+			"packageId": "gpio",
+			"alias": "GPIO",
+			"base": {
+				"displayName": "GPIO",
+				"description": "Directly reads or drives a single digital pin on the board.  Use this when no more specific component (Servo, etc) fits what you're wiring up.\n",
+				"actions": [
+					{
+						"displayName": "Write",
+						"description": "Sets the pin as output and drives it to the given digital value.",
+						"script": "src/write.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							{
+								"displayName": "Value",
+								"description": "Value of GPIO send.",
+								"type": "toggle",
+								"label": "HIGH",
+								"defaultValue": false
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "value",
+								"type": "bool",
+								"description": "The digital value that was written (0 = LOW, 1 = HIGH)."
+							}
+						]
+					},
+					{
+						"displayName": "Read",
+						"description": "Sets the pin as input and reads its current digital value.",
+						"script": "src/read.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_in"
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "value",
+								"type": "bool",
+								"description": "The digital value read from the pin (0 = LOW, 1 = HIGH)."
+							}
+						]
+					}
+				],
+				"triggers": [
+					{
+						"displayName": "Pin Trigger",
+						"icon": "toggle-right",
+						"description": "Runs its branch when a pin changes — a button pressed, a sensor going high.",
+						"script": "src/pin_trigger.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "The pin to watch.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_in"
+								],
+								"required": true
+							},
+							{
+								"displayName": "Edge",
+								"description": "Which change fires it.",
+								"type": "options",
+								"defaultValue": "rising",
+								"options": [
+									{
+										"displayName": "Rising (low → high)",
+										"value": "rising"
+									},
+									{
+										"displayName": "Falling (high → low)",
+										"value": "falling"
+									},
+									{
+										"displayName": "Both",
+										"value": "both"
+									}
+								]
+							},
+							{
+								"displayName": "Pull",
+								"description": "The board's internal resistor — Up for a button wired to ground.",
+								"type": "options",
+								"defaultValue": "none",
+								"options": [
+									{
+										"displayName": "None",
+										"value": "none"
+									},
+									{
+										"displayName": "Up",
+										"value": "up"
+									},
+									{
+										"displayName": "Down",
+										"value": "down"
+									}
+								]
+							},
+							{
+								"displayName": "Debounce",
+								"description": "Changes closer than this to the last one are ignored (a button bounces), in ms.",
+								"type": "number",
+								"defaultValue": "50"
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "level",
+								"type": "bool",
+								"description": "The pin right after the change."
+							},
+							{
+								"name": "at",
+								"type": "int",
+								"description": "When it changed — the board's clock, in ms."
+							}
+						]
+					}
+				]
+			},
+			"actions": [
+				{
+					"id": "2f1a7732-330c-478a-ad17-b583eb83b02a",
+					"componentId": "75c4d8c4-5727-44fe-9c69-caf6412eb53c",
+					"alias": "Read",
+					"base": {
+						"displayName": "Read",
+						"description": "Sets the pin as input and reads its current digital value.",
+						"script": "src/read.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_in"
+								]
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "value",
+								"type": "bool",
+								"description": "The digital value read from the pin (0 = LOW, 1 = HIGH)."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "1cf9b2ec-70e6-4660-b47b-1da244cd2fb6",
+							"base": {
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_in"
+								]
+							},
+							"binding": null,
+							"value": {
+								"gpio": 4,
+								"type": [
+									"digital_in",
+									"digital_out",
+									"analog_in",
+									"pwm",
+									"touch",
+									"uart"
+								],
+								"displayName": "GPIO4"
+							}
+						}
+					],
+					"inputs": [
+						{
+							"id": "bd73db9b-4024-4192-b774-77c8bc96ba62",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "41482f52-9850-42fa-88ff-f2969b1e2fcd",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 420,
+					"y": 0
+				},
+				{
+					"id": "64217a56-a94c-460c-ad93-96c1a95e5b84",
+					"componentId": "75c4d8c4-5727-44fe-9c69-caf6412eb53c",
+					"alias": "Write",
+					"base": {
+						"displayName": "Write",
+						"description": "Sets the pin as output and drives it to the given digital value.",
+						"script": "src/write.py",
+						"configurations": [
+							{
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							{
+								"displayName": "Value",
+								"description": "Value of GPIO send.",
+								"type": "toggle",
+								"label": "HIGH",
+								"defaultValue": false
+							}
+						],
+						"outputSchema": [
+							{
+								"name": "value",
+								"type": "bool",
+								"description": "The digital value that was written (0 = LOW, 1 = HIGH)."
+							}
+						]
+					},
+					"configurations": [
+						{
+							"id": "4db9c0f0-c8dc-4e86-a78b-94babb0461c5",
+							"base": {
+								"displayName": "Pin",
+								"description": "Board pin this GPIO instance controls.",
+								"type": "pin",
+								"from": "board",
+								"filterBy": [
+									"digital_out"
+								]
+							},
+							"binding": null,
+							"value": {
+								"gpio": 2,
+								"type": [
+									"digital_in",
+									"digital_out",
+									"analog_in",
+									"pwm",
+									"touch"
+								],
+								"displayName": "GPIO2"
+							}
+						},
+						{
+							"id": "0744cd18-870d-4f98-8b8c-1af7c063a143",
+							"base": {
+								"displayName": "Value",
+								"description": "Value of GPIO send.",
+								"type": "toggle",
+								"label": "HIGH",
+								"defaultValue": false
+							},
+							"binding": {
+								"actionId": "2f1a7732-330c-478a-ad17-b583eb83b02a",
+								"outputName": "value"
+							},
+							"value": false
+						}
+					],
+					"inputs": [
+						{
+							"id": "81116a27-6519-471a-bd65-af298c6d2af2",
+							"base": {
+								"id": "default",
+								"name": "In"
+							}
+						}
+					],
+					"outputs": [
+						{
+							"id": "04e29f1b-948c-4d91-aa2b-0a9395dfab9f",
+							"base": {
+								"id": "default",
+								"name": "Out"
+							}
+						}
+					],
+					"x": 840,
+					"y": 0
+				}
+			]
+		}
+	],
+	"connections": [
+		{
+			"id": "f3e97e33-ea7a-4744-8617-8d8973088a82",
+			"source": "1cc8cc83-4cf3-4141-901f-513d5bef92d2",
+			"target": "2f1a7732-330c-478a-ad17-b583eb83b02a",
+			"sourceHandle": "2dfff2e8-2489-4230-93ae-aa58d062023b",
+			"targetHandle": "bd73db9b-4024-4192-b774-77c8bc96ba62"
+		},
+		{
+			"id": "0717fdd3-c2ea-4354-86aa-1a5c756c35fd",
+			"source": "2f1a7732-330c-478a-ad17-b583eb83b02a",
+			"target": "64217a56-a94c-460c-ad93-96c1a95e5b84",
+			"sourceHandle": "41482f52-9850-42fa-88ff-f2969b1e2fcd",
+			"targetHandle": "81116a27-6519-471a-bd65-af298c6d2af2"
+		}
+	]
+}

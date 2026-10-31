@@ -1,0 +1,109 @@
+---
+title: "Joystick"
+description: "A 2-axis analog joystick with a push button (KY-023 and the like — VRx, VRy, SW)."
+---
+
+A 2-axis analog joystick with a push button (KY-023 and the like — VRx, VRy, SW). Read gives x and y from -100 to 100, Direction branches Up, Down, Left, Right or Center, Button branches on the push button, and Calibrate sets where the stick rests.
+
+<PackageInfo name="@henglosio/component-joystick" version="1.0.0" platform="^1.0.0" />
+
+| Node | Kind | What it does |
+| --- | --- | --- |
+| [Read](#read) | Action | Where the stick is — x and y from -100 to 100 (0 at rest), how far and which way it's pushed, and whether its button is down. |
+| [Direction](#direction) | Action | Branches on where the stick points — Up, Down, Left, Right, or Center while it's near the middle. |
+| [Button](#button) | Action | Branches on the stick's push button — Pressed or Released, read twice Debounce apart so its chatter doesn't count. |
+| [Calibrate](#calibrate) | Action | Takes where the stick rests now as its center, for Read and Direction on the same pins. |
+
+## Actions
+
+### Read
+
+Where the stick is — x and y from -100 to 100 (0 at rest), how far and which way it's pushed, and whether its button is down.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **X Pin** | Pin (analog in) | GPIO34 | **Required.** Board pin wired to the joystick's VRx — an analog input; GPIO32-39 keep working with Wi-Fi on. |
+| **Y Pin** | Pin (analog in) | GPIO35 | **Required.** Board pin wired to the joystick's VRy — an analog input; GPIO32-39 keep working with Wi-Fi on. |
+| **Button Pin** | Pin (digital in + digital out) | — | Board pin wired to the joystick's SW, to publish pressed — leave it empty if you don't use the button. Not GPIO34-39 (no pull-up). |
+| **Dead Zone** | Number (0 to 90) | `10` | *Advanced.* How far from the center still reads as 0, in % of the travel — 0 to 90. Raise it if the stick drifts at rest. |
+| **Invert X** | On / off | Off | *Advanced.* Swap left and right — for a joystick mounted the other way round. |
+| **Invert Y** | On / off | Off | *Advanced.* Swap up and down — for a module whose Y reads the other way, or one mounted upside down. |
+| **Samples** | Number (1 to 64) | `8` | *Advanced.* Readings averaged per axis, 1 to 64 — more is steadier, a little slower. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `x` | float | Left (-100) to right (100), 0 at rest. |
+| `y` | float | Down (-100) to up (100), 0 at rest. |
+| `magnitude` | float | How far the stick is pushed, 0 to 100, whichever way. |
+| `angle` | float | Which way it's pushed, in degrees — 0 right, 90 up, 180 left, 270 down. Only while it's pushed. |
+| `pressed` | bool | Whether the button is down — with a Button Pin. |
+| `raw_x` | int | The voltage read on X, 0 (0 V) to 65535 (3.3 V) — to check the wiring. At rest it should be near the middle. |
+| `raw_y` | int | The voltage read on Y, 0 (0 V) to 65535 (3.3 V) — to check the wiring. At rest it should be near the middle. |
+
+### Direction
+
+Branches on where the stick points — Up, Down, Left, Right, or Center while it's near the middle. Split evenly: Center is a circle of radius Threshold, and each way a 90° slice of the stick's angle — a diagonal goes to the slice it falls in. A board connects 4 outputs of an action by default: leave one unconnected, or raise Outputs per action in Platform settings.
+
+Ends on **Up**, **Down**, **Left**, **Right**, **Center** — or **Fallback** when it can't run.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **X Pin** | Pin (analog in) | GPIO34 | **Required.** Board pin wired to the joystick's VRx — an analog input; GPIO32-39 keep working with Wi-Fi on. |
+| **Y Pin** | Pin (analog in) | GPIO35 | **Required.** Board pin wired to the joystick's VRy — an analog input; GPIO32-39 keep working with Wi-Fi on. |
+| **Threshold** | Number (1 to 100) | `50` | How far the stick has to be pushed to count as a direction, in % — 1 to 100. Below it, Center. |
+| **Dead Zone** | Number (0 to 90) | `10` | *Advanced.* How far from the center still reads as 0, in % of the travel — 0 to 90. Raise it if the stick drifts at rest. |
+| **Invert X** | On / off | Off | *Advanced.* Swap left and right — for a joystick mounted the other way round. |
+| **Invert Y** | On / off | Off | *Advanced.* Swap up and down — for a module whose Y reads the other way, or one mounted upside down. |
+| **Samples** | Number (1 to 64) | `8` | *Advanced.* Readings averaged per axis, 1 to 64 — more is steadier, a little slower. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `x` | float | Left (-100) to right (100), 0 at rest. |
+| `y` | float | Down (-100) to up (100), 0 at rest. |
+| `angle` | float | The stick's angle, in degrees — 0 right, 90 up, 180 left, 270 down. |
+| `direction` | any | Where it points, as text — up, down, left, right or center. |
+
+### Button
+
+Branches on the stick's push button — Pressed or Released, read twice Debounce apart so its chatter doesn't count.
+
+Ends on **Pressed**, **Released** — or **Fallback** when it can't run.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Button Pin** | Pin (digital in + digital out) | GPIO32 | **Required.** Board pin wired to the joystick's SW — not GPIO34-39 (no pull-up). |
+| **Debounce** | Number (0 to 500) | `20` | *Advanced.* How long the press has to hold to count, in ms — 0 to 500. 0 reads it once. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `pressed` | bool | Whether the button is down. |
+
+### Calibrate
+
+Takes where the stick rests now as its center, for Read and Direction on the same pins. Without it, the first reading at rest after the board starts is the center — fine as long as nobody's touching the stick then.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **X Pin** | Pin (analog in) | GPIO34 | **Required.** Board pin wired to the joystick's VRx — an analog input; GPIO32-39 keep working with Wi-Fi on. |
+| **Y Pin** | Pin (analog in) | GPIO35 | **Required.** Board pin wired to the joystick's VRy — an analog input; GPIO32-39 keep working with Wi-Fi on. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `center_x` | int | X's voltage at rest, 0 (0 V) to 65535 (3.3 V). |
+| `center_y` | int | Y's voltage at rest, 0 (0 V) to 65535 (3.3 V). |

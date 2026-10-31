@@ -1,0 +1,12 @@
+{
+  "title": "Studio",
+  "pages": [
+    "index",
+    "triggers",
+    "configurations",
+    "logic",
+    "variables",
+    "running-and-debugging",
+    "export-import"
+  ]
+}

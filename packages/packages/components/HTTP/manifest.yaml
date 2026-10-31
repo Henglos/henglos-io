@@ -1,0 +1,291 @@
+kind: component
+name: HTTP
+schemaVersion: 1
+
+dependences:
+  platform: ^1.0.0
+  # What it needs of the board — only boards listing it run it.
+  capabilities: [wifi]
+
+schema:
+
+  displayName: HTTP
+  description: >
+    Calls web APIs from the board — Request a URL (GET, POST…) with headers,
+    a body and an auth token; the whole answer lands in a file the next
+    actions read (Read JSON, the Filesystem component), and Pick takes one
+    value out of its JSON right away. And serves them: Request Trigger runs
+    a branch when a request comes in (a webhook), Respond answers it. Needs a
+    network: WiFi's Connect before it.
+
+  # Wire ids come from the lowercased displayNames (computeWireActionId /
+  # computeWireConfigId in @henglosio/workflow) — each script's @action and
+  # context.get() names must match: "http/<action>", "<action>/<config>".
+  #
+  # A value is small (512 B by default): the answer goes to a file — Save To,
+  # or a temporary one (/tmp/http, cleared when a session starts) — and its
+  # path is published as `file`.
+
+  credentials:
+    - name: http_header
+      displayName: HTTP Header Auth
+      description: A header sent with each request — an API key or a bearer token, kept out of the workflow.
+      fields:
+        - name: header
+          displayName: Header
+          description: The header's name — empty sends Authorization.
+          type: string
+          placeholder: Authorization
+        - name: value
+          displayName: Value
+          description: The header's value — "Bearer <token>", an API key…
+          type: string
+          secret: true
+          required: true
+          placeholder: Bearer sk-…
+
+  # What starts a branch of the flow on its own — no input, only Out.
+  triggers:
+
+    - displayName: Request Trigger
+      description: >
+        Runs its branch when a request comes in on Port for Method under Path —
+        a webhook, a page's button, another board. Answer it with Respond; a
+        branch that doesn't answers 200. A path outside it gets 404, another
+        method 405, a request without Auth's header 401. Needs WiFi (Connect on Start).
+      script: src/request_trigger.py
+      configurations:
+        - displayName: Path
+          description: >
+            The base path it answers under — /api takes /api and everything
+            below it (/api/led/on), read in subpath and segments; / takes
+            every path. Two triggers on one port: the longer base path wins.
+            The query (?a=1) doesn't count.
+          type: string
+          required: true
+          defaultValue: /webhook
+          placeholder: /webhook
+        - displayName: Method
+          description: Which requests run it — Any, or only one method.
+          type: options
+          defaultValue: ANY
+          options:
+            - { displayName: Any, value: ANY }
+            - { displayName: GET, value: GET }
+            - { displayName: POST, value: POST }
+            - { displayName: PUT, value: PUT }
+            - { displayName: PATCH, value: PATCH }
+            - { displayName: DELETE, value: DELETE }
+        - displayName: Port
+          description: The port the board listens on — 80 is plain http://<board ip>/.
+          type: number
+          defaultValue: "80"
+          patterns:
+            - { name: Min, value: 1 }
+            - { name: Max, value: 65535 }
+        - displayName: Pick
+          description: One value from the body's JSON, by its path — sensor.temp, items.0; empty picks nothing. Published as `value`.
+          type: string
+          defaultValue: ""
+          placeholder: sensor.temp
+        - displayName: Auth
+          description: An HTTP Header Auth credential the request must carry (that header, that value) — else 401. Empty lets anyone in.
+          type: credential
+          credential: http_header
+        - displayName: Save To
+          advanced: true
+          description: A file of your own for the body — /data/last.json; it stays. Empty, it goes to a temporary file (one per trigger), cleared when a session starts.
+          type: string
+          defaultValue: ""
+          placeholder: /data/request.json
+      outputSchema:
+        - name: method
+          type: str
+          description: The request's method — GET, POST…
+        - name: path
+          type: str
+          description: The path it came for, without the query.
+        - name: subpath
+          type: str
+          description: What came after the base path — /led/on for /api/led/on on /api; empty for the base itself.
+        - name: segments
+          type: { array: str }
+          description: The subpath's parts, in order — ["led", "on"]; route on them with a Switch (segments[0]).
+        - name: query
+          type: any
+          description: 'The query''s fields as an object — ?led=on&level=3 is { "led": "on", "level": "3" }.'
+        - name: value
+          type: any
+          description: What Pick found in the body — a number, true/false, text, or a list/object as JSON; empty when nothing was picked.
+        - name: file
+          type: str
+          description: The file holding the body — bind it to Read JSON or Filesystem's Read; empty when there was none.
+        - name: size
+          type: int
+          description: How many bytes the body had.
+        - name: client
+          type: str
+          description: The address it came from — 192.168.0.12.
+        - name: error
+          type: str
+          description: What Pick missed, or why the body couldn't be saved; empty when all went well.
+
+  actions:
+
+    - displayName: Request
+      description: >
+        Calls a URL — goes on (Out) on a 2xx answer, Fallback when there's no
+        network, it took longer than Timeout, or the server answered 4xx/5xx
+        (`error` says which). The board waits for the answer meanwhile.
+      script: src/request.py
+      configurations:
+        - displayName: Method
+          description: What the request does — GET reads, POST sends, PUT/PATCH change, DELETE removes.
+          type: options
+          defaultValue: GET
+          options:
+            - { displayName: GET, value: GET }
+            - { displayName: POST, value: POST }
+            - { displayName: PUT, value: PUT }
+            - { displayName: PATCH, value: PATCH }
+            - { displayName: DELETE, value: DELETE }
+            - { displayName: HEAD, value: HEAD }
+        - displayName: URL
+          description: The address to call — https:// or http:// (without one, http://).
+          type: string
+          required: true
+          defaultValue: ""
+          placeholder: https://api.example.com/data
+        - displayName: Body
+          description: What POST, PUT and PATCH send — JSON, form fields or text. GET, HEAD and DELETE send none.
+          type: string
+          defaultValue: ""
+          placeholder: '{"temp": 21.5}'
+        - displayName: Pick
+          description: >
+            One value from the JSON answer, by its path — main.temp,
+            weather.0.description (a number steps into a list); empty picks
+            nothing. Published as `value`.
+          type: string
+          defaultValue: ""
+          placeholder: main.temp
+        - displayName: Auth
+          description: An HTTP Header Auth credential — the API key or token sent as a header. Empty sends none.
+          type: credential
+          credential: http_header
+        - displayName: Headers
+          advanced: true
+          description: Headers to send — a name and a value each.
+          type: array
+          items: { object: { name: str, value: str } }
+          maxItems: 8
+          defaultValue: []
+        - displayName: Content Type
+          advanced: true
+          description: What the Body is — Auto takes JSON when it starts with { or [, text otherwise. A Content-Type in Headers wins.
+          type: options
+          defaultValue: auto
+          options:
+            - { displayName: Auto, value: auto }
+            - { displayName: JSON, value: application/json }
+            - { displayName: Form, value: application/x-www-form-urlencoded }
+            - { displayName: Text, value: text/plain }
+        - displayName: Save To
+          advanced: true
+          description: A file of your own for the answer — /data/weather.json, its folders made; it stays. Empty, it goes to a temporary file, cleared when a session starts.
+          type: string
+          defaultValue: ""
+          placeholder: /data/response.json
+        - displayName: Timeout
+          advanced: true
+          description: How long it waits for the server, in ms — 1000 to 60000.
+          type: number
+          defaultValue: "10000"
+          placeholder: 1000–60000 ms
+          patterns:
+            - { name: Min, value: 1000 }
+            - { name: Max, value: 60000 }
+      outputSchema:
+        - name: status
+          type: int
+          description: The HTTP status — 200 OK, 404 not found, 500 server error…; 0 when no answer came.
+        - name: value
+          type: any
+          description: What Pick found — a number, true/false, text, or a list/object as JSON; empty when nothing was picked.
+        - name: file
+          type: str
+          description: The file holding the whole answer, as text — bind it to Read JSON, Filesystem's Read, or open() it in a Code binding; empty for HEAD or when it failed.
+        - name: size
+          type: int
+          description: How many bytes the answer had.
+        - name: error
+          type: str
+          description: >
+            Why it went Fallback, or what Pick missed — no_network, dns, timeout,
+            refused, unreachable, http_404…, "pick: no field temp"; empty
+            when all went well.
+
+    - displayName: Read JSON
+      description: >
+        One value from a JSON file on the board — a Request's `file` (bind it),
+        or any other. Fallback when the file isn't there, isn't JSON, or has nothing at Pick.
+      script: src/read_json.py
+      configurations:
+        - displayName: File
+          description: The file to read — bind a Request's `file`, or a path like /data/response.json.
+          type: string
+          required: true
+          defaultValue: ""
+          placeholder: /data/response.json
+        - displayName: Pick
+          description: The value's path — main.temp, weather.0.description; empty takes the whole file (if it fits).
+          type: string
+          defaultValue: ""
+          placeholder: main.temp
+      outputSchema:
+        - name: value
+          type: any
+          description: What Pick found — a number, true/false, text, or a list/object as JSON.
+        - name: error
+          type: str
+          description: Why it's Fallback — no_file, not_json, no field temp, value_too_large; empty otherwise.
+
+    - displayName: Respond
+      description: >
+        Answers the request its Request Trigger's branch runs for — Status and
+        a Body (or a File). Fallback when there's none to answer: not in a
+        Request Trigger's branch, or it was answered already.
+      script: src/respond.py
+      configurations:
+        - displayName: Status
+          description: The HTTP status — 200 OK, 201 created, 400 bad request, 404 not found…
+          type: number
+          defaultValue: "200"
+          patterns:
+            - { name: Min, value: 100 }
+            - { name: Max, value: 599 }
+        - displayName: Body
+          description: What it answers — text, or bind a list/object (sent as JSON).
+          type: string
+          defaultValue: ""
+          placeholder: '{"ok": true}'
+        - displayName: Content Type
+          advanced: true
+          description: What the Body is — Auto takes JSON for a list/object or text starting with { or [, plain text otherwise.
+          type: options
+          defaultValue: auto
+          options:
+            - { displayName: Auto, value: auto }
+            - { displayName: JSON, value: application/json }
+            - { displayName: Text, value: text/plain }
+            - { displayName: HTML, value: text/html }
+        - displayName: File
+          advanced: true
+          description: A file on the board to answer with instead of Body — /www/index.html. Empty sends Body.
+          type: string
+          defaultValue: ""
+          placeholder: /www/index.html
+      outputSchema:
+        - name: error
+          type: str
+          description: Why it went Fallback — no_request, no_file; empty otherwise.

@@ -1,0 +1,39 @@
+---
+title: Core concepts
+description: Packages, components, actions and triggers — what a workflow is made of.
+---
+
+A workflow is a graph of **nodes** on the canvas. Every node comes from a **component**, every
+component (and the board itself) comes from a **package** — and each node is either an **action**,
+a step of the flow, or a **trigger**, what starts one.
+
+```txt
+Package (npm)
+├── board       ESP32 — its pins, its firmware, what it offers (wifi, bluetooth…)
+└── component   GPIO, HTTP, DHT…
+    ├── actions     Write, Read…        steps of the flow
+    └── triggers    Pin Trigger…        what starts a branch of it
+```
+
+<WorkflowPreview name="triggers" height={480} />
+
+Above: **Start** (a trigger) runs WiFi's **Connect** (an action); HTTP's **Request Trigger** and
+Time's **Timer Trigger** each start a branch of their own, driving GPIO's **Write**.
+
+<Cards>
+  <Card title="Package" href="/docs/concepts/package" description="Boards and components as npm packages, described by a manifest." />
+  <Card title="Component" href="/docs/concepts/component" description="A group of actions and triggers for one thing — a sensor, a protocol." />
+  <Card title="Action" href="/docs/concepts/action" description="One step: its settings, the values it publishes, the output it ends on." />
+  <Card title="Trigger" href="/docs/concepts/trigger" description="What starts a branch — Start at boot, a pin, a timer, a request." />
+</Cards>
+
+## In one sentence each
+
+| Concept | Is |
+| --- | --- |
+| **Package** | An npm package with a `manifest.yaml` — a board or a component. What you install. |
+| **Board** | The hardware a workflow runs on: its pins and what each can do, its firmware, its capabilities. One per workflow. |
+| **Component** | A set of actions and triggers about one thing, with the MicroPython that runs them. |
+| **Action** | A node that runs when the flow reaches it, and ends on one of its outputs. |
+| **Trigger** | A node that starts a branch on its own — no input, one **Out**. |
+| **Workflow** | The graph: its board, its components' nodes, the wires between them, its variables. |

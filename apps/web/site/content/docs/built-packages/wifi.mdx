@@ -1,0 +1,115 @@
+---
+title: "WiFi"
+description: "The ESP32's WiFi — Connect the board to a network, check its Status, Scan for networks, make it an Access Point of its own, and Disconnect."
+---
+
+The ESP32's WiFi — Connect the board to a network, check its Status, Scan for networks, make it an Access Point of its own, and Disconnect. What runs over it (HTTP, MQTT…) are components of their own.
+
+<PackageInfo name="@henglosio/component-wifi" version="1.0.0" platform="^1.0.0" needs={["wifi"]} />
+
+| Node | Kind | What it does |
+| --- | --- | --- |
+| [Connect](#connect) | Action | Joins the board to a WiFi network — goes on (Out) once it has an address, Fallback when the password is wrong, the network isn't there, or it took longer than Timeout. |
+| [Disconnect](#disconnect) | Action | Leaves the network, stops the board's Access Point, or both — the radio goes quiet for what's stopped. |
+| [Status](#status) | Action | Branches on whether the board is on a network — Connected or Disconnected — with its address and signal, and how its Access Point is doing. |
+| [Scan](#scan) | Action | Lists the WiFi networks around, strongest first — an empty list when there's none (or the radio couldn't scan). |
+| [Access Point](#access-point) | Action | Makes the board a WiFi network of its own, for phones and other boards to join — goes on (Out) with its address (usually 192.168.4.1), or Fallback. |
+
+## Actions
+
+### Connect
+
+Joins the board to a WiFi network — goes on (Out) once it has an address, Fallback when the password is wrong, the network isn't there, or it took longer than Timeout. Already on that network: on at once. The connection stays up while the flow keeps running — a session that ends (Run ▶, Debug, a once-mode Play) drops it.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Network** | Credential (wifi) | — | **Required.** The WiFi network to join — one of your credentials (its name and password), or a new one. |
+| **Timeout** | Number (1000 to 60000) | `10000` | How long it tries before giving up, in ms — 1000 to 60000. The flow waits meanwhile. |
+| **Hostname** | Text | — | *Advanced.* The name the board shows in the router's device list — empty keeps the default (espressif). |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `ip` | any | The board's address on the network, as text — empty when not connected. |
+| `ssid` | any | The network it's on, as text. |
+| `rssi` | int | The signal, in dBm — -30 strong, -70 fair, -90 barely there; 0 when not connected. |
+| `mac` | any | The board's MAC address, as text — aa:bb:cc:dd:ee:ff. |
+| `reason` | any | Why it went Fallback, as text — wrong_password, no_network, failed, timeout, or no_credential (the network's credential isn't on the board: run the workflow again); empty once connected. |
+
+### Disconnect
+
+Leaves the network, stops the board's Access Point, or both — the radio goes quiet for what's stopped.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **Interface** | One of: Station, Access Point, Both | Station | What to stop — the connection to a network (Station), the board's own network (Access Point), or both. |
+
+### Status
+
+Branches on whether the board is on a network — Connected or Disconnected — with its address and signal, and how its Access Point is doing.
+
+Ends on **Connected**, **Disconnected** — or **Fallback** when it can't run.
+
+**Settings**
+
+No settings.
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `ip` | any | The board's address on the network, as text — empty when not connected. |
+| `ssid` | any | The network it's on, as text. |
+| `rssi` | int | The signal, in dBm — -30 strong, -70 fair, -90 barely there; 0 when not connected. |
+| `signal` | int | The signal as a percentage — 0 to 100. |
+| `ap_active` | bool | Whether the board's Access Point is on. |
+| `ap_clients` | int | Devices joined to the board's Access Point. |
+
+### Scan
+
+Lists the WiFi networks around, strongest first — an empty list when there's none (or the radio couldn't scan). Takes a couple of seconds.
+
+**Settings**
+
+No settings.
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `networks` | list of \{ ssid: str, rssi: int, channel: int \} | The networks it saw (the 10 strongest), strongest first, each with its ssid, rssi (dBm) and channel — bind it to a List variable or a list config. |
+
+### Access Point
+
+Makes the board a WiFi network of its own, for phones and other boards to join — goes on (Out) with its address (usually 192.168.4.1), or Fallback. Works alongside Connect. It stays up while the flow keeps running — a session that ends (Run ▶, Debug, a once-mode Play) turns it off.
+
+**Settings**
+
+| Setting | Type | Default | What it's for |
+| --- | --- | --- | --- |
+| **SSID** | Text | `henglos` | **Required.** The network's name, as others will see it. |
+| **Password** | Text | — | 8 characters or more (WPA2) — empty for an open network anyone can join. |
+| **Channel** | Number (1 to 13) | `1` | *Advanced.* The WiFi channel, 1 to 13 — another one if the air is crowded. With Connect on too, the board follows the network's channel. |
+| **Max Clients** | Number (1 to 10) | `4` | *Advanced.* How many devices may join at once — 1 to 10. |
+
+**Publishes**
+
+| Output | Type | What it is |
+| --- | --- | --- |
+| `ip` | any | The board's address on its own network, as text — usually 192.168.4.1. |
+
+## Credentials
+
+### WiFi Network
+
+A WiFi network to join — its name and password (2.4 GHz; the ESP32 doesn't do 5 GHz).
+
+| Field | What it's for |
+| --- | --- |
+| **SSID** | The network's name, as phones show it. |
+| **Password** | Empty for an open network. |

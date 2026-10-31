@@ -1,0 +1,16 @@
+{
+	"name": "@henglosio/component-code",
+	"version": "1.0.0",
+	"description": "Runs a short Python (MicroPython) script on a HenglosIO board",
+	"author": "Henglos",
+	"license": "SEE LICENSE IN LICENSE",
+	"type": "module",
+	"exports": {
+		"./manifest.yaml": "./manifest.yaml",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"src/**/*.py",
+		"manifest.yaml"
+	]
+}

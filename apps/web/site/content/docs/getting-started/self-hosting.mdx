@@ -1,0 +1,50 @@
+---
+title: Self-hosting
+description: Run the hosting and the studio on your own machine.
+---
+
+Henglos IO is self-hosted: the hosting (API, accounts, workflows, packages) and the studio run on
+your machine or server, and your drivers connect to it.
+
+<Callout type="warn" title="Work in progress">
+  Packaged releases aren't out yet — for now Henglos IO runs from its source repository, as below.
+</Callout>
+
+## From source
+
+The repository is a pnpm + Turborepo monorepo.
+
+```bash
+pnpm install
+pnpm dev
+```
+
+`pnpm dev` starts every app in development mode:
+
+| Service | Port | What it is |
+| --- | --- | --- |
+| Studio | `5173` | The web app |
+| Hosting | `3333` | The API, under `/io` |
+| Package registry | `4873` | A local [Verdaccio](https://verdaccio.org) for your own packages (`docker compose up` in `apps/hosting`) |
+
+A reverse proxy puts them behind one address. The repository's `Caddyfile` serves both at
+`https://hio.localhost`:
+
+```txt title="Caddyfile"
+hio.localhost {
+	tls internal
+
+	handle /io/* {
+		reverse_proxy http://localhost:3333
+	}
+
+	handle {
+		reverse_proxy http://localhost:5173
+	}
+}
+```
+
+## First run
+
+Open the studio. With no account yet, it opens the **setup** page — the account you create there
+is the instance's first user. Afterwards it goes straight to the login.

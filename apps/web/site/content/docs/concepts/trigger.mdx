@@ -1,0 +1,55 @@
+---
+title: Trigger
+description: What starts a branch of the flow — Start at boot, a pin, a timer, a request.
+---
+
+A **trigger** is a node that starts a branch of the flow on its own. It has **no input** — nothing
+leads into it — and a single output, **Out**: the first action of its branch. On the canvas it has a
+round left side, a green mark and the **Trigger** tag.
+
+## Start, and the others
+
+Every workflow has **Start**, the trigger that runs when the program starts — once, or in a loop.
+Components add the others:
+
+| Trigger | Component | Fires when |
+| --- | --- | --- |
+| Pin Trigger | GPIO | A pin changes — a button pressed. |
+| Timer Trigger | Time | Every interval. |
+| Request Trigger | HTTP | A request comes in on its path. |
+| Code Trigger | IR | A remote's code is received. |
+| Water Trigger | Water Sensor | The sensor gets wet, or dries. |
+| Sound Trigger | Sound Sensor | A clap, a knock. |
+| Climate Trigger | DHT | The temperature or humidity goes past a limit. |
+
+A trigger publishes what happened — a request's `path`, a pin's `level`, a timer's `count` — for its
+branch to bind to.
+
+## Branches side by side
+
+Each trigger's branch runs on its own:
+
+- It runs **right away** when its trigger fires — even while another branch waits in a Delay or a
+  network call.
+- Each branch has its **own values**; what they share are the workflow's variables.
+- A trigger runs **one branch at a time**: an event that comes while its branch runs waits, and
+  fires once it's over. Different triggers run in parallel.
+
+## Trigger or action?
+
+Some things are both: GPIO has a **Pin Trigger** and a **Read**, Water Sensor has a **Water
+Trigger** and a **Detect**. The trigger *waits* for it and starts a branch; the action *checks* it
+now, in the middle of a branch, and goes on.
+
+| Use a trigger | Use an action |
+| --- | --- |
+| "When the button is pressed, …" | "Is the button pressed right now?" |
+| Reacting to something that may come at any time. | A step in a sequence you're already running. |
+
+## On the board
+
+A trigger is an `HIOTrigger`: `arm` starts listening (open a socket, set an interrupt), `poll` is
+asked over and over — never blocking — whether it fired, and `disarm` stops.
+
+See [Triggers in the studio](/docs/studio/triggers) for using them, and
+[Building a component](/docs/packages/building-a-component#triggers) for writing one.

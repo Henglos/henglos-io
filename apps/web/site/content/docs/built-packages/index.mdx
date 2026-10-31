@@ -1,0 +1,68 @@
+---
+title: Built-in packages
+description: Every board and component Henglos IO comes with — what each does, its actions and triggers.
+---
+
+The packages made by Henglos IO. Each page lists every node of the package — what it does, its
+settings and what it publishes. Components are npm packages (`@henglosio/component-…`): install
+one from the studio's component store by its name. **Start**, **Logic** and **Variables** come with
+every workflow.
+
+<WorkflowPreview name="water-alarm" height={440} />
+
+A leak alarm made of three of them: **Water Sensor**'s Read in Start's loop, an **If** on its `wet`
+output, a **GPIO** Write sounding the alarm — and a button (**GPIO**'s Pin Trigger) silencing it.
+
+## In every workflow
+
+| | Nodes |
+| --- | --- |
+| [Start, Logic and Variables](/docs/built-packages/core) | Start · If, Switch, Repeat · Set, Append, Set Field, Clear |
+
+## Boards
+
+| Board | Capabilities |
+| --- | --- |
+| [ESP32](/docs/built-packages/esp32) | `wifi`, `bluetooth` |
+
+## Pins and timing
+
+| Component | Triggers | Actions | What for |
+| --- | --- | --- | --- |
+| [GPIO](/docs/built-packages/gpio) | Pin Trigger | Write, Read | Read or drive one digital pin; run a branch when a pin changes. |
+| [PWM](/docs/built-packages/pwm) | — | Write, Fade, Stop | Dim an LED, set a motor's speed, drive a buzzer. |
+| [Servo](/docs/built-packages/servo) | — | To Angle, Rotate, Release | Positional (0–180°) and continuous-rotation servos. |
+| [Time](/docs/built-packages/time) | Timer Trigger | Delay, Uptime, Start Timer, Elapsed, Every | Wait, measure, pace part of a loop; run a branch every interval. |
+
+## Sensors
+
+| Component | Triggers | Actions | What for |
+| --- | --- | --- | --- |
+| [DHT](/docs/built-packages/dht) | Climate Trigger | Read | DHT11 / DHT22 temperature and humidity — heat index and dew point too. |
+| [Water Sensor](/docs/built-packages/water-sensor) | Water Trigger | Read, Detect, Calibrate | Analog water level / leak sensors. |
+| [Sound Sensor](/docs/built-packages/sound-sensor) | Sound Trigger | Read, Detect | KY-037 / KY-038 microphone modules — a clap, a knock. |
+| [Ultrasonic Sensor](/docs/built-packages/ultrasonic-sensor) | — | Measure, Detect | HC-SR04-style distance sensors. |
+| [IMU](/docs/built-packages/imu) | — | Read, Orientation, Tilt, Motion, Calibrate | MPU-6050 family accelerometer + gyroscope. |
+| [Joystick](/docs/built-packages/joystick) | — | Read, Direction, Button, Calibrate | 2-axis analog joysticks with a push button. |
+
+## Displays
+
+| Component | Actions | What for |
+| --- | --- | --- |
+| [Display](/docs/built-packages/display) | Print, Scroll, Draw, Image, Bar, Gauge, Chart, Clear, Settings | SSD1306 / SH1106 I²C OLEDs. |
+| [LCD](/docs/built-packages/lcd) | Print, Clear, Backlight | 16×2 / 20×4 character LCDs, I²C or parallel. |
+
+## Connectivity
+
+| Component | Triggers | Actions | Needs | What for |
+| --- | --- | --- | --- | --- |
+| [WiFi](/docs/built-packages/wifi) | — | Connect, Disconnect, Status, Scan, Access Point | `wifi` | Join a network, or be one. |
+| [HTTP](/docs/built-packages/http) | Request Trigger | Request, Read JSON, Respond | `wifi` | Call web APIs; answer requests on a base path. |
+| [IR](/docs/built-packages/ir) | Code Trigger | Send, Receive, Match | — | Infrared remotes, both ways. |
+
+## Data and code
+
+| Component | Actions | What for |
+| --- | --- | --- |
+| [Filesystem](/docs/built-packages/filesystem) | Read, Write, Copy, Move, Delete, Info, List | The board's own files — what a Request saved, a log. |
+| [Code](/docs/built-packages/code) | Run | A short Python script: computes, and returns a value, a list or an object as `result`. |
