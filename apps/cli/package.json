@@ -6,6 +6,16 @@
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "main": "./dist/index.mjs",
+  "keywords": [
+  	"henglos",
+   	"henglosio",
+    "iot",
+    "workflow",
+    "cli"
+  ],
+  "publishConfig": {
+  	"access": "public"
+  },
   "files": [
     "./dist"
   ],
