@@ -4,7 +4,6 @@
 	"description": "React components for drawing and editing HenglosIO workflows.",
 	"author": "Henglos",
 	"license": "SEE LICENSE IN LICENSE",
-	"private": true,
 	"type": "module",
 	"exports": {
 		".": {

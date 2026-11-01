@@ -4,7 +4,6 @@
 	"description": "The HenglosIO design system: React components and tokens.",
 	"author": "Henglos",
 	"license": "SEE LICENSE IN LICENSE",
-	"private": true,
 	"type": "module",
 	"exports": {
 		".": {
