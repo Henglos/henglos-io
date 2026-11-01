@@ -1,0 +1,76 @@
+---
+title: Configuration
+description: Every setting of a Henglos IO installation — environment variables.
+---
+
+Henglos IO is configured with environment variables. With Docker Compose, they go in
+`deploy/docker/.env`; the hosting checks them when it starts, and stops with the reason when one
+is missing or invalid.
+
+## Docker Compose
+
+What `deploy/docker/.env` sets:
+
+| Variable | Default | What it is |
+| --- | --- | --- |
+| `HIO_SITE_ADDRESS` | `:80` | Where it's reached: a domain (`hio.example.com`) gets HTTPS on its own; `:80` serves plain HTTP. |
+| `HIO_HTTP_PORT` | `80` | The host port Caddy listens on for HTTP. |
+| `HIO_HTTPS_PORT` | `443` | The host port Caddy listens on for HTTPS. |
+| `HIO_JWT_SECRET` | — | **Required.** Signs the sign-in tokens. |
+| `HIO_SECRETS_KEY` | — | **Required.** Encrypts the saved credentials. |
+| `HIO_REGISTRY_URL` | `https://registry.npmjs.org/` | The npm registry boards, components and the platform come from. |
+| `HIO_TELEMETRY` | `true` | Anonymous usage statistics — `false` turns them off. |
+
+<Callout type="warn" title="The two secrets">
+  Make each one with `openssl rand -hex 32`. Changing `HIO_JWT_SECRET` signs everyone — and every
+  driver — out. Changing `HIO_SECRETS_KEY` makes the saved credentials unreadable: set it once and
+  keep it (with your backups).
+</Callout>
+
+## The hosting
+
+Every variable the hosting reads. The image sets the ones about where it listens and where its
+data goes; the rest have defaults, except the secret.
+
+| Variable | Default | What it is |
+| --- | --- | --- |
+| `HIO_JWT_SECRET` | — | **Required.** Signs the users' and drivers' access tokens. |
+| `HIO_SECRETS_KEY` | derived from `HIO_JWT_SECRET` | Encrypts the credentials' secret fields (16 characters or more). |
+| `HIO_USER_JWT_EXPIRATION` | `10d` | How long a user's access token lasts. |
+| `HIO_DRIVER_JWT_EXPIRATION` | `30d` | How long a driver's access token lasts. |
+| `HIO_REGISTRY_URL` | `https://registry.npmjs.org/` | The npm registry packages and the platform are installed from. |
+| `HIO_CORS_ORIGIN` | `*` | The origins a browser may call the API from: `*`, or a comma-separated list. |
+| `HIO_HOST` | `0.0.0.0` | The address it listens on. |
+| `HIO_PORT` | `3333` in the image | The port it listens on. |
+| `HIO_DATABASE_PROVIDER` | `sqlite` in the image | The database — only `sqlite` for now. |
+| `HIO_DATABASE_URL` | `file:/data/hio.sqlite` in the image | Where the SQLite database is. |
+| `HIO_TELEMETRY` | `true` | Anonymous usage statistics — `false`, `0`, `off` or `no` turns them off. |
+| `DO_NOT_TRACK` | — | The standard opt-out: `1` turns telemetry off too. |
+| `HIO_TELEMETRY_DEBUG` | `false` | Logs every telemetry event, to see exactly what's sent. |
+| `HIO_TELEMETRY_ID_FILE` | `/data/telemetry-id` in the image | Where the installation's random id is kept. |
+
+The studio has no settings of its own: it calls the hosting on its own address.
+
+## The registry
+
+Boards, components and the platform are npm packages. The hosting reads them from
+`HIO_REGISTRY_URL`, and every driver installs them from its own `HENGLOS_REGISTRY` — **both must
+point at the same registry**, or the studio offers versions a driver can't get.
+
+Both default to the public npm registry. To use your own (a [Verdaccio](https://verdaccio.org),
+for private packages), set it on both sides:
+
+```ini title="deploy/docker/.env"
+HIO_REGISTRY_URL=https://npm.example.com/
+```
+
+```bash title="on the driver's machine"
+export HENGLOS_REGISTRY=https://npm.example.com/
+```
+
+## Telemetry
+
+The hosting sends anonymous usage statistics — counts, versions and the official packages' names,
+never a workflow, a name or anything you write — under a random id of the installation, not of a
+person. `HIO_TELEMETRY=false` (or `DO_NOT_TRACK=1`) turns it off; with `HIO_TELEMETRY_DEBUG=true`
+each event is logged as it goes.
