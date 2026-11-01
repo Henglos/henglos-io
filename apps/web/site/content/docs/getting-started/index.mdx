@@ -3,43 +3,54 @@ title: Quickstart
 description: From nothing to a workflow running on an ESP32.
 ---
 
-<Steps>
-<Step>
 
 ### Run Henglos IO
 
-Start the hosting and the studio on your machine — see [Self-hosting](/docs/getting-started/self-hosting). The first
-time you open it, it asks you to create the admin account.
+With [Docker](https://www.docker.com), from the repository's `deploy/docker` folder:
 
-</Step>
-<Step>
+```bash
+cd deploy/docker
+cp .env.example .env     # fill in HIO_JWT_SECRET and HIO_SECRETS_KEY — openssl rand -hex 32
+docker compose up -d
 
-### Pair a driver
+```
 
-On the computer the board is plugged into, install the driver and pair it with a token from the
-studio's **Drivers** page — see [Pair a driver](/docs/getting-started/pair-a-driver).
+Open `http://localhost` — the first time, it asks you to create your account. Domains, HTTPS and
+every setting are in [Self-hosting](https://www.google.com/search?q=/docs/getting-started/self-hosting).
 
-</Step>
-<Step>
+### Install the CLI & Driver
+
+Install the Henglos IO CLI using the installation script:
+
+```bash
+curl -fsSL [https://henglos.io/get-hio.sh](https://henglos.io/get-hio.sh) | sh
+
+```
+
+Then configure and start your driver:
+
+```bash
+hio driver configure http://localhost
+hio driver login <pair-token> "My bench"     # the token from the studio's Drivers page
+hio driver start
+
+```
+
+See [Pair a driver](https://www.google.com/search?q=/docs/getting-started/pair-a-driver).
 
 ### Create a workflow
 
 In the **Hub**, click **New workflow**, pick a target board (ESP32) and a platform version.
-Add components from the library and wire their actions — see [Your first workflow](/docs/getting-started/first-workflow).
-
-</Step>
-<Step>
+Add components from the library and wire their actions — see [Your first workflow](https://www.google.com/search?q=/docs/getting-started/first-workflow).
 
 ### Upload and run
 
 Select the driver and the board's port in the studio, compile and upload, then press **Execute** —
 or **Debug** to go through it one action at a time.
 
-</Step>
-</Steps>
-
 ## What you need
 
-- A board with **MicroPython** flashed (an ESP32 dev board is the reference target).
-- A USB cable that carries data, and the board's USB-serial driver (CP210x / CH340) if your OS needs one.
-- Node.js on the computer that runs the driver.
+* **Where Henglos IO runs** — a machine or server with Docker.
+* **Where the board is plugged in** — Docker (the driver builds what the board runs in a container). It can be the same machine.
+* **A board** — an ESP32 dev board is the reference target — and a USB cable that carries data,
+with the board's USB-serial driver (CP210x / CH340) if your OS needs one.

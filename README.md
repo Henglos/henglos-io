@@ -18,15 +18,15 @@ or write yourself. It's self-hosted: the whole platform runs on your own machine
 
 You need [Docker](https://www.docker.com) and a board (an ESP32 to start with).
 
-**1. Start Henglos IO**, from [`deploy/docker`](deploy/docker):
+**1. Start Henglos IO**, using the installation script:
 
 ```bash
-cd deploy/docker
-cp .env.example .env     # then fill in HIO_JWT_SECRET and HIO_SECRETS_KEY (openssl rand -hex 32)
-docker compose up -d
+curl -fsSL https://get.henglos.com/henglos-io | sh
 ```
 
-Open `http://localhost` — the first time, it asks you to create your account.
+Or deploy manually with [Docker](https://docs.henglos.com/quick-started)
+
+Open `http://hio.localhost` — the first time, it asks you to create your account.
 
 **2. Connect your board**, from the computer it's plugged into:
 
@@ -38,8 +38,6 @@ hio driver start
 ```
 
 **3. Create a workflow** in the studio, pick your board and its port, and press **Run**.
-
-Domains and HTTPS, updates and backups are in the [Docker guide](deploy/docker/README.md).
 
 ## License
 

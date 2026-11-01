@@ -8,15 +8,29 @@ keeps a connection to your hosting, builds what the board needs for a workflow, 
 board over its USB REPL. A driver can serve several boards, and you can pair as many drivers as you
 have benches.
 
+It needs [Node.js](https://nodejs.org) to run, and [Docker](https://www.docker.com) — it builds
+what the board runs inside a container.
+
 ## Pair it
 
 <Steps>
 <Step>
 
-### Point it at your hosting
+### Install the CLI
 
 ```bash
-hio driver configure https://hio.localhost
+npm install -g @henglosio/cli
+```
+
+</Step>
+<Step>
+
+### Point it at your hosting
+
+The address you open the studio at:
+
+```bash
+hio driver configure https://hio.example.com
 ```
 
 </Step>
@@ -48,6 +62,17 @@ It runs in the background. `hio driver status` shows whether it's up, `hio drive
 </Steps>
 
 Once it's connected, it appears in the studio's driver selector with the serial ports it sees.
+
+## Its registry
+
+The driver installs boards, components and the platform from the public npm registry. If your
+hosting uses another one (`HIO_REGISTRY_URL` — see [Configuration](/docs/getting-started/configuration#the-registry)),
+point the driver at the same one before starting it:
+
+```bash
+export HENGLOS_REGISTRY=https://npm.example.com/
+hio driver start
+```
 
 ## Talking to the board
 
