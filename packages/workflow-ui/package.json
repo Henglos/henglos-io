@@ -17,9 +17,19 @@
 		"storybook": "storybook dev -p 6007",
 		"build-storybook": "storybook build"
 	},
+	"keywords": [
+		"henglos",
+		"henglosio",
+		"workflow",
+		"ui",
+		"react"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
 	"dependencies": {
-		"@henglosio/ui": "workspace:*",
-		"@henglosio/workflow": "workspace:*",
+		"@henglosio/ui": "^1.0.0",
+		"@henglosio/workflow": "^1.0.0",
 		"clsx": "^2.1.1"
 	},
 	"peerDependencies": {
