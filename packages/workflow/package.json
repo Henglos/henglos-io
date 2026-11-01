@@ -19,6 +19,15 @@
 		"dev": "tsdown --watch",
 		"test": "vitest"
 	},
+	"keywords": [
+		"henglos",
+		"henglosio",
+		"workflow",
+		"core"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
 	"devDependencies": {
 		"@types/node": "^22.0.0",
 		"tsdown": "latest",

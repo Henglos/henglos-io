@@ -19,6 +19,15 @@
 		"storybook": "storybook dev -p 6006",
 		"build-storybook": "storybook build"
 	},
+	"keywords": [
+		"henglos",
+   		"henglosio",
+     	"ui",
+      	"react"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
 	"peerDependencies": {
 		"gsap": ">=3",
 		"lucide-react": ">=0",
