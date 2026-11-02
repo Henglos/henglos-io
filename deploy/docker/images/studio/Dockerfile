@@ -1,6 +1,6 @@
 # The studio — Next.js, as a standalone server.
 #
-#   docker build -f apps/web/app/Dockerfile -t henglosio/studio .
+#   docker build -f deploy/docker/images/studio/Dockerfile -t henglosio/studio .
 #   docker run -p 5173:5173 henglosio/studio
 #
 # It calls the hosting on its own origin (/io/api, /io/collab): put both behind
@@ -20,8 +20,8 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm fetch --config.ignore-scripts=true
 
 COPY . .
-RUN pnpm install --offline --frozen-lockfile --filter "app..."
-RUN pnpm --filter "app..." run build
+RUN pnpm install --offline --frozen-lockfile --filter "frontend..."
+RUN pnpm --filter "frontend..." run build
 
 
 FROM node:24-bookworm-slim
@@ -31,10 +31,10 @@ ENV NODE_ENV=production \
 	PORT=5173
 WORKDIR /app
 
-# The standalone server keeps the monorepo's layout: the app sits in apps/web/app.
-COPY --from=build --chown=node:node /repo/apps/web/app/.next/standalone ./
-COPY --from=build --chown=node:node /repo/apps/web/app/.next/static ./apps/web/app/.next/static
-COPY --from=build --chown=node:node /repo/apps/web/app/public ./apps/web/app/public
+# The standalone server keeps the monorepo's layout: the app sits in apps/frontend.
+COPY --from=build --chown=node:node /repo/apps/frontend/.next/standalone ./
+COPY --from=build --chown=node:node /repo/apps/frontend/.next/static ./apps/frontend/.next/static
+COPY --from=build --chown=node:node /repo/apps/frontend/public ./apps/frontend/public
 
 USER node
 EXPOSE 5173
@@ -42,4 +42,4 @@ EXPOSE 5173
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
 	CMD node -e "fetch('http://127.0.0.1:' + process.env.PORT).then(r => process.exit(r.status < 500 ? 0 : 1), () => process.exit(1))"
 
-CMD ["node", "apps/web/app/server.js"]
+CMD ["node", "apps/frontend/server.js"]

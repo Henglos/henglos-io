@@ -1,6 +1,6 @@
 # The hosting — the API (/io/api), the collab socket (/io/collab), the drivers' link.
 #
-#   docker build -f apps/hosting/Dockerfile -t henglosio/hosting .
+#   docker build -f deploy/docker/images/hosting/Dockerfile -t henglosio/hosting .
 #   docker run -p 3333:3333 -v hio-data:/data -e HIO_JWT_SECRET=… henglosio/hosting
 #
 # The database (SQLite) and the installation's id live in /data — mount a volume there.
