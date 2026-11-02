@@ -1,6 +1,6 @@
 {
 	"name": "@henglosio/workflow-ui",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "React components for drawing and editing HenglosIO workflows.",
 	"author": "Henglos",
 	"license": "SEE LICENSE IN LICENSE",
