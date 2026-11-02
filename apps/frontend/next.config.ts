@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   // A self-contained server (.next/standalone) for the Docker image — traced
   // from the monorepo's root, so the workspace packages come along.
   output: "standalone",
-  outputFileTracingRoot: join(__dirname, "../../.."),
+  outputFileTracingRoot: join(__dirname, "../.."),
 };
 
 export default nextConfig;
