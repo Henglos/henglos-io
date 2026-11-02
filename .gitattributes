@@ -1,0 +1,2 @@
+# The installer is piped into sh: it must keep LF on every checkout.
+*.sh text eol=lf
