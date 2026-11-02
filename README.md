@@ -24,6 +24,7 @@ You need [Docker](https://www.docker.com) and a board (an ESP32 to start with).
 curl -fsSL https://get.henglos.com/henglos-io | sh
 ```
 
+It downloads the deployment files into `./henglos`, generates the secrets and starts everything.
 Or deploy manually with [Docker](https://docs.henglos.com/quick-started)
 
 Open `http://hio.localhost` — the first time, it asks you to create your account.
