@@ -697,11 +697,11 @@ importers:
   packages/workflow-ui:
     dependencies:
       '@henglosio/ui':
-        specifier: workspace:^
-        version: link:../ui
+        specifier: ^1.0.1
+        version: 1.0.1(gsap@3.15.0)(lucide-react@1.59.0(@types/react@19.2.17)(react@19.2.4))(radix-ui@1.6.2(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(tailwindcss@4.3.2)
       '@henglosio/workflow':
-        specifier: workspace:^
-        version: link:../workflow
+        specifier: ^1.0.1
+        version: 1.0.1(yjs@13.6.33)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -1570,6 +1570,21 @@ packages:
     resolution: {integrity: sha512-wtF6h+DY6M3YaDBPAmvuuA6jV8Sif9MjtOI5euKFWRgCDl5PeDpPsHR9u2l6St5ceY8AZgoNDww5+HvEsXFsGg==}
     engines: {node: '>=6'}
     hasBin: true
+
+  '@henglosio/ui@1.0.1':
+    resolution: {integrity: sha512-KwrRThTOqgI2uU1VIQm/ubiNfOhsZAVQdWG7ICfG1FiGeLJ+qQzcd28KKXagyHU5tijEOTjtEGZAKw4DMhEhJA==}
+    peerDependencies:
+      gsap: '>=3'
+      lucide-react: '>=0'
+      radix-ui: '>=1'
+      react: '>=19'
+      react-dom: '>=19'
+      tailwindcss: '>=4'
+
+  '@henglosio/workflow@1.0.1':
+    resolution: {integrity: sha512-ZRk05h6ZCOggqqs7UEhCzUW2p1FlwK2SJ0ReKm+v0m+VtaRisc8J5G7AALLqEz0S25SrRbs4cNYkcKVN8cBHDQ==}
+    peerDependencies:
+      yjs: ^13.6.0
 
   '@hocuspocus/common@4.7.0':
     resolution: {integrity: sha512-KyS6dXoIcWsd+v3gwd6nnZW04M77df5XstPNkOwqoDxwuncygobEN7xsf0x2PmdvlQdQyRaLm2SF4r1GZZGRnA==}
@@ -10123,6 +10138,26 @@ snapshots:
       long: 5.3.2
       protobufjs: 7.6.5
       yargs: 17.7.3
+
+  '@henglosio/ui@1.0.1(gsap@3.15.0)(lucide-react@1.59.0(@types/react@19.2.17)(react@19.2.4))(radix-ui@1.6.2(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(tailwindcss@4.3.2)':
+    dependencies:
+      clsx: 2.1.1
+      gsap: 3.15.0
+      lucide-react: 1.59.0(@types/react@19.2.17)(react@19.2.4)
+      radix-ui: 1.6.2(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      tailwind-merge: 3.6.0
+      tailwindcss: 4.3.2
+
+  '@henglosio/workflow@1.0.1(yjs@13.6.33)':
+    dependencies:
+      colord: 2.9.3
+      expr-eval: 2.0.2
+      nanoid: 5.1.16
+      uuid: 13.0.2
+      yjs: 13.6.33
+      zod: 4.6.7
 
   '@hocuspocus/common@4.7.0':
     dependencies:
