@@ -10,7 +10,7 @@ const heightStyles: Record<"sm" | "md" | "lg", string> = {
 	lg: "h-10",
 };
 
-interface RootToggleGroupProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface RootToggleGroupProps extends React.HTMLAttributes<HTMLDivElement> {
 	children: React.ReactNode;
 	value?: string;
 	defaultValue?: string;

@@ -2,7 +2,7 @@ import clsx from "clsx";
 import React from "react";
 import { Text } from "../Text";
 
-interface LabelProps extends Omit<React.HTMLAttributes<HTMLSpanElement>, "onChange"> {
+export interface LabelProps extends Omit<React.HTMLAttributes<HTMLSpanElement>, "onChange"> {
 	children: React.ReactNode;
 }
 

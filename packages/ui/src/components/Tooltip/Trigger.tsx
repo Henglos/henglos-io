@@ -2,7 +2,7 @@ import clsx from "clsx";
 import React from "react";
 import { Tooltip } from "radix-ui";
 
-interface TriggerProps extends React.ComponentPropsWithoutRef<typeof Tooltip.Trigger> {
+export interface TriggerProps extends React.ComponentPropsWithoutRef<typeof Tooltip.Trigger> {
 	children?: React.ReactNode;
 }
 

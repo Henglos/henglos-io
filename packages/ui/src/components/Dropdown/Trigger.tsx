@@ -1,7 +1,7 @@
 import React from "react";
 import { DropdownMenu } from "radix-ui";
 
-interface TriggerProps extends React.ComponentPropsWithoutRef<typeof DropdownMenu.Trigger> {
+export interface TriggerProps extends React.ComponentPropsWithoutRef<typeof DropdownMenu.Trigger> {
 	children?: React.ReactNode;
 }
 

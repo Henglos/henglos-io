@@ -3,7 +3,7 @@ import { Prefix } from "./Prefix";
 import { InputContext } from "./context";
 import clsx from "clsx";
 
-interface RootInputProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface RootInputProps extends React.HTMLAttributes<HTMLDivElement> {
 	children: React.ReactNode;
 	disable?: boolean;
 	defaultValue?: string | number;

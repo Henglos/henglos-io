@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import React, { useCallback, useRef, useState } from "react";
 
-interface RootSliderProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> {
+export interface RootSliderProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> {
 	min?: number;
 	max?: number;
 	step?: number;

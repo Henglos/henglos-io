@@ -2,7 +2,7 @@
 import { useTextareaContext } from "./context";
 import { cn } from "../../utils/cn";
 
-interface FieldProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+export interface FieldProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
 
 /** The multi-line field itself. */
 export const Field: React.FC<FieldProps> = ({ className, ...props }) => {

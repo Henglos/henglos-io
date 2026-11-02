@@ -2,7 +2,7 @@ import { cn } from "../../utils/cn";
 import React from "react";
 import { useTabsContext } from "./context";
 
-interface TabPanelProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface TabPanelProps extends React.HTMLAttributes<HTMLDivElement> {
 	value: string;
 	children: React.ReactNode;
 }

@@ -2,7 +2,7 @@ import clsx from "clsx";
 import React from "react";
 import { useContextMenuContext } from "./context";
 
-interface ItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 	children: React.ReactNode;
 	destructive?: boolean;
 }

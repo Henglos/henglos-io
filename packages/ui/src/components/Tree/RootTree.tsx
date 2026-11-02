@@ -2,7 +2,7 @@ import clsx from "clsx";
 import React from "react";
 import { TreeContext, TreeItemContext } from "./context";
 
-interface RootTreeProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface RootTreeProps extends React.HTMLAttributes<HTMLDivElement> {
 	children?: React.ReactNode;
 	value?: string;
 	onValueChange?: (value: string) => void;

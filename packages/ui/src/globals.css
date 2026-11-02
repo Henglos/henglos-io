@@ -4,6 +4,9 @@
 
 @import "./tokens.css";
 
+/* The classes the components use, for whoever imports this stylesheet. */
+@source "../dist";
+
 /* ---------- escala não-cor ---------- */
 @theme {
 	--spacing: 4px; /* grid de 8px: use só passos pares — p-2 = 8px, p-4 = 16px, h-8 = 32px. Ímpares/frações só p/ hairlines (<4px) */

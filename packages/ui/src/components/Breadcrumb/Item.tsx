@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 import React from "react";
 import { Slot } from "radix-ui";
 
-interface BreadcrumbItemProps extends React.HTMLAttributes<HTMLSpanElement> {
+export interface BreadcrumbItemProps extends React.HTMLAttributes<HTMLSpanElement> {
 	children: React.ReactNode;
 	current?: boolean;
 	asChild?: boolean;

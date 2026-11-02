@@ -1,7 +1,7 @@
 import React from "react";
 import { useTreeItemContext } from "./context";
 
-interface ContentProps {
+export interface ContentProps {
 	children: React.ReactNode;
 }
 

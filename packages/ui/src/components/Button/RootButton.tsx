@@ -21,7 +21,7 @@ const variantStyles: Record<ButtonVariant, string> = {
 };
 
 
-interface RootButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface RootButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 	children: React.ReactNode;
 	variant?: ButtonVariant;
 	size?: ButtonSize;

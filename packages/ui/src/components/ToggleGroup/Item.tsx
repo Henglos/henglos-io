@@ -3,7 +3,7 @@ import { Slot } from "radix-ui";
 import { useToggleGroupContext } from "./context";
 import { cn } from "../../utils/cn";
 
-interface ToggleGroupItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ToggleGroupItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 	value: string;
 	children: React.ReactNode;
 	asChild?: boolean;

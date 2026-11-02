@@ -2,7 +2,7 @@ import clsx from "clsx";
 import React from "react";
 import { useContextMenuContext } from "./context";
 
-interface TriggerProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface TriggerProps extends React.HTMLAttributes<HTMLDivElement> {
 	children: React.ReactNode;
 	asChild?: boolean;
 }

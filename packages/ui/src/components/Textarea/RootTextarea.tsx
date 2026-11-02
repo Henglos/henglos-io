@@ -3,7 +3,7 @@ import { Prefix } from "./Prefix";
 import { TextareaContext } from "./context";
 import clsx from "clsx";
 
-interface RootTextareaProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface RootTextareaProps extends React.HTMLAttributes<HTMLDivElement> {
 	children: React.ReactNode;
 	disable?: boolean;
 	defaultValue?: string;

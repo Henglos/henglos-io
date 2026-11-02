@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import React from "react";
 
-interface StackProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface StackProps extends React.HTMLAttributes<HTMLDivElement> {
 	children: React.ReactNode;
 	max?: number;
 }

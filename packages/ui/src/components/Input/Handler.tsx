@@ -4,7 +4,7 @@ import { useInputContext } from "./context";
 import { cn } from "../../utils/cn";
 import { readNumber, stepMultiplier, stepValue, writeValue } from "./stepping";
 
-interface HandlerProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> {
+export interface HandlerProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> {
 	/** Defaults to a ↔ icon; pass a unit ("ms", "%") or another icon to label the field. */
 	children?: React.ReactNode;
 	/** Pixels of mouse travel per step. Lower = faster. */

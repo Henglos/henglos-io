@@ -13,7 +13,7 @@ const variantStyles = {
 /** A badge's color. */
 export type BadgeVariant = keyof typeof variantStyles;
 
-interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 	variant?: BadgeVariant;
 	children: React.ReactNode;
 }

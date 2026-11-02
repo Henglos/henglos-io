@@ -2,7 +2,7 @@ import clsx from "clsx";
 import React from "react";
 import { Dialog } from "radix-ui";
 
-interface OverlayProps extends React.ComponentPropsWithoutRef<typeof Dialog.Overlay> {}
+export interface OverlayProps extends React.ComponentPropsWithoutRef<typeof Dialog.Overlay> {}
 
 /** The dimmed backdrop behind the dialog. */
 export const Overlay: React.FC<OverlayProps> = ({ className, ...props }) => (

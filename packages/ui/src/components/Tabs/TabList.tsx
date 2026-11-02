@@ -1,7 +1,7 @@
 import { cn } from "../../utils/cn";
 import React from "react";
 
-interface TabListProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface TabListProps extends React.HTMLAttributes<HTMLDivElement> {
 	children: React.ReactNode;
 }
 

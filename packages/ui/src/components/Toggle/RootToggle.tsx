@@ -29,7 +29,7 @@ const sizeIconOnlyStyles: Record<ToggleSize, string> = {
 	lg: "size-10",
 };
 
-interface RootToggleProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface RootToggleProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 	children: React.ReactNode;
 	pressed?: boolean;
 	defaultPressed?: boolean;

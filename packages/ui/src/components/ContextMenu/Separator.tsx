@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import React from "react";
 
-interface SeparatorProps extends React.HTMLAttributes<HTMLDivElement> {}
+export interface SeparatorProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 /** A line between groups of choices. */
 export const Separator: React.FC<SeparatorProps> = ({ className, ...props }) => {

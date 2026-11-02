@@ -4,7 +4,7 @@ import { Content } from "./Content";
 import { TreeItemContext, useTreeContext, useTreeItemContext } from "./context";
 import { ChevronRight } from "lucide-react";
 
-interface ItemProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface ItemProps extends React.HTMLAttributes<HTMLDivElement> {
 	children: React.ReactNode;
 	value?: string;
 	defaultExpanded?: boolean;

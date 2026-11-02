@@ -2,7 +2,7 @@ import clsx from "clsx";
 import React, { useLayoutEffect, useRef } from "react";
 import { useContextMenuContext } from "./context";
 
-interface ContentProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface ContentProps extends React.HTMLAttributes<HTMLDivElement> {
 	children: React.ReactNode;
 }
 

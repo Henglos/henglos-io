@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-interface PaginationProps {
+export interface PaginationProps {
 	page: number;
 	total: number;
 	onPageChange: (page: number) => void;

@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import React from "react";
 
-interface RowProps extends React.HTMLAttributes<HTMLDivElement> {}
+export interface RowProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 /** One row of the table. */
 export const Row: React.FC<RowProps> = ({ children, className, ...props }) => (

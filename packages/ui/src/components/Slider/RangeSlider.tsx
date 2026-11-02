@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-interface RangeSliderProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange" | "defaultValue"> {
+export interface RangeSliderProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange" | "defaultValue"> {
 	min?: number;
 	max?: number;
 	step?: number;
@@ -115,7 +115,7 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
 	);
 };
 
-interface InputPillProps {
+export interface InputPillProps {
 	label: string;
 	value: number;
 	min: number;

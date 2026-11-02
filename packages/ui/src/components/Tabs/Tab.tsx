@@ -2,7 +2,7 @@ import { cn } from "../../utils/cn";
 import React from "react";
 import { useTabsContext } from "./context";
 
-interface TabProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface TabProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 	value: string;
 	children: React.ReactNode;
 }

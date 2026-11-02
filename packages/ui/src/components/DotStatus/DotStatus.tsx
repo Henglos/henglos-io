@@ -10,7 +10,7 @@ const styleStatus = {
 
 }
 
-type DotStatusProps = {
+export type DotStatusProps = {
 	status: keyof typeof styleStatus;
 }
 

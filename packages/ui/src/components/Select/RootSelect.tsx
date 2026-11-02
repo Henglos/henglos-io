@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { Select as SelectPrimitive } from "radix-ui";
 import React from "react";
 
-interface RootSelectProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface RootSelectProps extends React.HTMLAttributes<HTMLDivElement> {
 	children: React.ReactNode;
 	value?: string;
 	onValueChange?: (value: string) => void;

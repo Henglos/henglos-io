@@ -2,7 +2,7 @@ import clsx from "clsx";
 import React, { useState } from "react";
 import { TabsContext } from "./context";
 
-interface RootTabsProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface RootTabsProps extends React.HTMLAttributes<HTMLDivElement> {
 	children: React.ReactNode;
 	value?: string;
 	defaultValue?: string;

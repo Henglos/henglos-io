@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import React from "react";
 import { Text } from "../Text";
 
-interface TagProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface TagProps extends React.HTMLAttributes<HTMLDivElement> {
 	children: React.ReactNode;
 	onRemove?: (e: React.MouseEvent) => void;
 }

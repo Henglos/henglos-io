@@ -3,7 +3,7 @@ import { Select as SelectPrimitive } from "radix-ui";
 import React from "react";
 import { cn } from "../../utils/cn";
 
-interface InputSelectProps extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root> {
+export interface InputSelectProps extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root> {
 	children: React.ReactNode;
 	placeholder?: string;
 	className?: string;

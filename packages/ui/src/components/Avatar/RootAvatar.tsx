@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import React from "react";
 
-interface RootAvatarProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface RootAvatarProps extends React.HTMLAttributes<HTMLDivElement> {
 	children: React.ReactNode;
 	size?: "sm" | "md" | "lg";
 	shape?: "circle" | "square";

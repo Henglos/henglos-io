@@ -1,7 +1,7 @@
 ﻿import React from "react";
 import { cn } from "../../utils/cn";
 
-interface LabelProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface LabelProps extends React.HTMLAttributes<HTMLDivElement> {
 	children: React.ReactNode;
 }
 

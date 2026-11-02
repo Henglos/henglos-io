@@ -5,7 +5,7 @@ import React from "react";
 import { Text } from "../Text";
 import { Tag } from "./Tag";
 
-interface MultiTriggerProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface MultiTriggerProps extends React.HTMLAttributes<HTMLDivElement> {
 	values: string[];
 	onRemove: (value: string) => void;
 	placeholder?: string;

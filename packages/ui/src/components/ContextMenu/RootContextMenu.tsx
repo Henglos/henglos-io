@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { ContextMenuContext } from "./context";
 
-interface RootContextMenuProps {
+export interface RootContextMenuProps {
 	children: React.ReactNode;
 }
 

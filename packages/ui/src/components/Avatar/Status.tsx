@@ -9,7 +9,7 @@ const statusColor: Record<StatusType, string> = {
 	busy:    "bg-danger",
 };
 
-interface StatusProps extends React.HTMLAttributes<HTMLSpanElement> {
+export interface StatusProps extends React.HTMLAttributes<HTMLSpanElement> {
 	type?: StatusType;
 }
 

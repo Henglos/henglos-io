@@ -3,7 +3,7 @@ import { ChevronDown } from "lucide-react";
 import { Select as SelectPrimitive } from "radix-ui";
 import React from "react";
 
-interface TriggerProps {
+export interface TriggerProps {
 	placeholder?: string;
 	className?: string;
 }

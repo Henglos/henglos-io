@@ -2,7 +2,7 @@ import clsx from "clsx";
 import React from "react";
 import { DropdownMenu } from "radix-ui";
 
-interface ItemProps extends React.ComponentPropsWithoutRef<typeof DropdownMenu.Item> {
+export interface ItemProps extends React.ComponentPropsWithoutRef<typeof DropdownMenu.Item> {
 	children: React.ReactNode;
 }
 

@@ -3,7 +3,7 @@ import React from "react";
 import clsx from "clsx";
 import { useButtonContext } from "./context";
 
-interface LabelProps extends Omit<React.HTMLAttributes<HTMLSpanElement>, "onChange"> {
+export interface LabelProps extends Omit<React.HTMLAttributes<HTMLSpanElement>, "onChange"> {
 	children: React.ReactNode;
 }
 

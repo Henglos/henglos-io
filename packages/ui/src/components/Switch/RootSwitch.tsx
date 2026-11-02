@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import React, { useState } from "react";
 
-interface RootSwitchProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onChange"> {
+export interface RootSwitchProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onChange"> {
 	checked?: boolean;
 	defaultChecked?: boolean;
 	onCheckedChange?: (checked: boolean) => void;

@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import React from "react";
 
-interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {}
+export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 /** A shimmering placeholder, shown while something loads. */
 export const Skeleton: React.FC<SkeletonProps> = ({ ...props }) => {

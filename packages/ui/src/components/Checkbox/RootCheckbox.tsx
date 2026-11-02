@@ -3,7 +3,7 @@ import { Check } from "lucide-react";
 import React, { useState } from "react";
 import { Text } from "../Text";
 
-interface RootCheckboxProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onChange"> {
+export interface RootCheckboxProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onChange"> {
 	checked?: boolean;
 	defaultChecked?: boolean;
 	onCheckedChange?: (checked: boolean) => void;

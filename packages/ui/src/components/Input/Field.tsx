@@ -3,7 +3,7 @@ import { useInputContext } from "./context";
 import { cn } from "../../utils/cn";
 import { readNumber, stepMultiplier, stepValue, writeValue } from "./stepping";
 
-interface FieldProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+export interface FieldProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
 /** The text field itself — ↑/↓ step a number when the input has a Handler. */
 export const Field: React.FC<FieldProps> = ({ className, onKeyDown, ...props }) => {

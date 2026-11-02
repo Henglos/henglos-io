@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import React from "react";
 
-interface FallbackProps extends React.HTMLAttributes<HTMLSpanElement> {
+export interface FallbackProps extends React.HTMLAttributes<HTMLSpanElement> {
 	children: React.ReactNode;
 }
 

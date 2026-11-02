@@ -3,7 +3,7 @@ import React from "react";
 import { Dialog } from "radix-ui";
 import { Overlay } from "./Overlay";
 
-interface ContentProps extends React.ComponentPropsWithoutRef<typeof Dialog.Content> {
+export interface ContentProps extends React.ComponentPropsWithoutRef<typeof Dialog.Content> {
 	children: React.ReactNode;
 	hideOverlay?: boolean;
 }

@@ -2,7 +2,7 @@ import clsx from "clsx";
 import React from "react";
 import { Text } from "../Text";
 
-interface RootRadioProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onChange"> {
+export interface RootRadioProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onChange"> {
 	checked?: boolean;
 	onCheckedChange?: (checked: boolean) => void;
 	label?: string;

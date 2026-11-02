@@ -3,7 +3,7 @@ import React from "react";
 import { Tooltip } from "radix-ui";
 import { Arrow } from "./Arrow";
 
-interface ContentProps extends React.ComponentPropsWithoutRef<typeof Tooltip.Content> {
+export interface ContentProps extends React.ComponentPropsWithoutRef<typeof Tooltip.Content> {
 	children: React.ReactNode;
 	hideArrow?: boolean;
 }

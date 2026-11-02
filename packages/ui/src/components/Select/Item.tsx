@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { Select as SelectPrimitive } from "radix-ui";
 import React from "react";
 
-interface ItemProps extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> {
+export interface ItemProps extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> {
 	children: React.ReactNode;
 	value: string;
 }

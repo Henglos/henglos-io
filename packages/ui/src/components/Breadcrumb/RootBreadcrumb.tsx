@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import React from "react";
 
-interface RootBreadcrumbProps extends React.HTMLAttributes<HTMLElement> {
+export interface RootBreadcrumbProps extends React.HTMLAttributes<HTMLElement> {
 	children: React.ReactNode;
 }
 

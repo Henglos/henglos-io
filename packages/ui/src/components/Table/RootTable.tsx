@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import React from "react";
 
-interface RootTableProps extends React.HTMLAttributes<HTMLDivElement> {}
+export interface RootTableProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 /** The table. */
 export const RootTable: React.FC<RootTableProps> = ({ children, className, ...props }) => (

@@ -1,7 +1,7 @@
 ﻿import React from "react";
 import { cn } from "../../utils/cn";
 
-interface PrefixProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface PrefixProps extends React.HTMLAttributes<HTMLDivElement> {
 	children: React.ReactNode;
 }
 

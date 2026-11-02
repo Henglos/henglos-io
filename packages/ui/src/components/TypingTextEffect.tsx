@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, createElement, useMemo, useCallback } from
 import type { ElementType } from 'react';
 import { gsap } from 'gsap';
 
-interface TypingTextEffectProps {
+export interface TypingTextEffectProps {
   className?: string;
   showCursor?: boolean;
   hideCursorWhileTyping?: boolean;
