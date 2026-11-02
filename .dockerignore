@@ -1,4 +1,4 @@
-# The images build from the repository's root (docker build -f apps/<app>/Dockerfile .):
+# The images build from the repository's root (docker build -f deploy/docker/images/<app>/Dockerfile .):
 # everything below is rebuilt inside, or never belongs in an image.
 
 **/node_modules
