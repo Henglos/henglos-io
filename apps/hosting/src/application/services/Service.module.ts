@@ -11,6 +11,7 @@ import { PlatformService } from "./Platform.service";
 import { PlatformModule } from "@/infrastructure/platform/Platform.module";
 import { DriverPairTokenCleanupService } from "./DriverPairTokenCleanup.service";
 import { PackageRegistryService } from "./PackageRegistry.service";
+import { LocalPackagesService } from "./LocalPackages.service";
 import { WorkflowCollabService } from "./WorkflowCollab.service";
 import { SecretBox } from "./SecretBox.service";
 import { CredentialService } from "./Credential.service";
@@ -32,6 +33,7 @@ import { TelemetryService } from "./Telemetry.service";
 		TokenService,
 		PlatformService,
 		DriverPairTokenCleanupService,
+		LocalPackagesService,
 		PackageRegistryService,
 		WorkflowCollabService,
 		SecretBox,

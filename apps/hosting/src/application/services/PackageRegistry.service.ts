@@ -15,6 +15,7 @@ import { BoardSchema, ComponentSchema } from '@henglosio/workflow';
 import { ManifestSchema } from '@henglosio/shared';
 import type { Env } from '@/config/env.schema';
 import { Package } from '@/domain/entities/Package';
+import { LocalPackagesService, type LocalPackage } from './LocalPackages.service';
 
 // manifest.yaml + <schema>.yaml, at the package root or under workspace/
 // (the older layout, still used by board packages) — the only files metadata
@@ -30,12 +31,17 @@ const MANIFEST_LOCATIONS = ['manifest.yaml', 'workspace/manifest.yaml'];
  * no class per provider: it's always the same request, to another place.
  *
  * Every method takes the registry (HIO_REGISTRY_URL by default) and the token
- * for a private package.
+ * for a private package. On the default registry, the packages that come with
+ * the hosting (see LocalPackagesService) take precedence: a package another
+ * registry was asked for, or that isn't among them, is read from the registry.
  */
 @Injectable()
 export class PackageRegistryService {
 
-	constructor(private readonly config: ConfigService<Env, true>) {}
+	constructor(
+		private readonly config: ConfigService<Env, true>,
+		private readonly localPackages: LocalPackagesService,
+	) {}
 
 	private get defaultRegistryUrl(): string {
 		return this.config.get('HIO_REGISTRY_URL', { infer: true });
@@ -46,25 +52,35 @@ export class PackageRegistryService {
 		return registryUrl ?? this.defaultRegistryUrl;
 	}
 
+	private findLocal(spec: string, registryUrl: string): Promise<LocalPackage | null> {
+		return registryUrl === this.defaultRegistryUrl ? this.localPackages.find(spec) : Promise.resolve(null);
+	}
+
 	/**
-	 * Every published version of `name`.
+	 * Every published version of `name`, and the one that comes with the hosting.
 	 *
-	 * @throws RegistryDownloadFailed when the registry doesn't answer with it.
+	 * @throws RegistryDownloadFailed when the registry doesn't answer with it
+	 *   and the hosting doesn't have it.
 	 */
 	async listVersions(name: string, registryUrl = this.defaultRegistryUrl, token?: string): Promise<string[]> {
+		const local = await this.findLocal(name, registryUrl);
 		const headers = this.buildHeaders(token);
-		const res = await fetch(`${registryUrl}/${encodeURIComponent(name)}`, { headers });
-		if (!res.ok) throw new RegistryDownloadFailed();
+		const res = await fetch(`${registryUrl}/${encodeURIComponent(name)}`, { headers }).catch(() => null);
+		if (!res?.ok) {
+			if (local) return [local.version];
+			throw new RegistryDownloadFailed();
+		}
 
 		const meta = await res.json() as { versions?: Record<string, unknown> };
-		return Object.keys(meta.versions ?? {});
+		const versions = Object.keys(meta.versions ?? {});
+		return local && !versions.includes(local.version) ? [...versions, local.version] : versions;
 	}
 
 	/**
 	 * `name`'s page on the registry (its packument, via pacote — no tarball):
 	 * every published version, newest first, the "latest" dist-tag, and when
 	 * each was published. Throws RegistryPackageNotFound when there's no such
-	 * package.
+	 * package. The version that comes with the hosting counts as one of them.
 	 */
 	async describePackage(name: string, registryUrl = this.defaultRegistryUrl, token?: string): Promise<{
 		name: string;
@@ -74,23 +90,27 @@ export class PackageRegistryService {
 	}> {
 		// fullMetadata: the publish times and each version's deprecation, not just the corgi doc.
 		const load = () => pacote.packument(name, { registry: registryUrl, token, fullMetadata: true });
+		const local = await this.findLocal(name, registryUrl);
+		const localVersion = local && { version: local.version, publishedAt: null, deprecated: null };
 		let packument: Awaited<ReturnType<typeof load>>;
 		try {
 			packument = await load();
 		} catch (error) {
+			if (local) return { name: local.name, description: local.description, latest: local.version, versions: [localVersion!] };
 			const code = (error as { code?: string; statusCode?: number })?.code;
 			if (code === 'E404' || (error as { statusCode?: number })?.statusCode === 404) throw new RegistryPackageNotFound(name);
 			throw new RegistryDownloadFailed();
 		}
 
 		const time = (packument.time ?? {}) as Record<string, string>;
-		const versions = Object.entries(packument.versions ?? {})
+		const versions: { version: string; publishedAt: string | null; deprecated: string | null }[] = Object.entries(packument.versions ?? {})
 			.filter(([version]) => semver.valid(version))
-			.sort(([a], [b]) => semver.rcompare(a, b))
 			.map(([version, manifest]) => {
 				const deprecated: unknown = (manifest as { deprecated?: unknown }).deprecated;
 				return { version, publishedAt: time[version] ?? null, deprecated: typeof deprecated === 'string' ? deprecated : null };
 			});
+		if (localVersion && !versions.some(({ version }) => version === localVersion.version)) versions.push(localVersion);
+		versions.sort((a, b) => semver.rcompare(a.version, b.version));
 
 		const latest = packument['dist-tags']?.latest ?? versions[0]?.version ?? null;
 		const description = (latest && (packument.versions?.[latest] as { description?: string } | undefined)?.description)
@@ -101,9 +121,9 @@ export class PackageRegistryService {
 	}
 
 	/**
-	 * Reads a package version from its registry and validates it — what it
-	 * takes to install one. Only its package.json and its YAML files are read
-	 * (see streamMetadataFiles), never the whole tarball.
+	 * Reads a package version — from the hosting's own, or from its registry —
+	 * and validates it: what it takes to install one. Only its package.json and
+	 * its YAML files are read (see streamMetadataFiles), never the whole tarball.
 	 *
 	 * @param spec An npm spec: `name@version`, or a name for the latest.
 	 * @returns The package, not saved yet.
@@ -111,7 +131,10 @@ export class PackageRegistryService {
 	 *   InvalidPackageSchema, or RegistryDownloadFailed.
 	 */
 	async fetchPackage(spec: string, registryUrl = this.defaultRegistryUrl, token?: string): Promise<Package> {
-		const files = await this.streamMetadataFiles(spec, registryUrl, token);
+		const local = await this.findLocal(spec, registryUrl);
+		const files = local
+			? await this.localPackages.readFiles(local.dir, this.isMetadataFile)
+			: await this.streamMetadataFiles(spec, registryUrl, token);
 
 		const pkgJsonRaw = files.get('package.json');
 		if (!pkgJsonRaw) throw new ManifestNotFound();
@@ -190,10 +213,7 @@ export class PackageRegistryService {
 
 		const run = pacote.tarball.stream(spec, (stream) => new Promise<void>((resolve, reject) => {
 			const parser = new TarParser({
-				filter: (entryPath) => {
-					const relativePath = this.stripPackageRoot(entryPath);
-					return relativePath === 'package.json' || METADATA_YAML_PATTERN.test(relativePath);
-				},
+				filter: (entryPath) => this.isMetadataFile(this.stripPackageRoot(entryPath)),
 			});
 
 			parser.on('entry', (entry) => {
@@ -215,6 +235,10 @@ export class PackageRegistryService {
 			throw new RegistryDownloadFailed();
 
 		 });
+	}
+
+	private isMetadataFile(relativePath: string): boolean {
+		return relativePath === 'package.json' || METADATA_YAML_PATTERN.test(relativePath);
 	}
 
 	// npm tarballs always nest content under a single top-level "package/" dir.

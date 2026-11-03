@@ -37,10 +37,14 @@ ENV NODE_ENV=production \
 	HIO_PORT=3333 \
 	HIO_DATABASE_PROVIDER=sqlite \
 	HIO_DATABASE_URL=file:/data/hio.sqlite \
-	HIO_TELEMETRY_ID_FILE=/data/telemetry-id
+	HIO_TELEMETRY_ID_FILE=/data/telemetry-id \
+	HIO_LOCAL_PACKAGES=/app/local-packages
 WORKDIR /app
 
 COPY --from=build --chown=node:node /out .
+# The boards, components and platform that come with it (HIO_LOCAL_PACKAGES).
+COPY --from=build --chown=node:node /repo/packages/packages ./local-packages/packages
+COPY --from=build --chown=node:node /repo/packages/platform/package.json /repo/packages/platform/manifest.yaml ./local-packages/platform/
 RUN mkdir /data && chown node:node /data
 VOLUME /data
 

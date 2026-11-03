@@ -1,9 +1,22 @@
 {
 	"packages": [
 		{ "spec": "@henglosio/board-esp32", "name": "Esp32" },
+		{ "spec": "@henglosio/component-code", "name": "Code" },
+		{ "spec": "@henglosio/component-dht", "name": "DHT" },
+		{ "spec": "@henglosio/component-display", "name": "Display" },
+		{ "spec": "@henglosio/component-filesystem", "name": "Filesystem" },
 		{ "spec": "@henglosio/component-gpio", "name": "GPIO" },
-		{ "spec": "@henglosio/component-time", "name": "Time" },
+		{ "spec": "@henglosio/component-http", "name": "HTTP" },
+		{ "spec": "@henglosio/component-imu", "name": "IMU" },
+		{ "spec": "@henglosio/component-ir", "name": "IR" },
+		{ "spec": "@henglosio/component-joystick", "name": "Joystick" },
+		{ "spec": "@henglosio/component-lcd", "name": "LCD" },
+		{ "spec": "@henglosio/component-pwm", "name": "PWM" },
 		{ "spec": "@henglosio/component-servo", "name": "Servo" },
-		{ "spec": "@henglosio/component-code", "name": "Code" }
+		{ "spec": "@henglosio/component-soundsensor", "name": "SoundSensor" },
+		{ "spec": "@henglosio/component-time", "name": "Time" },
+		{ "spec": "@henglosio/component-ultrasonicsensor", "name": "UltrasonicSensor" },
+		{ "spec": "@henglosio/component-watersensor", "name": "WaterSensor" },
+		{ "spec": "@henglosio/component-wifi", "name": "WiFi" }
 	]
 }

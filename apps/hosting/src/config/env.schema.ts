@@ -32,6 +32,11 @@ export const EnvSchema = zod.object({
 	// the drivers (HENGLOS_REGISTRY) at the same one.
 	HIO_REGISTRY_URL: zod.string().default("https://registry.npmjs.org/"),
 
+	// The monorepo's packages/ folder: its boards, components and platform are
+	// used instead of the registry's. Whatever isn't there still comes from
+	// the registry. The Docker image sets it to the ones it ships with.
+	HIO_LOCAL_PACKAGES: zod.string().optional(),
+
 	// The origins the browser may call the API from: `*`, or a comma-separated list.
 	HIO_CORS_ORIGIN: zod.string().default("*"),
 
