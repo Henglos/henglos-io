@@ -1,6 +1,6 @@
 {
   "name": "@henglosio/driver",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The HenglosIO driver: the agent on the machine the boards are plugged into.",
   "author": "Henglos",
   "license": "SEE LICENSE IN LICENSE",
