@@ -20,8 +20,8 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm fetch --config.ignore-scripts=true
 
 COPY . .
-RUN pnpm install --offline --frozen-lockfile --filter "frontend..."
-RUN pnpm --filter "frontend..." run build
+RUN pnpm install --offline --frozen-lockfile --filter "studio..."
+RUN pnpm --filter "studio..." run build
 
 
 FROM node:24-bookworm-slim
@@ -31,10 +31,10 @@ ENV NODE_ENV=production \
 	PORT=5173
 WORKDIR /app
 
-# The standalone server keeps the monorepo's layout: the app sits in apps/frontend.
-COPY --from=build --chown=node:node /repo/apps/frontend/.next/standalone ./
-COPY --from=build --chown=node:node /repo/apps/frontend/.next/static ./apps/frontend/.next/static
-COPY --from=build --chown=node:node /repo/apps/frontend/public ./apps/frontend/public
+# The standalone server keeps the monorepo's layout: the app sits in apps/studio.
+COPY --from=build --chown=node:node /repo/apps/studio/.next/standalone ./
+COPY --from=build --chown=node:node /repo/apps/studio/.next/static ./apps/studio/.next/static
+COPY --from=build --chown=node:node /repo/apps/studio/public ./apps/studio/public
 
 USER node
 EXPOSE 5173
@@ -42,4 +42,4 @@ EXPOSE 5173
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
 	CMD node -e "fetch('http://127.0.0.1:' + process.env.PORT).then(r => process.exit(r.status < 500 ? 0 : 1), () => process.exit(1))"
 
-CMD ["node", "apps/frontend/server.js"]
+CMD ["node", "apps/studio/server.js"]

@@ -1,7 +1,7 @@
 {
-  "name": "frontend",
+  "name": "studio",
   "version": "1.0.0",
-  "description": "The HenglosIO frontend, where workflows are built.",
+  "description": "The HenglosIO studio, where workflows are built.",
   "author": "Henglos",
   "license": "SEE LICENSE IN LICENSE",
   "private": true,

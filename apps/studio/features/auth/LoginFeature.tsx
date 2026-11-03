@@ -67,6 +67,7 @@ export const LoginFeature = () => {
 				
 
 				<form
+					onSubmit={handleSubmit}
 					className="z-10 w-80 flex flex-col gap-4 items-center"
 				>
 
@@ -102,7 +103,7 @@ export const LoginFeature = () => {
 						</Input.Affix>
 					</Input.Root>
 
-					<Button.Root onClick={handleSubmit} type="button" variant="primary" disabled={loading} className="w-full py-4!">
+					<Button.Root type="submit" variant="primary" disabled={loading} className="w-full py-4!">
 						<Button.Label>{loading ? "Entrando..." : "Entrar"}</Button.Label>
 					</Button.Root>
 

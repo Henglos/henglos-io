@@ -7,6 +7,7 @@ import { registerUser } from "@shared/api";
 import PixelBlast from "@/shared/components/PixelBlastBackground/PixelBlast";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
+import { isPasswordValid, PasswordRules } from "./components/PasswordRules.component";
 
 export const SetupFeature = () => {
 
@@ -68,6 +69,7 @@ export const SetupFeature = () => {
 
 
 				<form
+					onSubmit={handleSubmit}
 					className="z-10 w-80 flex flex-col gap-4 items-center"
 				>
 
@@ -115,7 +117,9 @@ export const SetupFeature = () => {
 						</Input.Affix>
 					</Input.Root>
 
-					<Button.Root onClick={handleSubmit} type="button" variant="primary" disabled={loading} className="w-full py-4!">
+					<PasswordRules password={password} />
+
+					<Button.Root type="submit" variant="primary" disabled={loading || !isPasswordValid(password)} className="w-full py-4!">
 						<Button.Label>{loading ? "wait..." : "Setup Account"}</Button.Label>
 					</Button.Root>
 
