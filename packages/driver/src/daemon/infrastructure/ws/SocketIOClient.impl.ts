@@ -1,6 +1,6 @@
-import https from "node:https";
 import { io, Socket } from "socket.io-client";
 import { injectable } from "tsyringe";
+import { serverHttpAgent, serverHttpsAgent } from "./serverAgents.js";
 
 /** The driver's socket to the hosting (/io/ws, namespace /driver), authenticated with its token. */
 @injectable()
@@ -13,21 +13,17 @@ export class SocketIOClient {
 	 * own after a drop — except when the hosting refused it (see "disconnect").
 	 */
 	async connect(host: string, token: string): Promise<void> {
-		// Caddy uses `tls internal` (a self-signed CA) — Node.js rejects it by
-		// default. Forcing this agent only makes sense on TLS connections (wss://)
-		// — on a plain ws:// host (e.g. straight to the hosting's port, no Caddy)
-		// it stalls the negotiation until it times out, since there's no TLS
-		// handshake for the agent to take part in.
+		// The agent must match the scheme: an HTTPS one on a plain ws:// host (e.g.
+		// straight to the hosting's port, no Caddy) stalls the negotiation until it
+		// times out, since there's no TLS handshake for it to take part in.
 		// socket.io-client's type says string | boolean, but the underlying ws takes an Agent.
-		const agent = host.startsWith("wss://")
-			? (new https.Agent({ rejectUnauthorized: false }) as unknown as boolean)
-			: undefined;
+		const agent = (host.startsWith("wss://") ? serverHttpsAgent() : serverHttpAgent()) as unknown as boolean;
 
 		this.socket = io(host, {
 			transports: ["websocket"],
 			path: "/io/ws",
 			extraHeaders: { authorization: token },
-			...(agent !== undefined && { agent }),
+			agent,
 		});
 
 		this.socket.on("connect", () => {

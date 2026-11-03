@@ -31,7 +31,6 @@ export class ConfigStore {
 	constructor() {}
 
 	async initialize(): Promise<void> {
-		await fs.mkdir(this.configDir, { recursive: true });
 		const exists = await fs
 			.access(this.configFilePath)
 			.then(() => true)
@@ -53,7 +52,9 @@ export class ConfigStore {
 		await this.write({ ...current, ...partial });
 	}
 
+	// `hio driver configure` may be the first thing to run on this machine.
 	private async write(config: DriverConfig): Promise<void> {
+		await fs.mkdir(this.configDir, { recursive: true });
 		await fs.writeFile(
 			this.configFilePath,
 			JSON.stringify(config, null, 4),

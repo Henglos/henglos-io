@@ -1,10 +1,10 @@
 import * as os from "os";
-import https from "node:https";
 import axios, { AxiosError } from "axios";
 import { getMachineIdSync } from "native-machine-id";
 import { injectable } from "tsyringe";
 import type { PairDriverIn, PairDriverOut } from "@henglosio/shared";
 import { ConfigStore } from "../../services/ConfigStore.js";
+import { serverHttpAgent, serverHttpsAgent } from "../../../infrastructure/ws/serverAgents.js";
 
 /**
  * `hio driver login <pairToken> <name>`: pairs this machine with the account the pair token
@@ -30,12 +30,6 @@ export class LoginDriverUseCase {
 
 		console.log("[auth] Pairing driver...");
 
-		// Caddy's `tls internal` uses a self-signed CA that Node rejects by
-		// default — same reason SocketIOClient relaxes it for wss://.
-		const httpsAgent = baseUrl.startsWith("https://")
-			? new https.Agent({ rejectUnauthorized: false })
-			: undefined;
-
 		let data: PairDriverOut;
 		try {
 			({ data } = await axios.post<PairDriverOut>(
@@ -46,7 +40,7 @@ export class LoginDriverUseCase {
 					deviceName,
 					deviceUser,
 				} satisfies PairDriverIn,
-				{ httpsAgent },
+				{ httpAgent: serverHttpAgent(), httpsAgent: serverHttpsAgent() },
 			));
 		} catch (e) {
 			throw new Error(`[auth] Pairing failed: ${describePairError(e, baseUrl)}`);
