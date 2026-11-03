@@ -1,20 +1,20 @@
 {
   "name": "@henglosio/cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The HenglosIO command-line interface.",
   "author": "Henglos",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "main": "./dist/index.mjs",
   "keywords": [
-  	"henglos",
-   	"henglosio",
+    "henglos",
+    "henglosio",
     "iot",
     "workflow",
     "cli"
   ],
   "publishConfig": {
-  	"access": "public"
+    "access": "public"
   },
   "files": [
     "./dist"
