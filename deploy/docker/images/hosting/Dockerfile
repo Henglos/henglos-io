@@ -43,8 +43,8 @@ WORKDIR /app
 
 COPY --from=build --chown=node:node /out .
 # The boards, components and platform that come with it (HIO_LOCAL_PACKAGES).
-COPY --from=build --chown=node:node /repo/packages/packages ./local-packages/packages
-COPY --from=build --chown=node:node /repo/packages/platform/package.json /repo/packages/platform/manifest.yaml ./local-packages/platform/
+COPY --from=build --chown=node:node /repo/packages/library ./local-packages/library
+COPY --from=build --chown=node:node /repo/packages/hio-system/package.json /repo/packages/hio-system/manifest.yaml ./local-packages/hio-system/
 RUN mkdir /data && chown node:node /data
 VOLUME /data
 

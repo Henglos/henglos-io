@@ -12,19 +12,21 @@ name: henglos-io
 services:
 
   hosting:
-    image: henglosio/hosting:1.0.0-beta.1
+    image: henglosio/hosting:1.1.0
     restart: unless-stopped
     environment:
       HIO_JWT_SECRET: ${HIO_JWT_SECRET:?set HIO_JWT_SECRET in .env (openssl rand -hex 32)}
       HIO_SECRETS_KEY: ${HIO_SECRETS_KEY:?set HIO_SECRETS_KEY in .env (openssl rand -hex 32)}
       HIO_REGISTRY_URL: ${HIO_REGISTRY_URL:-https://registry.npmjs.org/}
       HIO_TELEMETRY: ${HIO_TELEMETRY:-true}
+      # Caddy is in front: the rate limit reads the client's address from it.
+      HIO_TRUST_PROXY: 1
     volumes:
       # The database (SQLite) and the installation's id.
       - hio-data:/data
 
   studio:
-    image: henglosio/studio:1.0.0-beta.1
+    image: henglosio/studio:1.1.0
     restart: unless-stopped
     depends_on:
       - hosting

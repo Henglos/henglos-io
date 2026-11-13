@@ -1,23 +1,29 @@
-
 name: henglos_io_hosting_dev
 
 services:
 
-  verdaccio:
-    image: verdaccio/verdaccio
-    container_name: henglosio-package-registry
-    restart: unless-stopped
+  # The dev registry for everything HenglosIO publishes: npm (the platform,
+  # boards and components) and PyPI (hio-sdk), under the `henglosio` org.
+  #   npm:  http://localhost:3000/api/packages/henglosio/npm/
+  #   PyPI: http://localhost:3000/api/packages/henglosio/pypi  (install: .../pypi/simple)
+  # The org must stay public: the hosting and the drivers read without a token.
+  gitea:
+    image: docker.gitea.com/gitea:28.3.0
+    container_name: gitea
     environment:
-      - VERDACCIO_PORT=4873
-    ports:
-      - "4873:4873"
-
+      - USER_UID=1000
+      - USER_GID=1000
+    restart: always
+    networks:
+      - gitea
     volumes:
-      - verdaccio_storage:/verdaccio/storage
-      - verdaccio_conf:/verdaccio/conf
-      - verdaccio_plugins:/verdaccio/plugins
+      - ./gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3000:3000"
+      - "222:22"
 
-volumes:
-  verdaccio_storage:
-  verdaccio_conf:
-  verdaccio_plugins:
+networks:
+  gitea:
+    external: false

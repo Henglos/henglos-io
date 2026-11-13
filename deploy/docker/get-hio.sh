@@ -5,7 +5,7 @@
 #
 set -eu
 
-SCRIPT_VERSION="1.0.0-beta.1"
+SCRIPT_VERSION="1.1.0"
 HENGLOS_DIR="${HENGLOS_DIR:-./henglos}"
 COMPOSE_DIR="deploy/docker"
 SOURCE_REPO_URL="${HENGLOS_REPO_URL:-https://raw.githubusercontent.com/Henglos/henglos-io/main}"

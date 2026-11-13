@@ -158,3 +158,9 @@ __pycache__/
 
 # Fumadocs generated content
 .source
+
+.zed
+# Gitea data (docker-compose.dev.yaml): its database, repos, packages and secrets
+/gitea/
+
+.venv

@@ -1,2 +1,4 @@
 # The installer is piped into sh: it must keep LF on every checkout.
 *.sh text eol=lf
+# The same for what runs in a Linux image.
+deploy/docker/images/**/hio-* text eol=lf
