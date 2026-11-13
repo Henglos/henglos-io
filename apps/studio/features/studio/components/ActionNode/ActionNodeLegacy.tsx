@@ -92,8 +92,8 @@ export const ActionNodeLegacy = ({ id, data, selected }: NodeProps<Node<ActionNo
 
 	const { component, action } = data;
 	const inputs = action.inputs.length > 0 ? action.inputs : [DEFAULT_INPUT];
-	// Sempre inclui o handle "fallback" (vermelho, embaixo), derivado — não
-	// depende de estar persistido em action.outputs (ver getActionOutputs).
+	// Always includes the "fallback" handle (red, at the bottom), derived — it
+	// doesn't depend on being saved in action.outputs (see getActionOutputs).
 	const outputs = getActionOutputs(action);
 	const updateNodeInternals = useUpdateNodeInternals();
 	const [tab, setTab] = useState<NodeTab>("configuration");

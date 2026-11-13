@@ -3,6 +3,8 @@ import { Avatar, Button } from "@henglosio/ui";
 import { Computer, KeyRound, LayoutGrid, Package, ScrollText } from "lucide-react";
 import Link from "next/link";
 
+const DOCS_URL = "https://docs.henglos.com/henglos-io";
+
 export const ActivityBar = () => {
 
 	return (
@@ -55,14 +57,14 @@ export const ActivityBar = () => {
 
 			<div className="flex flex-col gap-2 mt-auto">
 
-				<Link href={"/documentation"}>
-
-				</Link>
-				<Button.Root variant="ghost" size="lg">
-					<Button.Icon>
-						<ScrollText size={16} />
-					</Button.Icon>
-				</Button.Root>
+				{/* The docs live outside the studio — opened in a new tab, so the workflow stays open. */}
+				<a href={DOCS_URL} target="_blank" rel="noopener noreferrer" title="Documentation">
+					<Button.Root variant="ghost" size="lg">
+						<Button.Icon>
+							<ScrollText size={16} />
+						</Button.Icon>
+					</Button.Root>
+				</a>
 
 			</div>
 

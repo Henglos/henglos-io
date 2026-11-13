@@ -129,8 +129,8 @@ const shiftWaypointsWith = (data: IWorkflowRuntime, positions: Map<string, FlowP
 };
 
 // ─── WorkspaceInner ────────────────────────────────────────────────────────────
-// Componente filho necessário para poder chamar useReactFlow()
-// (o hook exige estar dentro de um ReactFlowProvider)
+// A child component, so it can call useReactFlow()
+// (the hook must be inside a ReactFlowProvider)
 
 const WorkspaceInner = () => {
 
@@ -287,9 +287,10 @@ const WorkspaceInner = () => {
 
 			const result = [startNode, ...dedupedComponentNodes];
 
-			// Limpa overrides já aplicados e grava a posição deles no workflow —
-			// sem isso o override só existia na tela, e ao reabrir a action caía
-			// no layout fallback. (setTimeout evita setState-dentro-de-setState)
+			// Clears the overrides already applied and saves their position in the
+			// workflow — without it the override only existed on screen, and
+			// reopening the action fell back to the default layout. (setTimeout
+			// avoids a setState inside a setState)
 			if (consumed.size > 0) {
 				setTimeout(() => {
 					setPositionOverrides(prev => {
@@ -364,7 +365,7 @@ const WorkspaceInner = () => {
 		});
 	}, [workflow]);
 
-	// ── handlers de nodes/edges ───────────────────────────────────────────────
+	// ── node/edge handlers ────────────────────────────────────────────────────
 
 	const onNodesChange = useCallback(
 		(changes: NodeChange<Node<CanvasNodeData>>[]) => {
@@ -412,8 +413,8 @@ const WorkspaceInner = () => {
 		(deleted: Node<CanvasNodeData>[]) => {
 			if (!workflow) return;
 
-			// O node do Start não é deletável (deletable: false), mas o filtro abaixo
-			// protege contra qualquer chamada direta que ignore essa flag.
+			// The Start node can't be deleted (deletable: false), but the filter
+			// below guards against any direct call that ignores that flag.
 			const deletableNodes = deleted.filter((node): node is Node<ActionNodeData> => hasComponent(node.data));
 			if (deletableNodes.length === 0) return;
 
@@ -483,7 +484,7 @@ const WorkspaceInner = () => {
 		[setWorkflow],
 	);
 
-	// ── handlers de edge drag ─────────────────────────────────────────────────
+	// ── edge drag handlers ────────────────────────────────────────────────────
 
 	const onConnectStart: OnConnectStart = useCallback((_event, { nodeId, handleId, handleType }) => {
 		connectingRef.current = { nodeId: nodeId ?? "", handleId, handleType: handleType ?? "source" };
@@ -491,7 +492,7 @@ const WorkspaceInner = () => {
 
 	const onConnectEnd: OnConnectEnd = useCallback(
 		(event, connectionState) => {
-			// Conexão válida — onConnect já cuida
+			// A valid connection — onConnect handles it
 			if (connectionState.isValid) return;
 			if (!connectingRef.current?.nodeId) return;
 
@@ -530,12 +531,11 @@ const WorkspaceInner = () => {
 			onConnectEnd={onConnectEnd}
 			onNodeDragStop={onNodeDragStop}
 			deleteKeyCode={["Backspace", "Delete"]}
-			// Default é "Space" — escuta no window inteiro (useKeyPress com
-			// target: window), então digitar espaço em QUALQUER input de texto
-			// da página (não só dentro do canvas), como o Monaco do CodeEditor,
-			// disputa com o pan temporário do ReactFlow. Pan por arrasto
-			// (panOnDrag, ligado por padrão) já cobre o caso de uso; não
-			// depende do espaço pra nada aqui.
+			// The default is "Space" — it listens on the whole window (useKeyPress
+			// with target: window), so typing a space in ANY text input on the page
+			// (not only in the canvas), like the CodeEditor's Monaco, fights with
+			// ReactFlow's temporary pan. Panning by dragging (panOnDrag, on by
+			// default) already covers it; nothing here needs the space key.
 			panActivationKeyCode={null}
 			snapGrid={[14, 14]}
 			snapToGrid={true}

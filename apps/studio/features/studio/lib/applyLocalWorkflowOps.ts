@@ -9,6 +9,7 @@ import {
 	AddSwitchCase,
 	RemoveSwitchCase,
 	SetPlatformSetting,
+	SetBoardOption,
 	AddWorkflowVariable,
 	UpdateWorkflowVariable,
 	RemoveWorkflowVariable,
@@ -40,6 +41,7 @@ const LOCAL_OPS = new Set<WorkflowPatchInput["op"]>([
 	"add:switch-case",
 	"remove:switch-case",
 	"update:platform-setting",
+	"update:board-option",
 	"add:variable",
 	"update:variable",
 	"remove:variable",
@@ -61,6 +63,7 @@ const setPassContext = new SetWorkflowActionPassContext();
 const addSwitchCase = new AddSwitchCase();
 const removeSwitchCase = new RemoveSwitchCase();
 const setPlatformSetting = new SetPlatformSetting();
+const setBoardOption = new SetBoardOption();
 const addVariable = new AddWorkflowVariable();
 const updateVariable = new UpdateWorkflowVariable();
 const removeVariable = new RemoveWorkflowVariable();
@@ -96,6 +99,8 @@ const applyOne = (runtime: IWorkflowRuntime, op: WorkflowPatchInput): IWorkflowR
 			return removeSwitchCase.execute(runtime, op.componentId, op.actionId, op.case);
 		case "update:platform-setting":
 			return setPlatformSetting.execute(runtime, op.key, op.value);
+		case "update:board-option":
+			return setBoardOption.execute(runtime, op.key, op.value);
 		case "add:variable":
 			return addVariable.execute(runtime, op.variable).workflow;
 		case "update:variable":

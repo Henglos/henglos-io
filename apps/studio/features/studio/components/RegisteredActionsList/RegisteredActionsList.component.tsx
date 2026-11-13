@@ -21,14 +21,14 @@ type RegisteredActionsListProps = {
 	onSelect: (component: IComponentRuntime, action: IActionSchema) => void;
 };
 
-// "all" = sem componente selecionado — mostra as actions de todos agrupadas.
+// "all" = no component selected — shows every component's actions, grouped.
 type Selection = "all" | string;
 
-// Lista das actions de todos os componentes já registrados no workflow (sem
-// buscar/instalar pacotes novos) — usada tanto pra inserir uma action no meio
-// de uma connection quanto pra adicionar uma action solta a partir do Explorer.
-// Dois painéis: componentes à esquerda, actions do selecionado à direita. A
-// busca filtra os dois ao mesmo tempo (contagem por componente acompanha).
+// The actions of every component already in the workflow (no searching or
+// installing new packages) — used both to insert an action into a connection
+// and to add a loose action from the Explorer. Two panels: components on the
+// left, the selected one's actions on the right. The search filters both at
+// once (the per-component count follows it).
 export const RegisteredActionsList: React.FC<RegisteredActionsListProps> = ({ components, onSelect }) => {
 
 	const [query, setQuery] = useState("");
@@ -52,7 +52,7 @@ export const RegisteredActionsList: React.FC<RegisteredActionsListProps> = ({ co
 
 	const total = groups.reduce((sum, group) => sum + group.actions.length, 0);
 
-	// Se o componente selecionado sumiu (removido do workflow), volta pra "all".
+	// When the selected component is gone (removed from the workflow), goes back to "all".
 	const selectedGroup = groups.find(group => group.component.id === selected);
 	const visibleGroups = (selectedGroup ? [selectedGroup] : groups).filter(group => group.actions.length > 0);
 
@@ -116,7 +116,7 @@ export const RegisteredActionsList: React.FC<RegisteredActionsListProps> = ({ co
 					{visibleGroups.map(({ component, actions }) => (
 						<div key={component.id} className="flex flex-col">
 
-							{/* Cabeçalho só faz sentido quando mais de um componente está na lista. */}
+							{/* A header only makes sense when the list has more than one component. */}
 							{!selectedGroup && (
 								<div className="flex items-center gap-1.5 px-3 pt-2 pb-1">
 									<Text variant="low" size="xs" font="mono" className="truncate uppercase tracking-wide">{component.alias}</Text>

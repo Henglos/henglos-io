@@ -8,10 +8,10 @@ import { WorkflowAtom } from "../store/workflow.store";
 import { useWorkflowMutate } from "../hooks/useWorkflowMutate";
 
 /**
- * Overlay do "+" da toolbox do canvas — mesmo picker do Explorer (actions dos
- * componentes já registrados), mas a action nova aparece no meio do que o
- * canvas está mostrando. Fica dentro do ReactFlowProvider por causa do
- * screenToFlowPosition.
+ * Overlay of the canvas toolbox's "+" — the same picker as the Explorer's (the
+ * actions of the components already registered), but the new action shows up
+ * in the middle of what the canvas is showing. Lives inside the
+ * ReactFlowProvider because of screenToFlowPosition.
  */
 export const CanvasAddActionStore = () => {
 

@@ -16,9 +16,9 @@ const CLIPBOARD_MARKER = "henglosio/actions";
 type ClipboardConfigValue = { displayName: string; value: IConfigurationRuntime["value"] };
 
 type ClipboardActionItem = {
-	// Id da action no workflow de origem — só serve pra remapear as
-	// connections internas abaixo pros ids novos gerados no paste/duplicate;
-	// não tem mais nenhum uso depois disso.
+	// The action's id in the source workflow — only used to remap the internal
+	// connections below to the new ids the paste/duplicate creates; it has no
+	// use after that.
 	originalActionId: string;
 	componentId: string;
 	packageId: string;
@@ -32,9 +32,9 @@ type ClipboardActionItem = {
 type ClipboardConnection = {
 	sourceActionId: string;
 	targetActionId: string;
-	// Nome da porta (base.name), não o handle id — o id do Handler é gerado
-	// de novo a cada clone, o nome (ex: "out", "fallback") é o que é estável
-	// entre instâncias da mesma action.
+	// The port's name (base.name), not the handle id — a Handler's id is
+	// generated again for every clone; the name (e.g. "out", "fallback") is what
+	// stays the same across instances of the same action.
 	sourceHandleName: string;
 	targetHandleName: string;
 };
@@ -60,8 +60,8 @@ const handleName = (handlers: { id: string; base: { name: string } }[], handleId
 const resolveHandleId = (handlers: { id: string; base: { name: string } }[], name: string): string =>
 	handlers.find(h => h.base.name === name)?.id ?? "default";
 
-// Só as connections onde source E target estão no conjunto selecionado —
-// uma connection pra fora do grupo copiado não faz sentido no clone.
+// Only the connections whose source AND target are in the selection — a
+// connection leaving the copied group makes no sense in the clone.
 const internalConnections = (connections: IConnectionRuntime[], actionsById: Map<string, IActionRuntime>): ClipboardConnection[] =>
 	connections
 		.filter(c => actionsById.has(c.source) && actionsById.has(c.target))
@@ -102,13 +102,13 @@ export function useCanvasClipboard() {
 			.filter(action => selectedIds.has(action.id));
 	};
 
-	// Acha o componente já existente (pelo mesmo id, ou por packageId se o
-	// clone caiu num workflow diferente daquele em que foi copiado) — se não
-	// existir nenhum dos dois, tenta cadastrar o pacote. Recebe/retorna o
-	// estado do workflow explicitamente (em vez de ler o atom) porque, dentro
-	// de um paste/duplicate com várias actions em lote, o atom só atualiza
-	// entre renders — usar o valor "current" thread'ado é o que garante que a
-	// segunda action do lote já enxerga o componente instalado pela primeira.
+	// Finds the component already there (by the same id, or by packageId when
+	// the clone landed in a workflow other than the one it was copied from) —
+	// when there's neither, tries to add the package. Takes and returns the
+	// workflow's state explicitly (instead of reading the atom) because, in a
+	// paste/duplicate of several actions at once, the atom only updates between
+	// renders — threading "current" through is what lets the batch's second
+	// action already see the component the first one installed.
 	const resolveComponent = async (
 		current: IWorkflowRuntime,
 		item: ClipboardActionItem,
@@ -135,18 +135,19 @@ export function useCanvasClipboard() {
 			if (!installed) throw new Error("component not installed");
 			return { component: installed, current: afterInstall.data };
 		} catch {
-			emitToast("error", `Não é possível adicionar o componente "${item.componentAlias}".`);
+			emitToast("error", `Couldn't add the component "${item.componentAlias}".`);
 			return undefined;
 		}
 
 	};
 
-	// Cria a action no componente resolvido e aplica os valores copiados via
-	// update:configuration (casando por displayName — o id da configuration
-	// no clone é sempre novo). Não copia binding, só o valor literal. Mesmo
-	// motivo do "current" thread'ado acima: se duas actions do mesmo lote vão
-	// pro mesmo componente, a segunda precisa saber da action que a primeira
-	// acabou de criar pra não confundir o diff de "qual é a nova".
+	// Creates the action in the resolved component and applies the copied
+	// values with update:configuration (matched by displayName — a
+	// configuration's id is always new in the clone). Copies no binding, only
+	// the literal value. Same reason for threading "current" as above: when two
+	// actions of a batch go to the same component, the second needs to know
+	// about the action the first just created, so the "which one is new" diff
+	// doesn't mix them up.
 	const createAction = async (
 		current: IWorkflowRuntime,
 		componentId: string,
@@ -207,12 +208,12 @@ export function useCanvasClipboard() {
 
 	};
 
-	// Recria, num único request, as connections entre os clones — usando o
-	// mapa {id da action original/copiada -> id do clone} montado durante a
-	// criação, e resolvendo o handle pelo nome da porta (não dá pra reusar o
-	// handle id original — cada clone recebe Handlers com id novo). Connections
-	// que apontam pra fora do grupo (ou cujo lado não pôde ser clonado, ex:
-	// componente não liberado) são descartadas.
+	// Recreates, in a single request, the connections between the clones —
+	// with the {original/copied action id -> clone id} map built while
+	// creating them, resolving each handle by its port's name (the original
+	// handle id can't be reused — every clone gets Handlers with new ids).
+	// Connections leaving the group (or whose end couldn't be cloned, e.g. a
+	// component that wasn't allowed) are dropped.
 	const recreateConnections = async (connections: ClipboardConnection[], idMap: Map<string, string>, newActionsById: Map<string, IActionRuntime>) => {
 
 		const ops = connections
@@ -265,7 +266,7 @@ export function useCanvasClipboard() {
 		try {
 			await navigator.clipboard.writeText(JSON.stringify(payload));
 		} catch {
-			emitToast("error", "Não foi possível copiar para a área de transferência.");
+			emitToast("error", "Couldn't copy to the clipboard.");
 		}
 
 	};

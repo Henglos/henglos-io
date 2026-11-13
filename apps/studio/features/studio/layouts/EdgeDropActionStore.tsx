@@ -7,11 +7,11 @@ import { WorkflowAtom } from "../store/workflow.store";
 import { useWorkflowMutate } from "../hooks/useWorkflowMutate";
 
 /**
- * Overlay que aparece ao soltar uma connection num espaço vazio do canvas —
- * mesmo picker do "+" do Explorer (actions de todos os componentes já
- * registrados no workflow, agrupadas por componente). Ao escolher uma,
- * adiciona a action e conecta automaticamente o edge pendente até ela,
- * respeitando se o drag começou num handle de saída ou de entrada.
+ * Overlay shown when a connection is dropped on an empty spot of the canvas —
+ * the same picker as the Explorer's "+" (the actions of every component
+ * already in the workflow, grouped by component). Picking one adds the action
+ * and connects the pending edge to it, whether the drag started on an output
+ * handle or an input one.
  */
 export const EdgeDropActionStore = () => {
 
@@ -39,8 +39,9 @@ export const EdgeDropActionStore = () => {
 
 		setPositionOverrides(prev => ({ ...prev, [newAction.id]: drop.flowPosition }));
 
-		// Se o drag começou num handle de saída, o node arrastado é o source
-		// e a nova action vira o target — e vice-versa se começou numa entrada.
+		// When the drag started on an output handle, the dragged node is the
+		// source and the new action the target — and the other way around when
+		// it started on an input.
 		const draggedIsSource = drop.sourceHandleType === "source";
 
 		mutate({

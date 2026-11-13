@@ -121,6 +121,12 @@ export const stopTask = async (driverId: string, type: TaskType, taskId: string)
 	return data;
 };
 
+/** Frees the board on `port`, whatever is holding it. */
+export const releasePort = async (driverId: string, port: string): Promise<PortStatusOut> => {
+	const { data } = await http.post<PortStatusOut>(`/drivers/${driverId}/ports/release`, null, { params: { port } });
+	return data;
+};
+
 /** What has the board on `port` busy — no tasks when it's free. */
 export const getPortStatus = async (driverId: string, port: string): Promise<PortStatusOut> => {
 	const { data } = await http.get<PortStatusOut>(`/drivers/${driverId}/ports/status`, { params: { port } });
@@ -153,12 +159,13 @@ export const runAction = async (
 
 /** A value the debugger writes over what an action published (CONTEXT_SET on the board). */
 export type DebugValue =
-	| { name: string; kind: "int"; value: number }
+	| { name: string; kind: "integer"; value: number }
 	| { name: string; kind: "float"; value: number }
 	| { name: string; kind: "bool"; value: boolean }
-	| { name: string; kind: "text"; value: string }
+	| { name: string; kind: "string"; value: string }
 	| { name: string; kind: "bytes"; value: number[] }
-	| { name: string; kind: "json"; value: unknown[] | Record<string, unknown> };
+	| { name: string; kind: "list"; value: unknown[] }
+	| { name: string; kind: "object"; value: Record<string, unknown> };
 
 export type DebugState = {
 	sessionId: string;

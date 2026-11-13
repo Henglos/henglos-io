@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAtom } from "jotai";
 import { useQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-import { Button, Dialog, Dropdown, emitToast, Input, Text } from "@henglosio/ui";
+import { Button, Dialog, Dropdown, emitToast, Input, Select, Switch, Text } from "@henglosio/ui";
 // The browser entry: the main one pulls in Node-only code (child_process, fs).
 import { checkPlatformSettings, type PlatformSetting } from "@henglosio/shared/browser";
 import { Blocks, Check, ChevronDown, Info, RotateCcw, Settings, TriangleAlert, X } from "lucide-react";
@@ -12,6 +12,7 @@ import { getPlatformSettings, listPackages, updateWorkflow } from "@shared/api";
 import { WorkflowAtom } from "@/features/studio/store/workflow.store";
 import { useWorkflowMutate } from "@/features/studio/hooks/useWorkflowMutate";
 import { useSyncedDraft } from "@/features/studio/lib/useSyncedDraft";
+import { boardOptionError, type BoardOptionValue, type IBoardOption } from "@henglosio/workflow";
 import { usePlatformVersions } from "./usePlatformVersions.hook";
 
 // Hosting error ids a platform change can come back with (UpdateWorkflowUseCase).
@@ -109,6 +110,7 @@ export const PlatformWindow: React.FC<PlatformWindowProps> = ({ onClose }) => {
 
 						{/* ── Board ───────────────────────────────────────────────── */}
 						<BoardSection />
+						<BoardOptionsSection />
 
 						{/* ── Version ─────────────────────────────────────────────── */}
 						<Section title="Version">
@@ -304,8 +306,69 @@ const Section: React.FC<{ title: string; aside?: React.ReactNode; children: Reac
 	</div>
 );
 
+// The parameters of the board's firmware, when it has any — a form from its
+// manifest's `options`.
+const BoardOptionsSection: React.FC = () => {
+
+	const [workflow] = useAtom(WorkflowAtom);
+	const mutate = useWorkflowMutate();
+
+	const options = workflow?.data.board.base.options ?? [];
+	if (!workflow || options.length === 0) return null;
+
+	const picked = workflow.data.boardOptions ?? {};
+	// Writing the default is the same as not picking one.
+	const set = (option: IBoardOption, value: BoardOptionValue | null) =>
+		mutate({ op: "update:board-option", key: option.key, value: value === option.default ? null : value });
+
+	return (
+		<Section title="Board options">
+			{options.map(option => {
+				if (option.type === "integer") {
+					const value = picked[option.key];
+					return (
+						<LimitRow
+							key={option.key}
+							setting={option}
+							value={typeof value === "number" ? value : undefined}
+							problem={value === undefined ? undefined : boardOptionError(option, value) ?? undefined}
+							onChange={next => set(option, next)}
+						/>
+					);
+				}
+				const value = picked[option.key] ?? option.default;
+				return (
+					<div key={option.key} className="flex flex-col gap-1">
+						<div className="flex items-center gap-2">
+							<Text variant={option.key in picked ? "high" : "dim"} size="sm">{option.displayName}</Text>
+							{option.key in picked && <span className="size-1.5 rounded-full bg-accent" title="Changed" />}
+							<div className="ml-auto">
+								{option.type === "boolean" && (
+									<Switch.Root checked={value === true} onCheckedChange={next => set(option, next)} />
+								)}
+							</div>
+						</div>
+						{option.type === "select" && (
+							<Select.Root value={String(value)} onValueChange={next => set(option, next)}>
+								<Select.Trigger placeholder={option.displayName} />
+								<Select.Content>
+									{option.choices.map(choice => <Select.Item key={choice} value={choice}>{choice}</Select.Item>)}
+								</Select.Content>
+							</Select.Root>
+						)}
+						{boardOptionError(option, value)
+							? <Text variant="low" size="xs" className="text-danger!">{boardOptionError(option, value)}</Text>
+							: <Text variant="low" size="xs">{option.description}</Text>}
+					</div>
+				);
+			})}
+		</Section>
+	);
+
+};
+
 type LimitRowProps = {
-	setting: PlatformSetting;
+	setting: Pick<PlatformSetting, "key" | "displayName" | "description" | "default" | "min" | "max" | "unit">;
 	/** The workflow's override — undefined: the platform's default. */
 	value: number | undefined;
 	/** Out of range, or a rule with another limit broken (checkPlatformSettings). */

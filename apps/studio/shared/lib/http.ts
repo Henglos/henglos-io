@@ -50,8 +50,8 @@ http.interceptors.response.use(
 
 			if (!storedRefresh) {
 				const err = new ApiError("invalid_token");
-				emitToast("error", "Sua sessão expirou", {
-					detail: "Faça login novamente para continuar.",
+				emitToast("error", "Your session expired", {
+					detail: "Sign in again to continue.",
 					code: "invalid_token",
 				});
 				void handleAuthFailure();
@@ -88,8 +88,8 @@ http.interceptors.response.use(
 				pendingQueue.forEach(({ reject }) => reject(refreshError));
 				pendingQueue = [];
 				const err = new ApiError("invalid_token");
-				emitToast("error", "Sua sessão expirou", {
-					detail: "Faça login novamente para continuar.",
+				emitToast("error", "Your session expired", {
+					detail: "Sign in again to continue.",
 					code: "invalid_token",
 				});
 				void handleAuthFailure();

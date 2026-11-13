@@ -20,7 +20,7 @@ export const ConfigurationHeader = () => {
 				</Breadcrumb.Root>
 			) : (
 				<Text variant="low" size="xs">
-					{count === 0 ? "Nenhuma ação selecionada" : `${count} ações selecionadas`}
+					{count === 0 ? "No action selected" : `${count} actions selected`}
 				</Text>
 			)}
 

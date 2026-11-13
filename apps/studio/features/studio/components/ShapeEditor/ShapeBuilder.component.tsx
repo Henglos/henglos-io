@@ -1,18 +1,18 @@
 import { Button, Input, Select, Text } from "@henglosio/ui";
-import { isListShape, isObjectShape, pythonKind, type IShape } from "@henglosio/workflow";
+import { isListShape, isObjectShape, type IShape } from "@henglosio/workflow";
 import { Plus, Trash2 } from "lucide-react";
 
-// The scalars a variable's list items / object fields can be — MicroPython's,
-// the same four simple variable types.
+// The scalars a variable's list items / object fields can be — the same four
+// simple variable types.
 const SCALARS: { value: IShape; label: string }[] = [
-	{ value: "float", label: "Number (float)" },
-	{ value: "int", label: "Integer (int)" },
+	{ value: "integer", label: "Integer" },
+	{ value: "float", label: "Float" },
 	{ value: "bool", label: "Bool" },
-	{ value: "str", label: "Text (str)" },
+	{ value: "string", label: "String" },
 ];
 
-// Its row in SCALARS — a shape saved as "int32" or "text" is int / str.
-const scalarIndex = (shape: IShape) => SCALARS.findIndex(scalar => scalar.value === pythonKind(shape));
+// Its row in SCALARS.
+const scalarIndex = (shape: IShape) => SCALARS.findIndex(scalar => scalar.value === shape);
 
 const FIELD_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
@@ -68,7 +68,7 @@ const FieldsEditor: React.FC<{ fields: Fields; onChange: (fields: Fields) => voi
 };
 
 type ShapeBuilderProps = {
-	/** A list variable's ({ array: … }) or an object variable's ({ object: … }). */
+	/** A list variable's ({ list: … }) or an object variable's ({ object: … }). */
 	shape: IShape;
 	onChange: (shape: IShape) => void;
 };
@@ -85,7 +85,7 @@ export const ShapeBuilder: React.FC<ShapeBuilderProps> = ({ shape, onChange }) =
 	}
 
 	if (!isListShape(shape)) return null;
-	const item = shape.array;
+	const item = shape.list;
 	const itemKind = isObjectShape(item) ? "object" : String(scalarIndex(item));
 
 	return (
@@ -94,7 +94,7 @@ export const ShapeBuilder: React.FC<ShapeBuilderProps> = ({ shape, onChange }) =
 				<Text variant="dim" size="xs" className="shrink-0">Each item is</Text>
 				<Select.Root
 					value={itemKind}
-					onValueChange={next => onChange({ array: next === "object" ? { object: { x: "float" } } : SCALARS[Number(next)]!.value })}
+					onValueChange={next => onChange({ list: next === "object" ? { object: { x: "float" } } : SCALARS[Number(next)]!.value })}
 					className="flex-1"
 				>
 					<Select.Trigger />
@@ -104,7 +104,7 @@ export const ShapeBuilder: React.FC<ShapeBuilderProps> = ({ shape, onChange }) =
 					</Select.Content>
 				</Select.Root>
 			</div>
-			{isObjectShape(item) && <FieldsEditor fields={item.object} onChange={fields => onChange({ array: { object: fields } })} />}
+			{isObjectShape(item) && <FieldsEditor fields={item.object} onChange={fields => onChange({ list: { object: fields } })} />}
 		</div>
 	);
 

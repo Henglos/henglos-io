@@ -64,9 +64,9 @@ const Time: IComponentSchema = {
 			description: "Waits for Duration, then goes on.",
 			icon: "timer",
 			script: "src/delay.py",
-			outputSchema: [{ name: "duration", type: "int", description: "The time waited, in ms." }],
+			outputSchema: [{ name: "duration", type: "integer", description: "The time waited, in ms." }],
 			configurations: [
-				{ displayName: "Duration", description: "How long to wait.", type: "number", defaultValue: "1000" },
+				{ displayName: "Duration", description: "How long to wait.", type: "integer", defaultValue: "1000" },
 			],
 		},
 	],
@@ -87,7 +87,7 @@ const Sensor: IComponentSchema = {
 			],
 			configurations: [
 				{ displayName: "Signal Pin", description: "Board pin wired to S.", type: "pin", from: "board", filterBy: ["analog_in"] },
-				{ displayName: "Threshold", description: "The level it counts as wet from, in %.", type: "number", defaultValue: "10" },
+				{ displayName: "Threshold", description: "The level it counts as wet from, in %.", type: "float", defaultValue: "10" },
 			],
 		},
 	],

@@ -100,10 +100,10 @@ const display = (value: RunValue["value"]) =>
 // number is a float when it was declared one or isn't whole.
 const kindOf = (value: RunValue): DebugValue["kind"] =>
 	typeof value.value === "boolean" ? "bool"
-	: typeof value.value === "string" ? "text"
+	: typeof value.value === "string" ? "string"
 	: Array.isArray(value.value) ? "bytes"
 	: value.type?.includes("float") || !Number.isInteger(value.value) ? "float"
-	: "int";
+	: "integer";
 
 const OutputWindow: React.FC<{ value: RunValue; onEdit?: EditValue; busy?: boolean; onClose: () => void }> = ({ value, onEdit, busy, onClose }) => {
 
@@ -197,11 +197,11 @@ const ValueEditor: React.FC<ValueEditorProps> = ({ value, busy, onCancel, onAppl
 	const parsed = ((): { value: DebugValue; display: RunValue["value"] } | string => {
 		switch (kind) {
 			case "bool": return { value: { name: value.name, kind, value: flag }, display: flag };
-			case "text": return { value: { name: value.name, kind, value: text }, display: text };
-			case "int": {
+			case "string": return { value: { name: value.name, kind, value: text }, display: text };
+			case "integer": {
 				if (!/^-?\d+$/.test(text.trim())) return "A whole number.";
 				const number = Number(text);
-				if (number < -0x80000000 || number > 0x7fffffff) return "Out of int32 range.";
+				if (number < -0x80000000 || number > 0x7fffffff) return "Out of an integer's range.";
 				return { value: { name: value.name, kind, value: number }, display: number };
 			}
 			case "float": {
@@ -216,7 +216,8 @@ const ValueEditor: React.FC<ValueEditorProps> = ({ value, busy, onCancel, onAppl
 				return { value: { name: value.name, kind, value: bytes }, display: bytes };
 			}
 			// kindOf here never gives it — lists / objects are edited in OutputValue.
-			case "json":
+			case "list":
+			case "object":
 				return "Not editable here.";
 		}
 	})();
@@ -235,7 +236,7 @@ const ValueEditor: React.FC<ValueEditorProps> = ({ value, busy, onCancel, onAppl
 					autoFocus
 					value={text}
 					onChange={e => setText(e.target.value)}
-					rows={kind === "text" || kind === "bytes" ? 3 : 1}
+					rows={kind === "string" || kind === "bytes" ? 3 : 1}
 					className="w-full resize-y rounded-md border border-line bg-field px-2 py-1.5 font-mono text-sm text-fg outline-none focus:border-accent-line"
 				/>
 			)}

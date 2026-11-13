@@ -21,7 +21,7 @@ export const useDevices = () => {
 	useEffect(() => {
 		// The devices endpoint proxies to the driver daemon, so it only works
 		// while the driver is online — otherwise the backend rejects with
-		// "O driver está offline.".
+		// "The driver is offline.".
 		if (!driverId || !driverOnline) {
 			setDevices([]);
 			setSelected(null);

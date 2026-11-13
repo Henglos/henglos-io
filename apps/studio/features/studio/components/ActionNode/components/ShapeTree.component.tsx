@@ -16,14 +16,14 @@ type Path = (string | number)[];
 
 /** The short form of a type: a list is "<item>[]", an object just "object". */
 export const shortShapeLabel = (shape: OutputType): string =>
-	isListShape(shape) ? `${shortShapeLabel(shape.array)}[]`
+	isListShape(shape) ? `${shortShapeLabel(shape.list)}[]`
 	: isObjectShape(shape) ? "object"
 	: shapeLabel(shape);
 
 // The object a shape's fields come from — itself, or the items of its list(s) —
 // and the path down to it (an index per list).
 const fieldsOf = (shape: OutputType, path: Path = []): { fields: Record<string, IShape>; path: Path } | null =>
-	isListShape(shape) ? fieldsOf(shape.array, [...path, 0])
+	isListShape(shape) ? fieldsOf(shape.list, [...path, 0])
 	: isObjectShape(shape) ? { fields: shape.object, path }
 	: null;
 
@@ -34,7 +34,7 @@ export const hasShapeFields = (shape: OutputType): boolean => fieldsOf(shape) !=
 export const shapeAtPath = (shape: OutputType | undefined, path: Path): OutputType | undefined => {
 	let current = shape;
 	for (const step of path) {
-		if (typeof step === "number" && isListShape(current)) current = current.array;
+		if (typeof step === "number" && isListShape(current)) current = current.list;
 		else if (typeof step === "string" && isObjectShape(current)) current = current.object[step];
 		else return undefined;
 	}

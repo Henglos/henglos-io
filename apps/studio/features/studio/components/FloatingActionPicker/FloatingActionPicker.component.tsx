@@ -26,16 +26,16 @@ type FloatingActionPickerProps = {
 };
 
 /**
- * Shell de popover flutuante posicionado perto do clique (screenPosition),
- * usado por qualquer fluxo de "escolher uma action registrada" (inserir numa
- * connection, adicionar solta pelo Explorer, etc).
+ * A floating popover shell placed near the click (screenPosition), used by
+ * every "pick a registered action" flow (inserting into a connection, adding
+ * a loose one from the Explorer, etc).
  *
- * Dismiss (click fora / Escape) usa Dialog.Root não-modal do Radix (evita
- * conflito de pointer-events com o React Flow) mais um overlay invisível
- * próprio (div simples, não Dialog.Overlay — Overlay é um no-op quando
- * modal={false}, e Dialog.Portal descarta uma div simples solta entre seus
- * filhos por causa de como ele usa React.Children.map + asChild
- * internamente — por isso o overlay é renderizado fora do Portal).
+ * Dismissing (click outside / Escape) uses Radix's non-modal Dialog.Root
+ * (avoids a pointer-events clash with React Flow) plus its own invisible
+ * overlay (a plain div, not Dialog.Overlay — Overlay is a no-op when
+ * modal={false}, and Dialog.Portal drops a plain div loose among its children
+ * because of how it uses React.Children.map + asChild internally — so the
+ * overlay is rendered outside the Portal).
  */
 export const FloatingActionPicker: React.FC<FloatingActionPickerProps> = ({ screenPosition, onClose, children }) => {
 

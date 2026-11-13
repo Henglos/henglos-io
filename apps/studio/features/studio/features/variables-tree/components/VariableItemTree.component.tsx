@@ -8,16 +8,16 @@ import { useAtomValue } from "jotai";
 import { BoardLimitsAtom } from "@/features/studio/store/platform.store";
 
 const TYPE_ICON = {
-	number: Hash,
 	integer: Binary,
-	boolean: ToggleLeft,
-	text: Type,
-	array: List,
+	float: Hash,
+	bool: ToggleLeft,
+	string: Type,
+	list: List,
 	object: Braces,
 } as const;
 
 const formatInitial = (variable: IVariableRuntime) =>
-	variable.type === "text" || variable.type === "array" || variable.type === "object" ? JSON.stringify(variable.initial) : String(variable.initial);
+	variable.type === "string" || variable.type === "list" || variable.type === "object" ? JSON.stringify(variable.initial) : String(variable.initial);
 
 type VariableItemTreeProps = {
 	variable: IVariableRuntime;
@@ -40,11 +40,11 @@ export const VariableItemTree: React.FC<VariableItemTreeProps> = ({ variable, wo
 
 	const mutate = useWorkflowMutate();
 	const { bind, isDragging } = useBindDraggable(`variable:${variable.id}`, { kind: "variable", variableId: variable.id, name: variable.name });
-	// A text initial value set under a bigger limit than the board has now won't compile.
+	// A string initial value set under a bigger limit than the board has now won't compile.
 	const maxText = useAtomValue(BoardLimitsAtom).protocol.maxData;
 	const encoded = variable.initial === null ? null
-		: variable.type === "text" ? variable.initial as string
-		: variable.type === "array" || variable.type === "object" ? JSON.stringify(variable.initial)
+		: variable.type === "string" ? variable.initial as string
+		: variable.type === "list" || variable.type === "object" ? JSON.stringify(variable.initial)
 		: null;
 	const tooLong = encoded !== null && new TextEncoder().encode(encoded).length > maxText;
 

@@ -25,7 +25,7 @@ const MAX_HEIGHT     = 600;
 // The inspector's columns need room: opening it raises the panel to this.
 const INSPECTOR_HEIGHT = 320;
 
-// ─── hook de resize ───────────────────────────────────────────────────────────
+// ─── resize hook ──────────────────────────────────────────────────────────────
 
 function useResizeHandle(panelHeight: number, setPanelHeight: (h: number) => void) {
 
@@ -38,7 +38,7 @@ function useResizeHandle(panelHeight: number, setPanelHeight: (h: number) => voi
 
 		const onMove = (e: MouseEvent) => {
 			if (!dragRef.current) return;
-			// arrastar para cima (Y menor) → painel maior
+			// dragging up (smaller Y) → a bigger panel
 			const next = dragRef.current.startHeight + (dragRef.current.startY - e.clientY);
 			setPanelHeight(Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, next)));
 		};
@@ -100,7 +100,7 @@ export const BottomBarLayout = () => {
 
 		<aside className="w-full flex flex-col bg-chrome border-t border-line">
 
-			{/* drag handle — arrastar para cima expande, para baixo encolhe */}
+			{/* drag handle — dragging up expands it, down shrinks it */}
 			{activePanel && (
 				<div
 					onMouseDown={onResizeStart}
@@ -110,8 +110,8 @@ export const BottomBarLayout = () => {
 				</div>
 			)}
 
-			{/* conteúdo do painel — sempre montado: o REPL mantém a sessão e o
-			    histórico enquanto outra aba (ou nenhuma) está aberta */}
+			{/* the panel's content — always mounted: the REPL keeps its session and
+			    history while another tab (or none) is open */}
 			<div
 				style={{ height: panelHeight }}
 				className={clsx("w-full overflow-hidden border-b border-line shrink-0", !activePanel && "hidden")}
@@ -126,7 +126,7 @@ export const BottomBarLayout = () => {
 				</div>
 			</div>
 
-			{/* ── button strip — sempre visível ── */}
+			{/* ── button strip — always visible ── */}
 			<div className="flex items-center w-full h-6">
 
 				{NODE_LAYOUT === "panel" && (

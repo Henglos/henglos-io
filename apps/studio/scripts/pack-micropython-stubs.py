@@ -14,7 +14,7 @@ modules: machine, network, esp32, …) — the layout the stubs are made for.
 Nothing from the stubs is executed; pip only downloads them into a temp dir.
 
 Bump --stubs together with `firmware.micropython` in
-packages/packages/boards/Esp32/workspace/manifest.yaml.
+packages/library/boards/Esp32/manifest.yaml.
 """
 
 from __future__ import annotations

@@ -58,12 +58,12 @@ const display = (value: RunValue) =>
 // How a value is written back (CONTEXT_SET) — the shape it came in as; a
 // number is a float when it was declared one or isn't whole.
 const kindOf = (value: RunValue): DebugValue["kind"] =>
-	isStructured(value) ? "json"
+	isStructured(value) ? (Array.isArray(value.value) ? "list" : "object")
 	: typeof value.value === "boolean" ? "bool"
-	: typeof value.value === "string" ? "text"
+	: typeof value.value === "string" ? "string"
 	: Array.isArray(value.value) ? "bytes"
 	: value.type?.includes("float") || !Number.isInteger(value.value) ? "float"
-	: "int";
+	: "integer";
 
 type OutputValueProps = {
 	value: RunValue;
@@ -266,19 +266,20 @@ type ValueEditorProps = {
 const ValueEditor: React.FC<ValueEditorProps> = ({ value, busy, onCancel, onApply }) => {
 
 	const kind = kindOf(value);
+	const json = kind === "list" || kind === "object";
 	const [flag, setFlag] = useState(value.value === true);
 	const [text, setText] = useState(
-		kind === "bytes" ? hex(value.bytes) : kind === "json" ? JSON.stringify(value.value, null, 2) : kind === "bool" ? "" : String(value.value),
+		kind === "bytes" ? hex(value.bytes) : json ? JSON.stringify(value.value, null, 2) : kind === "bool" ? "" : String(value.value),
 	);
 
 	const parsed = ((): { value: DebugValue; display: RunValue["value"] } | string => {
 		switch (kind) {
 			case "bool": return { value: { name: value.name, kind, value: flag }, display: flag };
-			case "text": return { value: { name: value.name, kind, value: text }, display: text };
-			case "int": {
+			case "string": return { value: { name: value.name, kind, value: text }, display: text };
+			case "integer": {
 				if (!/^-?\d+$/.test(text.trim())) return "A whole number.";
 				const number = Number(text);
-				if (number < -0x80000000 || number > 0x7fffffff) return "Out of int32 range.";
+				if (number < -0x80000000 || number > 0x7fffffff) return "Out of an integer's range.";
 				return { value: { name: value.name, kind, value: number }, display: number };
 			}
 			case "float": {
@@ -292,12 +293,17 @@ const ValueEditor: React.FC<ValueEditorProps> = ({ value, busy, onCancel, onAppl
 				const bytes = parts.map(part => parseInt(part, 16));
 				return { value: { name: value.name, kind, value: bytes }, display: bytes };
 			}
-			case "json": {
+			case "list":
+			case "object": {
 				try {
 					const parsed = JSON.parse(text) as unknown;
-					if (!parsed || typeof parsed !== "object") return "A list or an object, as JSON.";
-					const json = parsed as unknown[] | Record<string, unknown>;
-					return { value: { name: value.name, kind, value: json }, display: json };
+					if (kind === "list") {
+						if (!Array.isArray(parsed)) return "A list, as JSON.";
+						return { value: { name: value.name, kind, value: parsed }, display: parsed };
+					}
+					if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return "An object, as JSON.";
+					const object = parsed as Record<string, unknown>;
+					return { value: { name: value.name, kind, value: object }, display: object };
 				} catch {
 					return "Not valid JSON.";
 				}
@@ -319,7 +325,7 @@ const ValueEditor: React.FC<ValueEditorProps> = ({ value, busy, onCancel, onAppl
 					autoFocus
 					value={text}
 					onChange={e => setText(e.target.value)}
-					rows={kind === "json" ? 6 : kind === "text" || kind === "bytes" ? 3 : 1}
+					rows={json ? 6 : kind === "string" || kind === "bytes" ? 3 : 1}
 					className="w-full resize-y rounded-sm border border-line bg-raised px-1.5 py-1 font-mono text-xs text-fg outline-none focus:border-accent-line"
 				/>
 			)}

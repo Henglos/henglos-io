@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
-import { Button, Input, Switch, Text, Textarea } from "@henglosio/ui";
-import { emptyShapeValue, isListShape, isObjectShape, pythonKind, shapeLabel, validateShape, type IShape } from "@henglosio/workflow";
-import { ArrowDown, ArrowUp, Braces, List, Plus, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Input, Switch, Text } from "@henglosio/ui";
+import { emptyShapeValue, isListShape, isObjectShape, validateShape, type IShape } from "@henglosio/workflow";
 import clsx from "clsx";
+import Editor from "@monaco-editor/react";
+import { defineHenglosMonacoTheme, HENGLOS_MONACO_THEME } from "@/features/studio/features/code-editor/henglosMonacoTheme";
 
 type ShapeValueEditorProps = {
 	shape: IShape;
@@ -12,113 +13,168 @@ type ShapeValueEditorProps = {
 	maxItems?: number;
 	/** An object's fields as the user reads them (a config's displayNames) — the field name otherwise. */
 	labels?: Record<string, string>;
-	/** Nesting, for the inner editors — the top one also offers "edit as JSON" and shows the error. */
+	/** Nesting, for the inner editors. */
 	depth?: number;
 };
 
 /**
- * Edits a value of a shape (see ShapeValue in @henglosio/workflow): a list as
- * rows to add, remove and reorder, an object as one row per field, a scalar as
- * its field — nested as deep as the shape goes. The top level can also be
- * edited as JSON (paste a whole value), and shows why the value doesn't fit.
+ * Edits a value of a shape: a list or object in text via Monaco Editor (styled like a textarea),
+ * or a scalar as its field.
  */
-export const ShapeValueEditor: React.FC<ShapeValueEditorProps> = ({ shape, value, onChange, maxItems, labels, depth = 0 }) => {
+export const ShapeValueEditor: React.FC<ShapeValueEditorProps> = ({ shape, value, onChange, maxItems, depth = 0 }) => {
 
-	const [asJson, setAsJson] = useState(false);
+	if (isListShape(shape) || isObjectShape(shape)) {
+		return <JsonEditor shape={shape} value={value} onChange={onChange} maxItems={maxItems} />;
+	}
+
 	const problem = depth === 0 ? validateShape(shape, value ?? emptyShapeValue(shape)) : null;
 
-	if (depth === 0 && (isListShape(shape) || isObjectShape(shape))) {
-		return (
-			<div className="flex flex-col gap-1.5 w-full nodrag">
-				<div className="flex items-center gap-1">
-					<Text variant="low" size="xs" className="truncate" title={shapeLabel(shape)}>{shapeLabel(shape)}</Text>
-					<Button.Root variant="ghost" size="sm" className="ml-auto" onClick={() => setAsJson(!asJson)} title={asJson ? "Edit field by field" : "Edit as JSON"}>
-						<Button.Icon>{asJson ? <List size={11} /> : <Braces size={11} />}</Button.Icon>
-					</Button.Root>
-				</div>
-				{asJson
-					? <JsonEditor shape={shape} value={value} onChange={onChange} />
-					: <Structured shape={shape} value={value} onChange={onChange} maxItems={maxItems} labels={labels} depth={depth} />}
-				{problem && !asJson && <Text variant="low" size="xs" className="text-danger!">{problem}</Text>}
-			</div>
-		);
-	}
-
-	return <Structured shape={shape} value={value} onChange={onChange} maxItems={maxItems} labels={labels} depth={depth} />;
+	return (
+		<div className="flex flex-col gap-1.5 w-full nodrag">
+			<ScalarEditor kind={shape} value={value} onChange={onChange} />
+			{problem && <Text variant="low" size="xs" className="text-danger!">{problem}</Text>}
+		</div>
+	);
 
 };
 
-const Structured: React.FC<ShapeValueEditorProps & { depth: number }> = ({ shape, value, onChange, maxItems, labels, depth }) => {
-
-	if (isListShape(shape)) {
-		const items = Array.isArray(value) ? value : [];
-		const set = (next: unknown[]) => onChange(next);
-		const move = (from: number, to: number) => {
-			const next = [...items];
-			const [moved] = next.splice(from, 1);
-			next.splice(to, 0, moved);
-			set(next);
-		};
-		const full = maxItems !== undefined && items.length >= maxItems;
-		return (
-			<div className={clsx("flex flex-col gap-1", depth > 0 && "pl-2 border-l border-line-subtle")}>
-				{items.map((item, index) => (
-					<div key={index} className="flex items-start gap-1">
-						<Text variant="low" size="xs" className="w-5 shrink-0 pt-2 text-right tabular-nums">{index}</Text>
-						<div className="flex-1 min-w-0">
-							<ShapeValueEditor shape={shape.array} value={item} depth={depth + 1}
-								onChange={next => set(items.map((old, i) => (i === index ? next : old)))} />
-						</div>
-						<div className="flex shrink-0">
-							<Button.Root variant="ghost" size="sm" onClick={() => move(index, index - 1)} disabled={index === 0} title="Up">
-								<Button.Icon><ArrowUp size={11} /></Button.Icon>
-							</Button.Root>
-							<Button.Root variant="ghost" size="sm" onClick={() => move(index, index + 1)} disabled={index === items.length - 1} title="Down">
-								<Button.Icon><ArrowDown size={11} /></Button.Icon>
-							</Button.Root>
-							<Button.Root variant="ghost" size="sm" onClick={() => set(items.filter((_, i) => i !== index))} title="Remove">
-								<Button.Icon><Trash2 size={11} className="text-danger" /></Button.Icon>
-							</Button.Root>
-						</div>
-					</div>
-				))}
-				<Button.Root variant="ghost" size="sm" className="self-start" onClick={() => set([...items, emptyShapeValue(shape.array)])} disabled={full}
-					title={full ? `At most ${maxItems}` : "Add an item"}>
-					<Button.Icon><Plus size={11} /></Button.Icon>
-					<Button.Label>{items.length === 0 ? "Add the first item" : "Add"}</Button.Label>
-				</Button.Root>
-			</div>
-		);
+const serialize = (val: unknown) => {
+	try {
+		return JSON.stringify(val ?? null);
+	} catch {
+		return "";
 	}
+};
 
-	if (isObjectShape(shape)) {
-		const fields = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
-		return (
-			<div className={clsx("flex flex-col gap-1", depth > 0 && "pl-2 border-l border-line-subtle")}>
-				{Object.entries(shape.object).map(([field, fieldShape]) => (
-					<div key={field} className={clsx("flex gap-2", isListShape(fieldShape) || isObjectShape(fieldShape) ? "flex-col" : "items-center")}>
-						<Text variant="dim" size="xs" className="shrink-0 min-w-14 font-mono">{labels?.[field] ?? field}</Text>
-						<div className="flex-1 min-w-0">
-							<ShapeValueEditor shape={fieldShape} value={fields[field] ?? emptyShapeValue(fieldShape)} depth={depth + 1}
-								onChange={next => onChange({ ...fields, [field]: next })} />
-						</div>
-					</div>
-				))}
-			</div>
-		);
+const formatInitial = (val: unknown, shp: IShape) => {
+	try {
+		return JSON.stringify(val ?? emptyShapeValue(shp), null, 2);
+	} catch {
+		return "";
 	}
+};
 
-	return <ScalarEditor kind={shape} value={value} onChange={onChange} />;
+type JsonEditorProps = {
+	shape: IShape;
+	value: unknown;
+	onChange: (value: unknown) => void;
+	maxItems?: number;
+};
+
+// Edits a list or object value as JSON text in Monaco Editor styled like a textarea.
+export const JsonEditor: React.FC<JsonEditorProps> = ({ shape, value, onChange, maxItems }) => {
+
+	const [text, setText] = useState(() => formatInitial(value, shape));
+	const [error, setError] = useState<string | null>(() => {
+		const initialVal = value ?? emptyShapeValue(shape);
+		let problem = validateShape(shape, initialVal);
+		if (!problem && maxItems !== undefined && Array.isArray(initialVal) && initialVal.length > maxItems) {
+			problem = `At most ${maxItems} ${maxItems === 1 ? "item" : "items"} (has ${initialVal.length})`;
+		}
+		return problem;
+	});
+
+	// Tracks what was last committed from typing to prevent overwriting local draft or cursor position.
+	const lastCommittedRef = useRef<string>(serialize(value));
+
+	useEffect(() => {
+		const serialized = serialize(value);
+		if (serialized !== lastCommittedRef.current) {
+			lastCommittedRef.current = serialized;
+			const formatted = formatInitial(value, shape);
+			setText(formatted);
+			try {
+				const parsed = JSON.parse(formatted) as unknown;
+				let problem = validateShape(shape, parsed);
+				if (!problem && maxItems !== undefined && Array.isArray(parsed) && parsed.length > maxItems) {
+					problem = `At most ${maxItems} ${maxItems === 1 ? "item" : "items"} (has ${parsed.length})`;
+				}
+				setError(problem);
+			} catch {
+				setError("Not valid JSON yet.");
+			}
+		}
+	}, [value, shape, maxItems]);
+
+	const handleEditorChange = (nextText: string | undefined) => {
+		const content = nextText ?? "";
+		setText(content);
+		try {
+			const parsed = JSON.parse(content) as unknown;
+			let problem = validateShape(shape, parsed);
+			if (!problem && maxItems !== undefined && Array.isArray(parsed) && parsed.length > maxItems) {
+				problem = `At most ${maxItems} ${maxItems === 1 ? "item" : "items"} (has ${parsed.length})`;
+			}
+			setError(problem);
+			if (!problem) {
+				lastCommittedRef.current = serialize(parsed);
+				onChange(parsed);
+			}
+		} catch {
+			setError("Not valid JSON yet.");
+		}
+	};
+
+	return (
+		<div className="flex flex-col gap-1 w-full nodrag nowheel">
+			<div
+				className={clsx(
+					"w-full h-32 min-h-20 resize-y overflow-hidden rounded-md border transition-[border-color,box-shadow]",
+					error
+						? "border-danger ring-1 ring-danger"
+						: "border-line focus-within:border-accent focus-within:ring-1 focus-within:ring-accent",
+					"bg-[#0c0c0e]",
+				)}
+			>
+				<Editor
+					height="100%"
+					width="100%"
+					language="json"
+					theme={HENGLOS_MONACO_THEME}
+					beforeMount={defineHenglosMonacoTheme}
+					value={text}
+					onChange={handleEditorChange}
+					loading={null}
+					options={{
+						minimap: { enabled: false },
+						lineNumbers: "off",
+						glyphMargin: false,
+						folding: false,
+						lineDecorationsWidth: 8,
+						lineNumbersMinChars: 0,
+						renderLineHighlight: "none",
+						overviewRulerLanes: 0,
+						hideCursorInOverviewRuler: true,
+						overviewRulerBorder: false,
+						scrollbar: {
+							vertical: "auto",
+							horizontal: "auto",
+							verticalScrollbarSize: 6,
+							horizontalScrollbarSize: 6,
+						},
+						scrollBeyondLastLine: false,
+						automaticLayout: true,
+						wordWrap: "on",
+						fontSize: 12,
+						lineHeight: 18,
+						tabSize: 2,
+						padding: { top: 8, bottom: 8 },
+						fixedOverflowWidgets: true,
+						formatOnPaste: true,
+					}}
+				/>
+			</div>
+			{error && <Text variant="low" size="xs" className="text-danger!">{error}</Text>}
+		</div>
+	);
 
 };
 
-// One scalar: text, a number (kept as typed until it reads as one), a bool.
-const ScalarEditor: React.FC<{ kind: IShape; value: unknown; onChange: (value: unknown) => void }> = ({ kind: shape, value, onChange }) => {
+// One scalar: a string, a number (kept as typed until it reads as one), a bool.
+const ScalarEditor: React.FC<{ kind: IShape; value: unknown; onChange: (value: unknown) => void }> = ({ kind, value, onChange }) => {
 
-	// A shape saved as "int32" or "text" is int / str.
-	const kind = pythonKind(shape);
-	const isText = kind === "str";
-	const isInteger = kind === "int";
+	const isText = kind === "string";
+	const isInteger = kind === "integer";
 	const [draft, setDraft] = useState(value === undefined || value === null ? "" : String(value));
 
 	// A value changed from elsewhere (collab, undo, a reorder) replaces what's typed.
@@ -152,38 +208,6 @@ const ScalarEditor: React.FC<{ kind: IShape; value: unknown; onChange: (value: u
 				}}
 			/>
 		</Input.Root>
-	);
-
-};
-
-// The whole value as JSON — applied once it parses and fits the shape.
-const JsonEditor: React.FC<{ shape: IShape; value: unknown; onChange: (value: unknown) => void }> = ({ shape, value, onChange }) => {
-
-	const [text, setText] = useState(() => JSON.stringify(value ?? emptyShapeValue(shape), null, 2));
-	const [error, setError] = useState<string | null>(null);
-
-	return (
-		<div className="flex flex-col gap-1">
-			<Textarea.Root>
-				<Textarea.Field
-					value={text}
-					rows={6}
-					className="font-mono text-xs"
-					onChange={event => {
-						setText(event.target.value);
-						try {
-							const parsed = JSON.parse(event.target.value) as unknown;
-							const problem = validateShape(shape, parsed);
-							setError(problem);
-							if (!problem) onChange(parsed);
-						} catch {
-							setError("Not valid JSON yet.");
-						}
-					}}
-				/>
-			</Textarea.Root>
-			{error && <Text variant="low" size="xs" className="text-danger!">{error}</Text>}
-		</div>
 	);
 
 };

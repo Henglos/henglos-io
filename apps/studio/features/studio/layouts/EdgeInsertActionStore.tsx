@@ -12,9 +12,9 @@ const findAction = (data: IWorkflowRuntime, actionId: string): IActionRuntime | 
 };
 
 /**
- * Overlay que aparece ao clicar no botão "+" de uma connection existente.
- * Ao escolher uma action, insere a action entre as duas actions conectadas —
- * remove a connection original e cria duas novas (source → nova action → target).
+ * Overlay shown when clicking the "+" button of an existing connection.
+ * Picking an action inserts it between the two connected actions — removes
+ * the original connection and creates two new ones (source → new action → target).
  */
 export const EdgeInsertActionStore = () => {
 
@@ -32,18 +32,18 @@ export const EdgeInsertActionStore = () => {
 		const insert = pending;
 		close();
 
-		// Resolve as duas actions que a connection clicada ligava — se alguma
-		// delas sumiu nesse meio tempo (ex: apagada enquanto o popover estava
-		// aberto), aborta em vez de criar uma connection pra um id inexistente.
+		// Resolves the two actions the clicked connection linked — if either
+		// is gone by now (e.g. deleted while the popover was open), aborts
+		// instead of creating a connection to an id that doesn't exist.
 		const leftAction = findAction(workflow.data, insert.source);
 		const rightAction = findAction(workflow.data, insert.target);
 		if (!leftAction || !rightAction) return;
 
-		// O output/input que a connection original usava em cada uma — não é
-		// necessariamente o primeiro pino da action, é especificamente o que
-		// já estava conectado (uma action pode ter mais de uma saída, ex:
-		// "fallback"). Confirma que o handle ainda existe nessa action;
-		// senão cai pro id cru guardado no clique (mesmo comportamento de antes).
+		// The output/input the original connection used on each one — not
+		// necessarily the action's first pin, but exactly the one that was
+		// connected (an action can have more than one output, e.g. "fallback").
+		// Checks the handle still exists on that action; otherwise falls back to
+		// the raw id saved on click (the same behavior as before).
 		const leftOutputHandle = leftAction.outputs.find(h => h.id === insert.sourceHandle)?.id ?? insert.sourceHandle;
 		const rightInputHandle = rightAction.inputs.find(h => h.id === insert.targetHandle)?.id ?? insert.targetHandle;
 
@@ -56,9 +56,9 @@ export const EdgeInsertActionStore = () => {
 		const newAction = result.actions.find(a => !previousActionIds.has(a.id));
 		if (!newAction) return;
 
-		// Posiciona a nova action no ponto médio entre a da esquerda e a da
-		// direita, em vez de deixar no canto padrão — ela está literalmente
-		// entre as duas no grafo, então faz sentido estar entre elas no canvas.
+		// Places the new action halfway between the left and the right one,
+		// instead of the default corner — it is literally between the two in
+		// the graph, so it makes sense for it to be between them on the canvas.
 		const leftNode = nodes.find(n => n.id === leftAction.id);
 		const rightNode = nodes.find(n => n.id === rightAction.id);
 		if (leftNode && rightNode) {

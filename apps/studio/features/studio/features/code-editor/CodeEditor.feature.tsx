@@ -60,17 +60,17 @@ export const CodeEditor = () => {
 		validate();
 	}, [names, variableNames, maxBytes]);
 
-	// Só resincroniza o rascunho quando o campo alvo muda de fato (outro
-	// config, ou reaberto) — não a cada re-render, senão digitar apagaria a
-	// própria digitação assim que target.value (ainda não commitado) mudasse.
+	// Only resyncs the draft when the target field actually changes (another
+	// config, or reopened) — not on every re-render, or typing would erase
+	// itself as soon as target.value (not committed yet) changed.
 	useEffect(() => {
 		setDraft(target?.value ?? "");
 	}, [target?.actionId, target?.configurationId]);
 
-	// Commitar no workflow a cada tecla re-renderiza o canvas inteiro e manda
-	// um op de collab por caractere — o rascunho fica local e só vai pro
-	// workflow depois de uma pausa na digitação. Guarda o onChange junto com o
-	// valor pra que o flush ao trocar de campo vá pro campo antigo, não o novo.
+	// Committing to the workflow on every key re-renders the whole canvas and
+	// sends one collab op per character — the draft stays local and only goes
+	// to the workflow after a pause in typing. Keeps the onChange with the
+	// value so the flush on switching fields goes to the old field, not the new one.
 	const pendingRef = useRef<{ value: string; onChange: (value: string) => void } | null>(null);
 	const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -81,7 +81,7 @@ export const CodeEditor = () => {
 		pending?.onChange(pending.value);
 	};
 
-	// Cleanup roda antes de trocar de campo, ao fechar (target → null) e no unmount.
+	// The cleanup runs before switching fields, on close (target → null) and on unmount.
 	useEffect(() => flush, [target?.actionId, target?.configurationId]);
 
 	// The editor's model stays open on the language server while it's mounted.

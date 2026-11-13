@@ -7,9 +7,9 @@ import { WorkflowAtom } from "@/features/studio/store/workflow.store";
 import { useWorkflowMutate } from "@/features/studio/hooks/useWorkflowMutate";
 
 /**
- * Overlay que aparece ao clicar no "+" do Explorer — escolhe uma action de
- * um componente já registrado no workflow e adiciona ela solta (sem mexer
- * em connections, diferente do EdgeInsertActionStore).
+ * Overlay shown when clicking the Explorer's "+" — picks an action of a
+ * component already in the workflow and adds it loose (without touching
+ * connections, unlike EdgeInsertActionStore).
  */
 export const ExplorerAddActionStore = () => {
 

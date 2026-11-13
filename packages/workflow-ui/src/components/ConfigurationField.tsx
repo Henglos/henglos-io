@@ -2,7 +2,6 @@ import { Fragment, useEffect, useState } from "react";
 import { Badge, Button, Dropdown, Input, Select, Switch, Text, Tooltip } from "@henglosio/ui";
 import { ConfigurationParser } from "@henglosio/workflow";
 import type { IActionRuntime, IAnyValueKindSchema, IAnyValueSchema, IBoardRuntime, IComponentRuntime, IConfigurationRuntime, IConfigurationSchema, IOptionEntrySchema, IOptionValueSchema, IPinSchema, IVariableRuntime } from "@henglosio/workflow";
-import { pythonKind } from "@henglosio/workflow";
 import { ChevronDown, Code2, Variable, X } from "lucide-react";
 import clsx from "clsx";
 import { OUTPUT_DRAG_MIME, isVariableDrag, unpackOutputDragPayload, unpackVariableDragPayload } from "../lib/dnd";
@@ -10,21 +9,16 @@ import { isOutputBindAllowed } from "../lib/isOutputBindAllowed";
 import { useSyncedDraft } from "../lib/useSyncedDraft";
 import { useWorkflowCanvas } from "../context";
 
-// Configs a Code binding can target — must match resolveCodeResultType's cases
-// in GenerateExecuteCommand.use-case.ts (packages/workflow), which is what
-// actually decides whether a config's RESULT TYPE byte is representable:
-// BOOL/FLOAT_32/UINT_8 as a scalar, or UINT_8 with the array bit set (raw
-// text for string/password/options, or a byte table for bytes/color — see
-// resolveCodeResultType's comment for the exact shapes). "any" is eligible
-// too, but its DataType comes from whatever kind was last picked on the
-// literal side (value.kind) — see resolveCodeResultType's "any" case.
-// Only "code" (the Monaco script field itself) is excluded: a script that
-// computes the script to run doesn't mean anything. Offering the toggle on a
-// type resolveCodeResultType doesn't cover would let the user write a script
-// that silently gets dropped at compile time instead of ever reaching the
-// device.
+// Configs a Code binding can target — the ones resolveExpectedType (in
+// GenerateExecuteCommand.use-case.ts, packages/workflow) gives a RESULT TYPE:
+// what the script returns is converted to the config's type on the board
+// (integer, float, bool, string, bytes, list, object), or kept as it is for
+// "any". Only "code" (the Monaco script field itself) is excluded: a script
+// that computes the script to run doesn't mean anything. Offering the toggle
+// on a type resolveExpectedType doesn't cover would let the user write a
+// script that silently gets dropped at compile time.
 const CODE_ELIGIBLE_TYPES: ReadonlySet<IConfigurationSchema["type"]> = new Set([
-	"toggle", "number", "pin", "any", "string", "password", "options", "bytes", "color",
+	"toggle", "integer", "float", "pin", "any", "string", "password", "options", "bytes", "color",
 ]);
 
 type ConfigurationFieldProps = {
@@ -250,7 +244,7 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 	// shows why under the field, instead of being silently dropped.
 	const commitChecked = (next: string | undefined) => {
 		if (readOnly) return;
-		if (next === undefined || next === "") return commit(base.type === "number" ? undefined : next);
+		if (next === undefined || next === "") return commit(base.type === "integer" || base.type === "float" ? undefined : next);
 		const problem = ConfigurationParser.validate(base, next);
 		if (problem) return setFilterError(problem);
 		commit(next);
@@ -319,7 +313,7 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 					</Input.Root>
 				)}
 
-				{base.type === "number" && (
+				{(base.type === "integer" || base.type === "float") && (
 					<Input.Root className={clsx("nodrag", filterError && "ring-1 ring-danger rounded-md")} value={draft as string ?? ""}>
 						{!readOnly && (
 							<Tooltip.Provider delayDuration={600}>
@@ -606,9 +600,9 @@ const OptionsField: React.FC<OptionsFieldProps> = ({ value, options, readOnly, o
 
 };
 
-// An int takes a whole number, a float a fractional part too — both may be negative.
+// An integer takes a whole number, a float a fractional part too — both may be negative.
 const ANY_KIND_PATTERNS: Record<Exclude<IAnyValueKindSchema, "bool">, RegExp> = {
-	int: /^-?\d+$/,
+	integer: /^-?\d+$/,
 	float: /^-?\d+(\.\d+)?$/,
 };
 
@@ -621,9 +615,8 @@ type AnyFieldProps = {
 
 const AnyField: React.FC<AnyFieldProps> = ({ value, availables, readOnly, onChange }) => {
 
-	// A schema not resynced yet may still list the old names (int32, uint8…).
-	const kinds = [...new Set(availables.map(pythonKind))];
-	const kind = pythonKind(value?.kind ?? kinds[0]!);
+	const kinds = availables;
+	const kind = value?.kind ?? kinds[0]!;
 	const [draft, setDraft] = useSyncedDraft(value, v => (v?.value !== undefined ? String(v.value) : ""));
 
 	const commitValue = () => {

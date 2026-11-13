@@ -3,7 +3,6 @@ import { useAtom, useAtomValue } from "jotai";
 import { Badge, Button, Dropdown, Input, Select, Switch, Text, Tooltip } from "@henglosio/ui";
 import { ConfigurationParser, contextSourcesOf, emptyShapeValue, outputReaches, isJsonShape, isShapeCompatible, resolveWorkflowAction } from "@henglosio/workflow";
 import type { IAnyValueKindSchema, IAnyValueSchema, IBoardRuntime, IComponentRuntime, IConfigurationRuntime, IConfigurationSchema, IConnectionRuntime, ICredentialValueSchema, IFileValueSchema, IOptionEntrySchema, IOptionValueSchema, IPinSchema, IShape, IVariableRuntime, IWorkflowRuntime } from "@henglosio/workflow";
-import { pythonKind } from "@henglosio/workflow";
 import { FileField } from "./FileField.component";
 import { CredentialField } from "./CredentialField.component";
 import { ShapeValueEditor } from "@/features/studio/components/ShapeEditor/ShapeValueEditor.component";
@@ -15,28 +14,23 @@ import { dragExpression, useBindDroppable } from "@/features/studio/lib/bindDrag
 import { shapeAtPath } from "./ShapeTree.component";
 import { CodeEditorTargetAtom } from "@/features/studio/store/canvas.store";
 
-// Configs a Code binding can target — must match resolveCodeResultType's cases
-// in GenerateExecuteCommand.use-case.ts (packages/workflow), which is what
-// actually decides whether a config's RESULT TYPE byte is representable:
-// BOOL/FLOAT_32/UINT_8 as a scalar, or UINT_8 with the array bit set (raw
-// text for string/password/options, or a byte table for bytes/color — see
-// resolveCodeResultType's comment for the exact shapes). "any" is eligible
-// too, but its DataType comes from whatever kind was last picked on the
-// literal side (value.kind) — see resolveCodeResultType's "any" case.
-// Only "code" (the Monaco script field itself) is excluded: a script that
-// computes the script to run doesn't mean anything. Offering the toggle on a
-// type resolveCodeResultType doesn't cover would let the user write a script
-// that silently gets dropped at compile time instead of ever reaching the
-// device.
+// Configs a Code binding can target — the ones resolveExpectedType (in
+// GenerateExecuteCommand.use-case.ts, packages/workflow) gives a RESULT TYPE:
+// what the script returns is converted to the config's type on the board
+// (integer, float, bool, string, bytes, list, object), or kept as it is for
+// "any". Only "code" (the Monaco script field itself) is excluded: a script
+// that computes the script to run doesn't mean anything. Offering the toggle
+// on a type resolveExpectedType doesn't cover would let the user write a
+// script that silently gets dropped at compile time.
 const CODE_ELIGIBLE_TYPES: ReadonlySet<IConfigurationSchema["type"]> = new Set([
-	"toggle", "number", "pin", "any", "string", "password", "options", "bytes", "color",
+	"toggle", "integer", "float", "pin", "any", "string", "password", "options", "bytes", "color",
 	// A script returning a list / a dict — sent as its JSON.
-	"array", "object",
+	"list", "object",
 ]);
 
 /** The shape a list / object config holds — null for the other types. */
 const configShape = (base: IConfigurationSchema): IShape | null =>
-	base.type === "array" ? { array: base.items }
+	base.type === "list" ? { list: base.items }
 	: base.type === "object" ? { object: Object.fromEntries(base.fields.map(field => [field.name, field.type])) }
 	: null;
 
@@ -245,7 +239,7 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 	// commit: a value that fails one keeps the draft (so it can be fixed) and
 	// shows why under the field, instead of being silently dropped.
 	const commitChecked = (next: string | undefined) => {
-		if (next === undefined || next === "") return commit(base.type === "number" ? undefined : next);
+		if (next === undefined || next === "") return commit(base.type === "integer" || base.type === "float" ? undefined : next);
 		const problem = ConfigurationParser.validate(base, next);
 		if (problem) return setFilterError(problem);
 		commit(next);
@@ -314,7 +308,7 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 					</Input.Root>
 				)}
 
-				{base.type === "number" && (
+				{(base.type === "integer" || base.type === "float") && (
 					<Input.Root className={clsx("nodrag", filterError && "ring-1 ring-danger rounded-md")} value={draft as string ?? ""}>
 						<Tooltip.Provider delayDuration={600}>
 							<Tooltip.Root>
@@ -423,7 +417,7 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 				)}
 
 				{base.type === "bytes" && (
-					<Text variant="dim" size="xs">Definido via binding ou script — sem edição manual</Text>
+					<Text variant="dim" size="xs">Set by a binding or a script — not editable by hand</Text>
 				)}
 
 				{base.type === "file" && (
@@ -434,13 +428,13 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 					<CredentialField base={base} value={draft as ICredentialValueSchema | undefined} onChange={commit} />
 				)}
 
-				{(base.type === "array" || base.type === "object") && targetShape && (
+				{(base.type === "list" || base.type === "object") && targetShape && (
 					<div className="w-64">
 						<ShapeValueEditor
 							shape={targetShape}
 							value={draft ?? base.defaultValue ?? emptyShapeValue(targetShape)}
 							onChange={next => commit(next as IConfigurationRuntime["value"])}
-							maxItems={base.type === "array" ? base.maxItems : undefined}
+							maxItems={base.type === "list" ? base.maxItems : undefined}
 							labels={base.type === "object" ? Object.fromEntries(base.fields.map(field => [field.name, field.displayName])) : undefined}
 						/>
 					</div>
@@ -512,10 +506,10 @@ type CodeFieldProps = {
 	onOpen: () => void;
 };
 
-// Não edita nada aqui — é só o "gatilho" que abre o Monaco no secondary
-// sidebar (ver CodeEditorTargetAtom/CodeEditor.feature.tsx). O node fica
-// pequeno de propósito; escrever/ler o script de verdade precisa de mais
-// espaço do que um card de configuração comporta.
+// Edits nothing here — it's only the "trigger" that opens Monaco in the
+// secondary sidebar (see CodeEditorTargetAtom/CodeEditor.feature.tsx). The node
+// stays small on purpose; actually writing/reading the script needs more room
+// than a configuration card has.
 const CodeField: React.FC<CodeFieldProps> = ({ value, isOpen, onOpen }) => {
 
 	const trimmed = value.trim();
@@ -580,9 +574,9 @@ const OptionsField: React.FC<OptionsFieldProps> = ({ value, options, onChange })
 
 };
 
-// An int takes a whole number, a float a fractional part too — both may be negative.
+// An integer takes a whole number, a float a fractional part too — both may be negative.
 const ANY_KIND_PATTERNS: Record<Exclude<IAnyValueKindSchema, "bool">, RegExp> = {
-	int: /^-?\d+$/,
+	integer: /^-?\d+$/,
 	float: /^-?\d+(\.\d+)?$/,
 };
 
@@ -594,9 +588,8 @@ type AnyFieldProps = {
 
 const AnyField: React.FC<AnyFieldProps> = ({ value, availables, onChange }) => {
 
-	// A schema not resynced yet may still list the old names (int32, uint8…).
-	const kinds = [...new Set(availables.map(pythonKind))];
-	const kind = pythonKind(value?.kind ?? kinds[0]!);
+	const kinds = availables;
+	const kind = value?.kind ?? kinds[0]!;
 	const [draft, setDraft] = useSyncedDraft(value, v => (v?.value !== undefined ? String(v.value) : ""));
 
 	const commitValue = () => {
@@ -693,7 +686,7 @@ const PinField: React.FC<PinFieldProps> = ({ value, from, filterBy, component, b
 					</Dropdown.Trigger>
 					<Dropdown.Content align="end">
 						{available.length === 0 && (
-							<Dropdown.Item disabled>Nenhum pino disponível</Dropdown.Item>
+							<Dropdown.Item disabled>No pins available</Dropdown.Item>
 						)}
 						{available.map(pin => (
 							<Dropdown.Item key={pin.gpio} onSelect={() => selectPin(pin)}>

@@ -58,7 +58,7 @@ export function summarizeConfiguration(configuration: IConfigurationRuntime, var
 			case "file": return (value as { name: string }).name;
 			case "credential": return "credential";
 			case "code": return "script";
-			case "array": return `${(value as unknown[]).length} items`;
+			case "list": return `${(value as unknown[]).length} items`;
 			case "object": return `${Object.keys(value as object).length} fields`;
 			case "any": return String((value as { value?: unknown }).value ?? value);
 			default: return typeof value === "object" ? JSON.stringify(value) : String(value);

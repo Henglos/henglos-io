@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAtom, useAtomValue } from "jotai";
 import type { PortStatusOut, TaskType } from "@henglosio/shared";
-import { debugGet, debugStop, getPortStatus, stopTask } from "@/shared/api";
+import { debugGet, debugStop, getPortStatus, releasePort, stopTask } from "@/shared/api";
 import { WorkflowAtom } from "../../store/workflow.store";
 import { DeviceSelectionAtom, DriverConnectionAtom } from "../../store/driver.store";
 import { ActiveTaskIdAtom } from "../../store/logs.store";
@@ -35,8 +35,7 @@ const elapsed = (since: number) => {
  * for how long — and the studio picking it up as it is: a debug session on
  * this workflow opens debug mode where it stands, anything else on it shows
  * its log. Its Stop is that operation's own (debug's stop, the task's stop).
- * A task nothing tracks any more (the hosting restarted) is only shown — it
- * ends with the driver.
+ * A task nothing tracks can still be stopped: that frees the board itself.
  */
 export const BoardStatus = () => {
 
@@ -116,7 +115,8 @@ export const BoardStatus = () => {
 	const onStop = async () => {
 		setStopping(true);
 		try {
-			if (task.label === "debug") {
+			if (!task.hostingType) await releasePort(driver.id, device.port);
+			else if (task.label === "debug") {
 				if (debugSession?.state.sessionId === task.taskId) setDebugSession(null);
 				await debugStop(driver.id, task.taskId);
 			}
@@ -130,7 +130,7 @@ export const BoardStatus = () => {
 	};
 
 	const title = !tracked
-		? `${device.port}: a task no studio tracks any more (started before the hosting restarted) — restart the driver to end it`
+		? `${device.port}: a task no studio tracks any more — Stop frees the board`
 		: `${device.port}: ${label}${ours ? "" : " on another workflow"}`;
 
 	return (
@@ -144,14 +144,12 @@ export const BoardStatus = () => {
 					open its workflow
 				</Link>
 			)}
-			{tracked && (
-				<Button.Root variant="ghost" onClick={onStop} disabled={stopping} title={`Stop the ${label}`}>
-					<Button.Icon>
-						{stopping ? <Loader2 size={12} className="animate-spin" /> : <Square size={12} />}
-					</Button.Icon>
-					<Button.Label>Stop</Button.Label>
-				</Button.Root>
-			)}
+			<Button.Root variant="ghost" onClick={onStop} disabled={stopping} title={`Stop the ${label}`}>
+				<Button.Icon>
+					{stopping ? <Loader2 size={12} className="animate-spin" /> : <Square size={12} />}
+				</Button.Icon>
+				<Button.Label>Stop</Button.Label>
+			</Button.Root>
 		</div>
 	);
 

@@ -57,18 +57,18 @@ export const NodePositionOverrideAtom = atom<
 	Record<string, { x: number; y: number }>
 >({});
 
-// Componente cujas actions estão sendo exibidas no secondary sidebar (Action Store).
-// null = sidebar fechado.
+// The component whose actions the secondary sidebar shows (Action Store).
+// null = sidebar closed.
 export const ActionStoreTargetAtom = atom<IComponentRuntime | null>(null);
 
-// Controla se o secondary sidebar está mostrando o Component Store (catálogo de
-// componentes instaláveis) — mutuamente exclusivo com ActionStoreTargetAtom.
+// Whether the secondary sidebar shows the Component Store (the catalog of
+// installable components) — mutually exclusive with ActionStoreTargetAtom.
 export const ComponentStoreOpenAtom = atom<boolean>(false);
 
-// Campo "code" (Monaco) sendo editado no secondary sidebar — null = nenhum
-// aberto. Tem prioridade sobre ActionStoreTargetAtom/ComponentStoreOpenAtom
-// (ver SecondarySidebarLayout): abrir um editor de código fecha qualquer
-// outra coisa que estivesse aberta ali.
+// The "code" field (Monaco) being edited in the secondary sidebar — null =
+// none open. Takes priority over ActionStoreTargetAtom/ComponentStoreOpenAtom
+// (see SecondarySidebarLayout): opening a code editor closes whatever else
+// was open there.
 export type CodeEditorTarget = {
 	actionId: string;
 	configurationId: string;
