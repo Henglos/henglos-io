@@ -1,17 +1,13 @@
-import { pythonKind, type IKSchemaKind, type IShape } from "../schemas/IKSchema.schema.js";
+import type { IKSchemaKind, IShape } from "../schemas/ISchema.schema.js";
+import { INTEGER_RANGE } from "../wire/DataType.js";
 
 // Values against shapes (IShape) — checking a value fits one (a config's,
 // a variable's), whether an output's shape can feed a config's, a shape as
 // words for the studio, and the empty value of a shape (a new list item).
-// A shape saved with an old type name (int32, text…) reads as its
-// MicroPython type (pythonKind).
-
-// An int travels as INT_32 — what fits in it both ways (see SCALAR_KINDS).
-export const INT_RANGE: [number, number] = [-0x80000000, 0x7fffffff];
 
 /** Whether a shape is a list. */
-export const isListShape = (shape: unknown): shape is { array: IShape } =>
-	!!shape && typeof shape === "object" && "array" in shape;
+export const isListShape = (shape: unknown): shape is { list: IShape } =>
+	!!shape && typeof shape === "object" && "list" in shape;
 
 /** Whether a shape is an object. */
 export const isObjectShape = (shape: unknown): shape is { object: Record<string, IShape> } =>
@@ -20,22 +16,22 @@ export const isObjectShape = (shape: unknown): shape is { object: Record<string,
 /** A shape a value travels as JSON in — a list or an object. */
 export const isJsonShape = (shape: unknown): boolean => isListShape(shape) || isObjectShape(shape);
 
-/** Whether a shape is str (or "text", as it was written before). */
-export const isStrShape = (shape: unknown): boolean => pythonKind(shape) === "str";
+/** Whether a shape is a string. */
+export const isStringShape = (shape: unknown): boolean => shape === "string";
 
-const isNumberKind = (shape: IShape) => {
-	const kind = pythonKind(shape);
-	return kind === "int" || kind === "float";
-};
+const isNumberKind = (shape: IShape) => shape === "integer" || shape === "float";
 
 /** Why `value` doesn't fit `shape` — "[2].rssi: expected an integer" — or null when it does. */
 export function validateShape(shape: IShape, value: unknown, path = ""): string | null {
 	const at = (message: string) => `${path || "value"}: ${message}`;
 
+	if (shape === "any") return null;
+
 	if (isListShape(shape)) {
 		if (!Array.isArray(value)) return at("expected a list");
+		if (shape.list === "any") return null;
 		for (let i = 0; i < value.length; i++) {
-			const problem = validateShape(shape.array, value[i], `${path}[${i}]`);
+			const problem = validateShape(shape.list, value[i], `${path}[${i}]`);
 			if (problem) return problem;
 		}
 		return null;
@@ -51,50 +47,59 @@ export function validateShape(shape: IShape, value: unknown, path = ""): string 
 		return null;
 	}
 
-	const kind = pythonKind(shape);
-	if (kind === "str") return typeof value === "string" ? null : at("expected text");
-	if (kind === "bool") return typeof value === "boolean" ? null : at("expected true or false");
+	if (shape === "string") return typeof value === "string" ? null : at("expected a string");
+	if (shape === "bool") return typeof value === "boolean" ? null : at("expected true or false");
 	if (typeof value !== "number" || !Number.isFinite(value)) return at("expected a number");
-	if (kind === "int") {
-		if (!Number.isInteger(value)) return at("expected a whole number");
-		if (value < INT_RANGE[0] || value > INT_RANGE[1]) return at(`out of int's range (${INT_RANGE[0]} to ${INT_RANGE[1]})`);
+	if (shape === "integer") {
+		if (!Number.isInteger(value)) return at("expected an integer");
+		if (value < INTEGER_RANGE[0] || value > INTEGER_RANGE[1]) return at(`out of an integer's range (${INTEGER_RANGE[0]} to ${INTEGER_RANGE[1]})`);
 	}
 	return null;
 }
 
 /**
  * Whether a value of `source`'s shape can fill `target`: the same structure,
- * an int or a float for either, and an object with at least the fields the
+ * an integer or a float for either, and an object with at least the fields the
  * target asks for. "any" (an output that doesn't say) can fill anything.
  */
 export function isShapeCompatible(source: IShape | "any" | IKSchemaKind[], target: IShape): boolean {
 	if (source === "any" || Array.isArray(source)) return true;
-	if (isListShape(target)) return isListShape(source) && isShapeCompatible(source.array, target.array);
+	if (target === "any") return true;
+	if (isListShape(target)) {
+		return isListShape(source) && (target.list === "any" || source.list === "any" || isShapeCompatible(source.list, target.list));
+	}
 	if (isObjectShape(target)) {
-		return isObjectShape(source)
-			&& Object.entries(target.object).every(([field, shape]) => field in source.object && isShapeCompatible(source.object[field]!, shape));
+		if (Object.keys(target.object).length === 0) {
+			return isObjectShape(source);
+		}
+		if (!isObjectShape(source)) return false;
+		return Object.entries(target.object).every(([field, shape]) => field in source.object && isShapeCompatible(source.object[field]!, shape));
 	}
 	if (isJsonShape(source)) return false;
-	const kind = pythonKind(target);
-	if (kind === "str" || kind === "bool") return pythonKind(source) === kind;
+	if (target === "string" || target === "bool") return source === target;
 	return isNumberKind(source as IShape);
 }
 
-/** A shape as words: "list of { ssid: str, rssi: int }". */
+/** A shape as words: "list of { ssid: string, rssi: integer }". */
 export function shapeLabel(shape: IShape | "any" | IKSchemaKind[]): string {
 	if (shape === "any") return "any";
-	if (Array.isArray(shape)) return [...new Set(shape.map(pythonKind))].join(" | ");
-	if (isListShape(shape)) return `list of ${shapeLabel(shape.array)}`;
-	if (isObjectShape(shape)) return `{ ${Object.entries(shape.object).map(([field, inner]) => `${field}: ${shapeLabel(inner)}`).join(", ")} }`;
-	return pythonKind(shape);
+	if (Array.isArray(shape)) return [...new Set(shape)].join(" | ");
+	if (isListShape(shape)) return shape.list === "any" ? "list" : `list of ${shapeLabel(shape.list)}`;
+	if (isObjectShape(shape)) {
+		if (Object.keys(shape.object).length === 0) return "object";
+		return `{ ${Object.entries(shape.object).map(([field, inner]) => `${field}: ${shapeLabel(inner)}`).join(", ")} }`;
+	}
+	return shape;
 }
 
 /** The empty value of a shape — what a new list item, or a new object, starts as. */
 export function emptyShapeValue(shape: IShape): unknown {
+	if (shape === "any") return null;
 	if (isListShape(shape)) return [];
-	if (isObjectShape(shape)) return Object.fromEntries(Object.entries(shape.object).map(([field, inner]) => [field, emptyShapeValue(inner)]));
-	const kind = pythonKind(shape);
-	if (kind === "str") return "";
-	if (kind === "bool") return false;
+	if (isObjectShape(shape)) {
+		return Object.fromEntries(Object.entries(shape.object).map(([field, inner]) => [field, emptyShapeValue(inner)]));
+	}
+	if (shape === "string") return "";
+	if (shape === "bool") return false;
 	return 0;
 }

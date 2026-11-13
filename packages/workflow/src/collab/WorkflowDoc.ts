@@ -5,9 +5,8 @@ import type { IComponentRuntime } from "../domain/entities/IComponent.runtime.js
 import type { IActionRuntime } from "../domain/entities/IAction.runtime.js";
 import type { IConfigurationRuntime } from "../domain/entities/IConfiguration.runtime.js";
 import type { IConnectionRuntime } from "../domain/entities/IConnection.runtime.js";
-import { migrateVariable, type IVariableRuntime } from "../domain/entities/IVariable.runtime.js";
+import type { IVariableRuntime } from "../domain/entities/IVariable.runtime.js";
 import { withTriggerNodes } from "../domain/value-objects/TriggerNodes.js";
-import { withPythonKinds } from "../domain/schemas/IKSchema.schema.js";
 
 // IWorkflowRuntime <-> Y.Doc, shared by the hosting (Hocuspocus) and the studio.
 //
@@ -22,6 +21,7 @@ import { withPythonKinds } from "../domain/schemas/IKSchema.schema.js";
 //   connections  Keyed<{ value: IConnectionRuntime }>
 //   variables    Keyed<{ value: IVariableRuntime }>   — absent until the workflow has one
 //   platformSettings  Y.Map<number> by SystemConfig key — absent until one is overridden
+//   boardOptions      Y.Map<string | number | boolean> by option key — absent until one is picked
 //
 //   Action = { id, componentId, alias, base, x, y, notes, disabled, inputs, outputs, configurations: Keyed<{ value: IConfigurationRuntime }> }
 //
@@ -92,20 +92,19 @@ const readComponent = (m: Y.Map<unknown>): IComponentRuntime => ({
 });
 
 // withTriggerNodes: trigger nodes saved with an input read back without one.
-// withPythonKinds: types saved by width (int32, uint8…) read as int / float.
 export const readWorkflowDoc = (doc: Y.Doc): IWorkflowRuntime => {
 	const r = root(doc);
-	return withTriggerNodes(withPythonKinds({
+	return withTriggerNodes({
 		name: r.get("name") as string,
 		description: r.get("description") as string,
 		board: readBoard(r.get("board") as Y.Map<unknown>),
 		start: readAction(r.get("start") as Y.Map<unknown>),
 		components: sortedEntries(r.get("components") as Keyed).map(readComponent),
 		connections: readValues<IConnectionRuntime>(r.get("connections") as Keyed),
-		// migrateVariable: a doc written before variables had simple types still reads as the current shape.
-		...(r.has("variables") && { variables: readValues<unknown>(r.get("variables") as Keyed).map(migrateVariable) as IVariableRuntime[] }),
+		...(r.has("variables") && { variables: readValues<IVariableRuntime>(r.get("variables") as Keyed) }),
 		...(r.has("platformSettings") && { platformSettings: Object.fromEntries((r.get("platformSettings") as Y.Map<number>).entries()) }),
-	}) as IWorkflowRuntime);
+		...(r.has("boardOptions") && { boardOptions: Object.fromEntries((r.get("boardOptions") as Y.Map<string | number | boolean>).entries()) }),
+	} as IWorkflowRuntime);
 };
 
 // ---------------------------------------------------------------- write
@@ -228,5 +227,6 @@ export const reconcileWorkflowDoc = (doc: Y.Doc, data: IWorkflowRuntime, origin?
 		// Only once there's something to keep: older workflows don't grow an empty map.
 		if (data.variables || r.has("variables")) reconcileKeyed(childMap(r, "variables") as Keyed, data.variables ?? [], writeValue);
 		if (data.platformSettings || r.has("platformSettings")) reconcileRecord(childMap(r, "platformSettings"), data.platformSettings ?? {});
+		if (data.boardOptions || r.has("boardOptions")) reconcileRecord(childMap(r, "boardOptions"), data.boardOptions ?? {});
 	}, origin);
 };

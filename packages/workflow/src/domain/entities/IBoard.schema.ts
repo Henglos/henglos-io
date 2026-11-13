@@ -80,6 +80,57 @@ export const BoardConnectionStateSchema = zod.object({
 	message: "connection state must have at least serial or wifi",
 });
 
+const BoardOptionBase = {
+	key: zod.string().regex(/^[A-Z][A-Z0-9_]*$/),
+	displayName: zod.string().min(1),
+	description: zod.string(),
+};
+
+const BoardOptionShape = zod.discriminatedUnion("type", [
+	zod.object({ ...BoardOptionBase, type: zod.literal("integer"), default: zod.number().int(), min: zod.number().int(), max: zod.number().int() }).strict(),
+	zod.object({ ...BoardOptionBase, type: zod.literal("boolean"), default: zod.boolean() }).strict(),
+	zod.object({ ...BoardOptionBase, type: zod.literal("select"), default: zod.string(), choices: zod.array(zod.string().min(1)).min(1) }).strict(),
+]);
+
+/** A parameter of a board's firmware — the studio asks for it, the board's firmware script reads it. */
+export type IBoardOption = zod.infer<typeof BoardOptionShape>;
+/** What a workflow picked for a board's option. */
+export type BoardOptionValue = string | number | boolean;
+
+/** Why `value` can't be `option`'s value, or null when it can. */
+export const boardOptionError = (option: IBoardOption, value: unknown): string | null => {
+	switch (option.type) {
+		case "integer":
+			if (typeof value !== "number" || !Number.isInteger(value)) return `${option.key} must be a whole number.`;
+			if (value < option.min || value > option.max) return `${option.key} must be between ${option.min} and ${option.max}.`;
+			return null;
+		case "boolean":
+			return typeof value === "boolean" ? null : `${option.key} must be true or false.`;
+		case "select":
+			return typeof value === "string" && option.choices.includes(value) ? null : `${option.key} must be one of: ${option.choices.join(", ")}.`;
+	}
+};
+
+export const BoardOptionSchema = BoardOptionShape.superRefine((option, ctx) => {
+	const error = boardOptionError(option, option.default);
+	if (error) ctx.addIssue({ code: "custom", path: ["default"], message: error });
+});
+
+/**
+ * The value of each of a board's options, as the firmware script gets them: what
+ * the workflow picked, or the default. Keys the board doesn't declare are left
+ * out — the workflow may have picked them for another board.
+ *
+ * @throws When a picked value isn't valid for its option.
+ */
+export const resolveBoardOptions = (options: IBoardOption[], picked: Record<string, BoardOptionValue>): Record<string, string> =>
+	Object.fromEntries(options.map(option => {
+		const value = picked[option.key] ?? option.default;
+		const error = boardOptionError(option, value);
+		if (error) throw new Error(`Board option: ${error}`);
+		return [option.key, String(value)];
+	}));
+
 /** A board as its package's board.schema.yaml declares it: its pins, its connection, its configs. */
 export const BoardSchema = zod.object({
 	name: zod.string().min(1),
@@ -94,6 +145,9 @@ export const BoardSchema = zod.object({
 	// What it offers besides its pins (its manifest's `capabilities`) — what
 	// components that need one run on. Absent: not said, nothing is checked.
 	capabilities: zod.array(CapabilitySchema).optional(),
+
+	// The parameters of its firmware (its manifest's `options`).
+	options: zod.array(BoardOptionSchema).optional(),
 }).strict();
 
 /** A board as its package's board.schema.yaml declares it: its pins, its connection, its configs. */

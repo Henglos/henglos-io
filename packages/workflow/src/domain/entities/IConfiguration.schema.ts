@@ -2,7 +2,7 @@
 import zod from "zod";
 import { isValidRegex, PARAM_PATTERN_NAMES, SIMPLE_PATTERN_NAMES } from "../../patterns/registry.js";
 import { PinSchema } from "./IPin.schema.js";
-import { KSchemaKindSchema, ShapeSchema } from "../schemas/IKSchema.schema.js";
+import { KSchemaKindSchema, ShapeSchema } from "../schemas/ISchema.schema.js";
 
 /** A config bound to another action's config, by name. */
 export const BindingSchema = zod.object({
@@ -38,7 +38,7 @@ export const VariableBindingSchema = zod.object({
 	variableId: zod.string(),
 }).strict();
 
-// One input filter of a string/password/number config — see patterns/registry.ts
+// One input filter of a string/password/integer/float config — see patterns/registry.ts
 // for the names and what each checks:
 //   - Email                                   a named filter
 //   - { name: MaxLength, value: 16 }          a filter that takes a number
@@ -128,9 +128,11 @@ export const ToggleInputSchema = BaseConfigurationSchema.extend({
 	label: zod.string().optional(),
 }).strict();
 
-/** A number field — a math expression is fine ("50 * 2"). */
-export const NumberInputSchema = BaseConfigurationSchema.extend({
-	type: zod.literal("number"),
+// A number field — a math expression is fine ("50 * 2"). `integer` takes a
+// whole number (an int on the board — an expression must come out whole),
+// `float` any (a float on the board).
+const numberInput = <T extends "integer" | "float">(type: T) => BaseConfigurationSchema.extend({
+	type: zod.literal(type),
 	defaultValue: zod.string().optional(),
 
 	placeholder: zod.string().optional(),
@@ -138,6 +140,15 @@ export const NumberInputSchema = BaseConfigurationSchema.extend({
 	patternMatch: PatternMatchSchema.optional(),
 
 }).strict();
+
+/** A whole-number field — an int on the board. */
+export const IntegerInputSchema = numberInput("integer");
+
+/** A number field — a float on the board. */
+export const FloatInputSchema = numberInput("float");
+
+/** Whether a config's type is a number field (integer or float). */
+export const isNumberConfigType = (type: string): type is "integer" | "float" => type === "integer" || type === "float";
 
 /** A color picker. */
 export const ColorInputSchema = BaseConfigurationSchema.extend({
@@ -214,8 +225,8 @@ export const BytesInputSchema = BaseConfigurationSchema.extend({
 	defaultValue: zod.array(zod.number().int().min(0).max(255)).optional(),
 }).strict();
 
-// The types an "any" value can be typed in as — MicroPython's (see
-// SCALAR_KINDS). The old width-specific names (int32, uint8…) still read.
+// The types an "any" value can be typed in as — integer, float or bool (see
+// SCALAR_KINDS).
 export const AnyValueKindSchema = KSchemaKindSchema;
 
 /** A value of an `any` field: its kind and the value. */
@@ -233,8 +244,8 @@ export const AnySchema = BaseConfigurationSchema.extend({
 }).strict();
 
 // Picks one of the workflow's variables (its IVariableRuntime id) — the
-// "Variable" config of Variables / Set. Wire-encoded as the variable's
-// VARIABLE_ID, a LITERAL uint16 (see encodeConfigurationValue).
+// "Variable" config of the Variables actions. Wire-encoded as the variable's
+// VARIABLE_ID, a LITERAL INTEGER (see buildConfigEntry).
 export const VariableInputSchema = BaseConfigurationSchema.extend({
 	type: zod.literal("variable"),
 	defaultValue: zod.string().optional(),
@@ -274,8 +285,8 @@ export const FileValueSchema = zod.object({
 // A list of values of one shape — numbers, text, objects… (see ShapeSchema):
 // typed in the studio row by row, or bound to an output / a variable / a
 // script of the same shape. On the board it arrives as a list (its JSON).
-export const ArrayInputSchema = BaseConfigurationSchema.extend({
-	type: zod.literal("array"),
+export const ListInputSchema = BaseConfigurationSchema.extend({
+	type: zod.literal("list"),
 	items: ShapeSchema,
 	maxItems: zod.number().int().positive().optional(),
 	defaultValue: zod.array(zod.unknown()).optional(),
@@ -315,7 +326,8 @@ export const ConfigurationSchema = zod.discriminatedUnion("type", [
 	StringInputSchema,
 	PasswordInputSchema,
 	ToggleInputSchema,
-	NumberInputSchema,
+	IntegerInputSchema,
+	FloatInputSchema,
 	ColorInputSchema,
 	CodeInputSchema,
 	OptionsSchema,
@@ -325,7 +337,7 @@ export const ConfigurationSchema = zod.discriminatedUnion("type", [
 	VariableInputSchema,
 	FileInputSchema,
 	CredentialInputSchema,
-	ArrayInputSchema,
+	ListInputSchema,
 	ObjectInputSchema,
 ]);
 
@@ -335,7 +347,7 @@ export const ConfigurationValueSchema = zod
 		StringInputSchema.shape.defaultValue,
 		PasswordInputSchema.shape.defaultValue,
 		ToggleInputSchema.shape.defaultValue,
-		NumberInputSchema.shape.defaultValue,
+		IntegerInputSchema.shape.defaultValue,
 		ColorInputSchema.shape.defaultValue,
 		CodeInputSchema.shape.defaultValue,
 		OptionsSchema.shape.defaultValue,
@@ -360,14 +372,14 @@ export type IOutputBindingSchema = zod.infer<typeof OutputBindingSchema>;
 export type IOptionValueSchema = zod.infer<typeof OptionValueSchema>;
 /** One entry of an options field: a choice, or a category of them. */
 export type IOptionEntrySchema = zod.infer<typeof OptionEntrySchema>;
-// The types an "any" value can be typed in as — MicroPython's (see
-// SCALAR_KINDS). The old width-specific names (int32, uint8…) still read.
+// The types an "any" value can be typed in as — integer, float or bool (see
+// SCALAR_KINDS).
 export type IAnyValueKindSchema = zod.infer<typeof AnyValueKindSchema>;
 /** A value of an `any` field: its kind and the value. */
 export type IAnyValueSchema = zod.infer<typeof AnyValueSchema>;
 /** A config as a manifest declares it — told apart by `type`. */
 export type IConfigurationSchema = zod.infer<typeof ConfigurationSchema>;
-// One input filter of a string/password/number config — see patterns/registry.ts
+// One input filter of a string/password/integer/float config — see patterns/registry.ts
 // for the names and what each checks:
 //   - Email                                   a named filter
 //   - { name: MaxLength, value: 16 }          a filter that takes a number

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DataType, isSizedDataType } from "../../../domain/wire/DataType.js";
 import type { IWorkflowRuntime } from "../../../domain/entities/IWorkflow.runtime.js";
 import type { IComponentSchema } from "../../../domain/entities/IComponent.schema.js";
 import { ComponentSchema } from "../../../domain/entities/IComponent.schema.js";
@@ -46,9 +47,9 @@ const literalConfigIds = (payload: Uint8Array) => {
 	while (index < payload.length) {
 		ids.push(view.getUint16(index, true));
 		const dataType = payload[index + 3]!;
-		const isArray = (dataType & 0x80) !== 0;
-		const size = isArray ? view.getUint16(index + 4, true) : [1, 2, 4, 1, 2, 4, 1, 2, 4, 1, 2, 4, 1][dataType & 0x7f]!;
-		index += 4 + (isArray ? 2 : 0) + size;
+		const sized = isSizedDataType(dataType);
+		const size = sized ? view.getUint16(index + 4, true) : dataType === DataType.BOOL ? 1 : 4;
+		index += 4 + (sized ? 2 : 0) + size;
 	}
 	return ids;
 };
@@ -134,7 +135,7 @@ describe("the built-in Logic component", () => {
 		const id = generateId("if/value");
 		const at = payload.findIndex((_, i) => payload[i] === (id & 0xff) && payload[i + 1] === id >> 8 && payload[i + 2] === 0x02);
 		expect(at).toBeGreaterThan(0);
-		expect(payload[at + 3]).toBe(14);
+		expect(payload[at + 3]).toBe(DataType.AUTO);
 	});
 
 });

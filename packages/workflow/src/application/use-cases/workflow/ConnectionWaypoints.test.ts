@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 import type { IWorkflowRuntime } from "../../../domain/entities/IWorkflow.runtime.js";
 import { ConnectionRuntime } from "../../../domain/entities/IConnection.runtime.js";
 import { loopWaypoints, waypointInsertIndex, wireHandles, wirePath } from "../../../domain/value-objects/WirePath.js";
-import { AddConnectionWaypoint, MoveConnectionWaypoint, RemoveConnectionWaypoint, SetConnectionWaypointHandle, SetConnectionWaypoints, ShiftConnectionWaypoints } from "./ConnectionWaypoints.use-case.js";
+import { AddConnectionWaypoint } from "./AddConnectionWaypoint.use-case.js";
+import { MoveConnectionWaypoint } from "./MoveConnectionWaypoint.use-case.js";
+import { RemoveConnectionWaypoint } from "./RemoveConnectionWaypoint.use-case.js";
+import { SetConnectionWaypointHandle } from "./SetConnectionWaypointHandle.use-case.js";
+import { SetConnectionWaypoints } from "./SetConnectionWaypoints.use-case.js";
+import { ShiftConnectionWaypoints } from "./ShiftConnectionWaypoints.use-case.js";
 import { CreateWorkflow } from "./CreateWorkflow.use-case.js";
 
 const withWire = (): IWorkflowRuntime => ({

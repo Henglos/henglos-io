@@ -60,7 +60,7 @@ describe("config patterns", () => {
 	});
 
 	it("checks numbers against the evaluated expression", () => {
-		const percent = config({ patterns: [{ name: "Min", value: 0 }, { name: "Max", value: 100 }] }, "number");
+		const percent = config({ patterns: [{ name: "Min", value: 0 }, { name: "Max", value: 100 }] }, "float");
 		expect(ConfigurationParser.validate(percent, "50 * 2")).toBeNull();
 		expect(ConfigurationParser.validate(percent, "101")).toBe("At most 100.");
 		expect(ConfigurationParser.validate(percent, "-1")).toBe("At least 0.");

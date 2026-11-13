@@ -60,7 +60,8 @@ export class ConfigurationParser {
 
 			case "string": return [ConfigurationParser.stringPipe(base.patterns, base.patternMatch)];
 			case "password": return [ConfigurationParser.passwordPipe(base.patterns, base.patternMatch)];
-			case "number": return [ConfigurationParser.numberPipe(base.patterns, base.patternMatch)];
+			case "integer":
+			case "float": return [ConfigurationParser.numberPipe(base.patterns, base.patternMatch)];
 			case "toggle": return [ConfigurationParser.togglePipe()];
 			case "color": return [ConfigurationParser.colorPipe(base.hasTransparency)];
 			case "options": return [ConfigurationParser.optionsPipe(base.options)];
@@ -76,7 +77,7 @@ export class ConfigurationParser {
 	 * Why `value` (the text the user typed) isn't accepted by `base`, or null
 	 * when it is — the message the studio shows under the field and the one a
 	 * compile error carries. Covers the manifest's `patterns` filters and, for
-	 * "number", that it evaluates at all.
+	 * "integer" / "float", that it evaluates at all (to a whole number, for "integer").
 	 */
 	static validate(base: IConfigurationSchema, value: string): string | null {
 
@@ -86,10 +87,12 @@ export class ConfigurationParser {
 			case "password":
 				return checkPatterns(value, base.patterns, base.patternMatch);
 
-			case "number": {
+			case "integer":
+			case "float": {
 				if (value.trim() === "") return null;
 				const result = evaluateMath(value.trim());
 				if (result === null) return "Not a number or expression.";
+				if (base.type === "integer" && !Number.isInteger(result)) return "Must be a whole number.";
 				return checkPatterns(String(result), base.patterns, base.patternMatch);
 			}
 

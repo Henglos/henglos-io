@@ -25,7 +25,7 @@ const ClockSchema: IComponentSchema = {
 	displayName: "Clock",
 	description: "",
 	triggers: [
-		{ displayName: "Timer", description: "", script: "timer.py", outputSchema: [{ name: "count", type: "int" }] },
+		{ displayName: "Timer", description: "", script: "timer.py", outputSchema: [{ name: "count", type: "integer" }] },
 		{ displayName: "Pin", description: "", script: "pin.py" },
 	],
 };

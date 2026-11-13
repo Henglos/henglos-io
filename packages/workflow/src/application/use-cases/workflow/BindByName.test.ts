@@ -16,7 +16,7 @@ const Schema: IComponentSchema = {
 	displayName: "Net",
 	description: "",
 	actions: [
-		{ displayName: "Read", description: "", script: "read.py", configurations: [], outputSchema: [{ name: "path", type: "str" }] },
+		{ displayName: "Read", description: "", script: "read.py", configurations: [], outputSchema: [{ name: "path", type: "string" }] },
 		{ displayName: "Use", description: "", script: "use.py", configurations: [{ displayName: "Input", description: "", type: "string" }] },
 	],
 };
@@ -53,7 +53,7 @@ const bindSource = (payload: Uint8Array) => {
 	const view = new DataView(payload.buffer);
 	let index = 6 + payload[5]! * 4;
 	while (index < payload.length) {
-		if (payload[index + 2] === 0x01) return view.getUint16(index + 3, true);
+		if (payload[index + 2] === 0x01) return view.getUint16(index + 3, true);   // + EXPECTED_TYPE(8) after it
 		index += 4 + (payload[index + 3]! & 0x80 ? 2 + view.getUint16(index + 4, true) : 1);
 	}
 	return undefined;

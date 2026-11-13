@@ -1,6 +1,6 @@
 import type { IWorkflowRuntime } from "../../../domain/entities/IWorkflow.runtime.js";
 import type { IConfigurationRuntime } from "../../../domain/entities/IConfiguration.runtime.js";
-import type { IBindingSchema, IOutputBindingSchema, IAnyValueSchema, IAnyValueKindSchema, IFileValueSchema, ICredentialValueSchema } from "../../../domain/entities/IConfiguration.schema.js";
+import type { IBindingSchema, IOutputBindingSchema, IAnyValueSchema, IFileValueSchema, ICredentialValueSchema } from "../../../domain/entities/IConfiguration.schema.js";
 import { credentialBoardPath, fileBoardPath } from "./ResolveBoardInstall.use-case.js";
 import type { IPinSchema } from "../../../domain/entities/IPin.schema.js";
 import { Color } from "../../../domain/value-objects/Color.js";
@@ -8,14 +8,17 @@ import { ConfigurationParser } from "../../services/ConfigurationParser.service.
 import { resolveWorkflowAction, computeWireActionId, computeWireInstanceId } from "./ResolveWorkflowAction.js";
 import { computeWireOutputId, getActionOutputs } from "./ResolveNextAction.use-case.js";
 import { generateId } from "../../../utils/identifier.js";
-import { computeWireVariableId } from "./Variables.use-case.js";
+import { computeWireVariableId } from "./WorkflowVariables.js";
 import { protocolLimits } from "../../../domain/value-objects/ProtocolLimits.js";
 import { isConfigurationVisible } from "../../services/ConfigurationVisibility.js";
-import type { IVariableRuntime } from "../../../domain/entities/IVariable.runtime.js";
-import { pythonKind, type IShape } from "../../../domain/schemas/IKSchema.schema.js";
+import type { IShape } from "../../../domain/schemas/ISchema.schema.js";
 import { validateShape } from "../../../domain/value-objects/ShapeValue.js";
 import { actionPassesContext, PASS_CONTEXT_CONFIG_ID } from "./PassContext.use-case.js";
 import { LogicComponentSchema } from "../../../domain/value-objects/LogicComponent.js";
+import {
+	DataType, INTEGER_RANGE, buildValueEntry, encodeBool, encodeBytes, encodeFloat, encodeInteger, encodeJson, encodeString, encodeValue,
+	type EncodedValue,
+} from "../../../domain/wire/DataType.js";
 
 // A real runtime global in both the browser and Node — just missing from this
 // package's tsconfig "lib" (ESNext only, no DOM), so it's declared narrowly
@@ -23,7 +26,7 @@ import { LogicComponentSchema } from "../../../domain/value-objects/LogicCompone
 // this package into, alongside Node-only consumers like apps/hosting).
 declare const TextEncoder: new () => { encode(input: string): Uint8Array };
 
-// REQUEST command ids understood by the firmware (see packages/platform's
+// REQUEST command ids understood by the firmware (see packages/hio-system's
 // PacketCodec.py). Execute and Record share this exact body shape (ACTION_ID +
 // OUTPUTS + CONFIGS, decoded by ActionBody.py) — only the COMMAND_ID byte
 // differs, so both go through the same builder below.
@@ -43,129 +46,77 @@ const VALUE_TYPE_VARIABLE = 0x04;
 // for the callers that always imported them from this module.
 export { MAX_CODE_BUFFER, MAX_DATA_BUFFER, PROTOCOL_LIMIT_DEFAULTS, protocolLimits, type ProtocolLimits } from "../../../domain/value-objects/ProtocolLimits.js";
 
-// DATA TYPE byte (see PacketCodec.py's DataType): high bit is the array flag,
-// low 7 bits are the element type ordinal. This table's order must be kept in
-// sync with it by hand.
-const DATA_TYPE_ARRAY_BIT = 0x80;
-
-// A list or an object: its JSON, UTF-8 — always as an array (PacketCodec.py's
-// DataType.JSON). Not an "any" kind: only array/object configs and variables
-// (and scripts filling them) carry it.
-const DATA_TYPE_JSON = 13;
-
-// A CODE config's RESULT TYPE only (PacketCodec.py's DataType.AUTO): the board
-// keeps the type the script returned. For Logic's operands — they compare
-// whatever comes (Logic.py), and a number returned stays a number — and for
-// every "any" config (Variables' Set / Append / Set Field Value…).
-const DATA_TYPE_AUTO = 14;
-
-const encodeJson = (value: unknown): EncodedValue =>
-	({ dataType: DATA_TYPE_JSON, isArray: true, data: new TextEncoder().encode(JSON.stringify(value)) });
-
-// The wire's element types (PacketCodec.py's DataType) — only the ones the
-// host sends. A MicroPython type goes as the one the board itself answers
-// with (Context.py's encode_value): int → INT_32, float → FLOAT_32.
-const WIRE_TYPE = {
-	uint8: 0,
-	uint16: 1,
-	int32: 8,
-	float32: 11,
-	bool: 12,
-} as const;
-
-const WIRE_KIND: Record<IAnyValueKindSchema, number> = {
-	int: WIRE_TYPE.int32,
-	float: WIRE_TYPE.float32,
-	bool: WIRE_TYPE.bool,
-};
-
-// An "any" config's tagged value ({ kind, value }) as its bytes. A value saved
-// under an old type name (int32, uint8…) goes as the MicroPython type it is.
-function encodeAnyValue(rawKind: IAnyValueKindSchema, value: number | boolean): Uint8Array {
-	const kind = pythonKind(rawKind);
-	const data = new Uint8Array(kind === "bool" ? 1 : 4);
-	const view = new DataView(data.buffer);
-
-	switch (kind) {
-		case "bool": data[0] = value ? 1 : 0; return data;
-		case "int": view.setInt32(0, Math.trunc(value as number), true); return data;
-		case "float": view.setFloat32(0, value as number, true); return data;
-		default: throw new Error(`Tipo desconhecido para um valor "any": "${String(rawKind)}"`);
-	}
+// A number config's typed-in value (a math expression is fine) as its number.
+function evaluateNumber(config: IConfigurationRuntime): number {
+	const [, result, matched] = ConfigurationParser.parse(String(config.value), ConfigurationParser.pipesFor(config.base));
+	if (!matched) throw new Error(`Não foi possível calcular a expressão da configuração "${config.base.displayName}": ${config.value}`);
+	return result as number;
 }
-
-type EncodedValue = { dataType: number; isArray: boolean; data: Uint8Array };
 
 function encodeConfigurationValue(config: IConfigurationRuntime): EncodedValue {
 	switch (config.base.type) {
 
 		case "toggle":
-			return { dataType: WIRE_TYPE.bool, isArray: false, data: new Uint8Array([config.value ? 1 : 0]) };
+			return encodeBool(!!config.value);
 
-		case "number": {
-			const [, result, matched] = ConfigurationParser.parse(String(config.value), ConfigurationParser.pipesFor(config.base));
-			if (!matched) throw new Error(`Não foi possível calcular a expressão da configuração "${config.base.displayName}": ${config.value}`);
-
-			const data = new Uint8Array(4);
-			new DataView(data.buffer).setFloat32(0, result as number, true);
-			return { dataType: WIRE_TYPE.float32, isArray: false, data };
+		case "integer": {
+			const value = evaluateNumber(config);
+			if (!Number.isInteger(value) || value < INTEGER_RANGE[0] || value > INTEGER_RANGE[1]) {
+				throw new Error(`A configuração "${config.base.displayName}" espera um inteiro, não ${value}`);
+			}
+			return encodeInteger(value);
 		}
+
+		case "float":
+			return encodeFloat(evaluateNumber(config));
 
 		case "color": {
-			// RGBA — 4 channel bytes, modeled as an array of uint8 (there's no
-			// dedicated "color" DataType on the wire).
+			// RGBA — its 4 channel bytes.
 			const color = Color.fromHex(config.value as string);
-			return { dataType: WIRE_TYPE.uint8, isArray: true, data: new Uint8Array([color.R, color.G, color.B, color.A]) };
+			return encodeBytes([color.R, color.G, color.B, color.A]);
 		}
 
-		case "pin": {
-			const pin = config.value as IPinSchema;
-			return { dataType: WIRE_TYPE.uint8, isArray: false, data: new Uint8Array([pin.gpio & 0xff]) };
-		}
+		case "pin":
+			return encodeInteger((config.value as IPinSchema).gpio);
 
 		case "any": {
+			// An integer, a float or a bool typed in — see AnyValueSchema.
 			const anyValue = config.value as IAnyValueSchema;
-			// AnyValueSchema.value is a bare number|boolean today — no array
-			// literal support yet (see AnyValueSchema in IConfiguration.schema.ts),
-			// so an "any" config is always a single element, never an array.
-			return { dataType: WIRE_KIND[pythonKind(anyValue.kind)], isArray: false, data: encodeAnyValue(anyValue.kind, anyValue.value) };
+			return encodeValue(anyValue.kind, anyValue.value);
 		}
 
 		case "bytes":
-			// Raw byte array — an array of uint8, same wire shape as text, but
-			// the value is already a number[] (0-255 each), not UTF-8 text.
-			return { dataType: WIRE_TYPE.uint8, isArray: true, data: Uint8Array.from(config.value as number[]) };
+			// Raw bytes (0-255 each) — not UTF-8 text.
+			return encodeBytes(config.value as number[]);
 
 		case "file":
 			// The file itself reaches the board with the components (see
-			// ResolveBoardInstall): the config carries where — its path, as text.
-			return { dataType: WIRE_TYPE.uint8, isArray: true, data: new TextEncoder().encode(fileBoardPath(config.value as IFileValueSchema)) };
+			// ResolveBoardInstall): the config carries where — its path.
+			return encodeString(fileBoardPath(config.value as IFileValueSchema));
 
 		case "credential":
 			// Same for a credential: its values are put on the board by the
 			// hosting — the config carries their file's path, never the values.
-			return { dataType: WIRE_TYPE.uint8, isArray: true, data: new TextEncoder().encode(credentialBoardPath((config.value as ICredentialValueSchema).credentialId)) };
+			return encodeString(credentialBoardPath((config.value as ICredentialValueSchema).credentialId));
 
-		case "array":
+		case "list":
 		case "object":
 			return encodeJson(config.value);
 
 		case "string":
 		case "password":
 		case "options":
+		case "code":
 		default:
-			// Text — an array of uint8 (there's no dedicated STRING DataType,
-			// see HIOSDK::Common::DataType).
-			return { dataType: WIRE_TYPE.uint8, isArray: true, data: new TextEncoder().encode(config.value as string) };
+			return encodeString(config.value as string);
 	}
 }
 
 // CONFIG_ID: config.base.id when the schema sets one explicitly (an escape
 // hatch for a config the firmware needs to match by a raw literal id instead
 // of the hashed name — unused today, see IConfigurationSchema.id), otherwise
-// generateId(`${actionName}/${displayName}` lowercased) — the firmware side
-// must then match it via Util::findConfig(configs, "<actionSlug>/<configSlug>")
-// using the same lowercased strings (see GPIOAction.cpp for the pattern).
+// generateId(`${actionName}/${displayName}` lowercased) — what the action's
+// context.get("<action>/<config>") hashes too.
 function computeWireConfigId(actionName: string, config: IConfigurationRuntime): number {
 	if (config.base.id !== undefined) return config.base.id;
 	return generateId(`${actionName}/${config.base.displayName}`.toLowerCase());
@@ -173,10 +124,8 @@ function computeWireConfigId(actionName: string, config: IConfigurationRuntime):
 
 // A BIND's source isn't a config — it's a named entry in the source action's
 // outputSchema (the values an action actually produces at runtime, e.g. GPIO
-// Read's "value"), which has no per-action prefix on the wire: firmware tags a
-// result payload with generateId(outputSchema.name) directly (see
-// GPIOReadAction.cpp's `Util::generateId("value")`), not
-// generateId(`${actionName}/${name}`) like configs do.
+// Read's "value"), which has no per-action prefix on the wire: an action
+// publishes it with context.set("value"), i.e. under generateId("value").
 function computeWireOutputSchemaId(outputName: string): number {
 	return generateId(outputName.toLowerCase());
 }
@@ -190,11 +139,8 @@ function computeWireOutputSchemaId(outputName: string): number {
 // A binding can also be the OTHER shape — IBindingSchema's {actionId,
 // configurationName} (see SetConfigurationBinding), which points at another
 // action's CONFIG rather than its published output. That has no wire
-// representation at all: the on-device Context only ever holds values an
-// action's IAction::execute() explicitly published as its result (see
-// Execute::execute's m_context.merge), never another action's input configs —
-// there is nothing a SOURCE_ID could point at. Treat it the same as a dangling
-// bind (undefined) rather than reading a field this shape doesn't have.
+// representation: the board's pipeline only holds what actions published, so
+// there's nothing a SOURCE_ID could point at — dropped like a dangling bind.
 function resolveBindSourceId(workflow: IWorkflowRuntime, binding: IBindingSchema | IOutputBindingSchema): number | undefined {
 	if (!("outputName" in binding)) {
 		return undefined;
@@ -214,89 +160,42 @@ function resolveBindSourceId(workflow: IWorkflowRuntime, binding: IBindingSchema
 	return computeWireOutputSchemaId(binding.outputName);
 }
 
-// A CODE config's script is MicroPython source run on-device (see the
-// firmware's ScriptEngine.py), so whatever it returns is coerced into this
-// RESULT TYPE byte before it's usable (see PacketCodec.py's CodeLink) — same
-// shape as LITERAL's DATA TYPE byte: high bit is the array flag, low 7 bits are
-// the element type. Only types ScriptEngine knows how to produce are eligible:
-//  - scalar (no array bit) — BOOL/INT*/UINT*/FLOAT_32, never the *8/*16
-//    float variants.
-//  - UINT_8 with the array bit set — the return value must be a str (same
-//    shape "string"/"password"/"options" already carry as a LITERAL), bytes,
-//    or a list of 0-255 ints (same shape "bytes"/"color" already carry — e.g.
-//    [255, 0, 0, 255] for an RGBA color). No other element type supports the
-//    array bit.
-// "code" (the Monaco script field itself) has no case here on purpose — a
-// script computing the script to run doesn't mean anything.
-function resolveCodeResultType(config: IConfigurationRuntime): number | undefined {
+// The DataType a config's value must arrive as — a BIND's / VARIABLE's
+// EXPECTED_TYPE and a CODE's RESULT_TYPE: the board converts what reaches it
+// to this when that loses nothing (Context.convert), or the action goes out
+// Fallback. AUTO ("any"): as it arrives — a literal's kind says nothing about
+// a bind or a script (Variables' Set with `return True` is a bool, fine).
+// "code" (the Monaco script field itself) has none on purpose — a script
+// computing the script to run doesn't mean anything.
+function resolveExpectedType(config: IConfigurationRuntime): number | undefined {
 	switch (config.base.type) {
-
-		case "toggle": return WIRE_TYPE.bool;
-		case "number": return WIRE_TYPE.float32;
-
-		// Same shape a literal `pin.gpio & 0xff` already carries — see
-		// encodeConfigurationValue's "pin" case.
-		case "pin": return WIRE_TYPE.uint8;
-
+		case "toggle": return DataType.BOOL;
+		case "integer": return DataType.INTEGER;
+		case "float": return DataType.FLOAT;
+		case "pin": return DataType.INTEGER;
 		case "string":
 		case "password":
 		case "options":
+			return DataType.STRING;
 		case "bytes":
 		case "color":
-			return WIRE_TYPE.uint8 | DATA_TYPE_ARRAY_BIT;
-
-		// The script returns a list / a dict — ScriptEngine turns it into its JSON.
-		case "array":
-		case "object":
-			return DATA_TYPE_JSON | DATA_TYPE_ARRAY_BIT;
-
-		// "any" takes whatever the script returns, as it returns it (AUTO): a
-		// literal's kind (value.kind) says nothing about a script — Variables'
-		// Set with `return True` would be refused for not being its int32.
-		case "any":
-			return DATA_TYPE_AUTO;
-
+			return DataType.BYTES;
+		case "list": return DataType.LIST;
+		case "object": return DataType.OBJECT;
+		case "any": return DataType.AUTO;
 		default: return undefined;
-
 	}
 }
 
-// A workflow variable by its id, or undefined (with a warning) when it's gone —
-// the binding / Set that pointed at it is then dropped, like a dangling bind.
-function resolveVariable(workflow: IWorkflowRuntime, variableId: string, configName: string) {
-	const variable = (workflow.variables ?? []).find(v => v.id === variableId);
-	return variable;
+// A workflow variable by its id, or undefined when it's gone — the binding /
+// Variables action that pointed at it is then dropped, like a dangling bind.
+function resolveVariable(workflow: IWorkflowRuntime, variableId: string) {
+	return (workflow.variables ?? []).find(v => v.id === variableId);
 }
 
-// LITERAL entry bytes: CONFIG_ID(16) + 0x00 + DATA_TYPE(8) + [DATA_SIZE(16) if array] + DATA
-function buildLiteralEntry(configId: number, { dataType, isArray, data }: EncodedValue): Uint8Array {
-	const entry = new Uint8Array(4 + (isArray ? 2 : 0) + data.length);
-	const view = new DataView(entry.buffer);
-	view.setUint16(0, configId, true);
-	entry[2] = VALUE_TYPE_LITERAL;
-	entry[3] = dataType | (isArray ? DATA_TYPE_ARRAY_BIT : 0);
-
-	let offset = 4;
-	if (isArray) {
-		view.setUint16(offset, data.length, true);
-		offset += 2;
-	}
-
-	entry.set(data, offset);
-	return entry;
-}
-
-// A variable's value in the DataType its type maps to (see IVariable.runtime.ts).
-function encodeVariableValue(variable: IVariableRuntime): EncodedValue {
-	const value = variable.initial!;
-	switch (variable.type) {
-		case "boolean": return { dataType: WIRE_TYPE.bool, isArray: false, data: encodeAnyValue("bool", value as boolean) };
-		case "integer": return { dataType: WIRE_TYPE.int32, isArray: false, data: encodeAnyValue("int", value as number) };
-		case "number": return { dataType: WIRE_TYPE.float32, isArray: false, data: encodeAnyValue("float", value as number) };
-		case "text": return { dataType: WIRE_TYPE.uint8, isArray: true, data: new TextEncoder().encode(value as string) };
-		case "array":
-		case "object": return encodeJson(value);
-	}
+// LITERAL entry bytes: CONFIG_ID(16) + 0x00 + DATA_TYPE(8) + [DATA_SIZE(16) if sized] + DATA
+function buildLiteralEntry(configId: number, encoded: EncodedValue): Uint8Array {
+	return buildValueEntry(configId, encoded, VALUE_TYPE_LITERAL);
 }
 
 // "core/start" also seeds the workflow variables: one LITERAL per variable
@@ -308,8 +207,8 @@ function buildVariableInitialEntries(workflow: IWorkflowRuntime): Uint8Array[] {
 	return (workflow.variables ?? [])
 		.filter(variable => variable.initial !== null)
 		.map(variable => {
-			const encoded = encodeVariableValue(variable);
-			// A text initial value set under a bigger MAX_DATA_BUFFER than the workflow has now.
+			const encoded = encodeValue(variable.type, variable.initial);
+			// A string initial value set under a bigger MAX_DATA_BUFFER than the workflow has now.
 			if (encoded.data.length > maxData) {
 				throw new Error(`O valor inicial da variável "${variable.name}" tem ${encoded.data.length} bytes — o máximo que a placa aceita é ${maxData}`);
 			}
@@ -317,44 +216,47 @@ function buildVariableInitialEntries(workflow: IWorkflowRuntime): Uint8Array[] {
 		});
 }
 
-// LITERAL:  CONFIG_ID(16) + VALUE_TYPE(8)=0x00 + DATA_TYPE(8) + [DATA_SIZE(16) if array] + DATA
-// BIND:     CONFIG_ID(16) + VALUE_TYPE(8)=0x01 + SOURCE_ID(16)
+// LITERAL:  CONFIG_ID(16) + VALUE_TYPE(8)=0x00 + DATA_TYPE(8) + [DATA_SIZE(16) if sized] + DATA
+// BIND:     CONFIG_ID(16) + VALUE_TYPE(8)=0x01 + SOURCE_ID(16) + EXPECTED_TYPE(8)
 // CODE:     CONFIG_ID(16) + VALUE_TYPE(8)=0x02 + RESULT_TYPE(8) + CODE_SIZE(16) + CODE
-// VARIABLE: CONFIG_ID(16) + VALUE_TYPE(8)=0x04 + VARIABLE_ID(16)
+// VARIABLE: CONFIG_ID(16) + VALUE_TYPE(8)=0x04 + VARIABLE_ID(16) + EXPECTED_TYPE(8)
+//
+// EXPECTED_TYPE: see resolveExpectedType. AUTO for Logic (it compares values
+// as they are).
 function buildConfigEntry(workflow: IWorkflowRuntime, actionName: string, config: IConfigurationRuntime, logic = false): Uint8Array | undefined {
 
 	const configId = computeWireConfigId(actionName, config);
+	const expectedType = logic ? DataType.AUTO : resolveExpectedType(config) ?? DataType.AUTO;
 
 	if (config.binding && "variableId" in config.binding) {
 
-		const variable = resolveVariable(workflow, config.binding.variableId, config.base.displayName);
+		const variable = resolveVariable(workflow, config.binding.variableId);
 		if (!variable) return undefined;
 
-		const entry = new Uint8Array(5);
+		const entry = new Uint8Array(6);
 		const view = new DataView(entry.buffer);
 		view.setUint16(0, configId, true);
 		entry[2] = VALUE_TYPE_VARIABLE;
 		view.setUint16(3, computeWireVariableId(variable.name), true);
+		entry[5] = expectedType;
 		return entry;
 
 	}
 
-	// A "variable" config (Variables / Set's target) carries which variable as
-	// its VARIABLE_ID — a LITERAL uint16.
+	// A "variable" config (the Variables actions' target) carries which
+	// variable as its VARIABLE_ID — a LITERAL INTEGER.
 	if (!config.binding && config.base.type === "variable") {
 
-		const variable = resolveVariable(workflow, config.value as string, config.base.displayName);
+		const variable = resolveVariable(workflow, config.value as string);
 		if (!variable) return undefined;
 
-		const data = new Uint8Array(2);
-		new DataView(data.buffer).setUint16(0, computeWireVariableId(variable.name), true);
-		return buildLiteralEntry(configId, { dataType: WIRE_TYPE.uint16, isArray: false, data });
+		return buildLiteralEntry(configId, encodeInteger(computeWireVariableId(variable.name)));
 
 	}
 
 	if (config.binding && "code" in config.binding) {
 
-		const resultType = logic && config.base.type === "string" ? DATA_TYPE_AUTO : resolveCodeResultType(config);
+		const resultType = logic && config.base.type === "string" ? DataType.AUTO : resolveExpectedType(config);
 		if (resultType === undefined) {
 			return undefined;
 		}
@@ -381,11 +283,12 @@ function buildConfigEntry(workflow: IWorkflowRuntime, actionName: string, config
 		const sourceId = resolveBindSourceId(workflow, config.binding);
 		if (sourceId === undefined) return undefined;
 
-		const entry = new Uint8Array(5);
+		const entry = new Uint8Array(6);
 		const view = new DataView(entry.buffer);
 		view.setUint16(0, configId, true);
 		entry[2] = VALUE_TYPE_BIND;
 		view.setUint16(3, sourceId, true);
+		entry[5] = expectedType;
 		return entry;
 
 	}
@@ -399,13 +302,13 @@ function buildConfigEntry(workflow: IWorkflowRuntime, actionName: string, config
 	}
 
 	// A list / an object typed in the studio — checked against its shape too.
-	if (config.base.type === "array" || config.base.type === "object") {
-		const shape: IShape = config.base.type === "array"
-			? { array: config.base.items }
+	if (config.base.type === "list" || config.base.type === "object") {
+		const shape: IShape = config.base.type === "list"
+			? { list: config.base.items }
 			: { object: Object.fromEntries(config.base.fields.map(field => [field.name, field.type])) };
 		const problem = validateShape(shape, config.value);
 		if (problem) throw new Error(`A configuração "${config.base.displayName}" tem um valor inválido — ${problem}`);
-		if (config.base.type === "array" && config.base.maxItems !== undefined && (config.value as unknown[]).length > config.base.maxItems) {
+		if (config.base.type === "list" && config.base.maxItems !== undefined && (config.value as unknown[]).length > config.base.maxItems) {
 			throw new Error(`A configuração "${config.base.displayName}" tem ${(config.value as unknown[]).length} itens — o máximo é ${config.base.maxItems}`);
 		}
 	}
@@ -468,9 +371,9 @@ function buildOutputEntries(workflow: IWorkflowRuntime, actionId: string): Uint8
 
 }
 
-// Builds an Execute/Record Command REQUEST payload per packages/platform's PacketCodec.py:
+// Builds an Execute/Record Command REQUEST payload per packages/hio-system's PacketCodec.py:
 // COMMAND_ID + ACTION_ID(16) + INSTANCE_ID(16) + OUTPUTS_SIZE(8) + OUTPUTS +
-// [CONFIG_ID(16) + VALUE_TYPE(8) + (LITERAL: DATA_TYPE(8)+[DATA_SIZE(16) if array]+DATA | BIND: SOURCE_ID(16))]*
+// [CONFIG_ID(16) + VALUE_TYPE(8) + (LITERAL | BIND | CODE | VARIABLE, see buildConfigEntry)]*
 export class GenerateExecuteCommand {
 
 	execute(workflow: IWorkflowRuntime, actionId: string, commandId: number = EXECUTE_COMMAND_ID): Uint8Array | undefined {
@@ -500,7 +403,7 @@ export class GenerateExecuteCommand {
 		// Pass Context on: a flag the board takes out of the configs — without
 		// it, the next action gets only what this one published.
 		if (actionPassesContext(workflow, actionId)) {
-			configEntries.push(buildLiteralEntry(PASS_CONTEXT_CONFIG_ID, { dataType: WIRE_TYPE.bool, isArray: false, data: new Uint8Array([1]) }));
+			configEntries.push(buildLiteralEntry(PASS_CONTEXT_CONFIG_ID, encodeBool(true)));
 		}
 		if (configEntries.length > limits.maxConfigs) {
 			throw new Error(`A ação "${action.base.displayName}" tem ${configEntries.length} configurações — o máximo que a placa aceita é ${limits.maxConfigs}`);

@@ -4,7 +4,9 @@ import { LOGIC_COMPONENT_ID, LogicComponentSchema } from "../../../domain/value-
 import { CreateWorkflow } from "./CreateWorkflow.use-case.js";
 import { AddActionToWorkflowComponent } from "./AddActionToComponent.use-case.js";
 import { AddConnectionToWorkflow } from "./AddConnection.use-case.js";
-import { AddSwitchCase, MAX_SWITCH_CASES, RemoveSwitchCase, switchCaseCount } from "./SwitchCases.use-case.js";
+import { AddSwitchCase } from "./AddSwitchCase.use-case.js";
+import { RemoveSwitchCase } from "./RemoveSwitchCase.use-case.js";
+import { MAX_SWITCH_CASES, switchCaseCount } from "./SwitchCases.js";
 import { GenerateExecuteCommand } from "./GenerateExecuteCommand.use-case.js";
 import { computeWireOutputId, getActionOutputs } from "./ResolveNextAction.use-case.js";
 import { generateId } from "../../../utils/identifier.js";

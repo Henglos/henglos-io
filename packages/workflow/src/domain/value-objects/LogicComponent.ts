@@ -147,10 +147,10 @@ export const LogicComponentSchema: IComponentSchema = {
 				{ id: "done", name: "Done" },
 			],
 			outputSchema: [
-				{ name: "iteration", type: "int", description: "Which time round this is — 1 on the first loop." },
+				{ name: "iteration", type: "integer", description: "Which time round this is — 1 on the first loop." },
 			],
 			configurations: [
-				{ displayName: "Times", description: "How many times the Loop branch runs before Done.", type: "number", defaultValue: "3", required: true },
+				{ displayName: "Times", description: "How many times the Loop branch runs before Done.", type: "integer", defaultValue: "3", required: true },
 			],
 		},
 	],

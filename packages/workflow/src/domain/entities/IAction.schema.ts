@@ -1,7 +1,7 @@
 import zod from "zod";
 import { HandlerSchema } from "./IHandler.schema.js";
 import { ConfigurationSchema } from "./IConfiguration.schema.js";
-import { KSchemaSchema } from "../schemas/IKSchema.schema.js";
+import { KSchemaSchema } from "../schemas/ISchema.schema.js";
 import { CapabilitySchema } from "../value-objects/Capabilities.js";
 
 /** An action as a component's manifest declares it: its name, configs, outputs and script. */
@@ -25,7 +25,7 @@ export const ActionSchema = zod.object({
 
 	configurations: zod.array(ConfigurationSchema).optional(),
 
-	// Path (relative to the component package's workspace/ dir) to this
+	// Path (relative to the component package's root) to this
 	// action's MicroPython source, e.g. "python/write.py". Optional here only
 	// because this base schema is also reused for the workflow's synthetic
 	// Start action (see StartAction.ts) and board-level runtime actions,

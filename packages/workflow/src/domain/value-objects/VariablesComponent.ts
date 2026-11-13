@@ -1,20 +1,24 @@
 import type { IComponentSchema } from "../entities/IComponent.schema.js";
 
-// The built-in "Variables" component: its "Set" action writes a workflow
-// variable on the board. Like the Start action it has no package and no script
-// on the device — the platform's ExecuteCommand handles its ACTION_ID itself,
-// generateId("variables/set") (computeWireActionId of displayName "Variables"
-// + action "Set"), because only the runtime can reach GlobalVariables.
+// The built-in "Variables" component: its actions read and write the
+// workflow's variables on the board. Like Start and Logic it has no package —
+// its actions ship with the platform's runtime (hio/system/core/builtin/
+// variables, registered as "variables/<action>": computeWireActionId of
+// displayName "Variables" + the action's name), since only the runtime can
+// reach GlobalVariables.
 //
 // It's an ordinary entry of workflow.components (packageId below), added the
 // first time a variable is created (see AddWorkflowVariable), so nodes,
 // connections, the action picker and the collab doc need nothing special.
 // Package sync and the board build skip it: its packageId resolves to no
 // package (see SyncWorkflow / UpdateWorkflow).
+//
+// A "variable" config carries which variable as its VARIABLE_ID (a LITERAL
+// INTEGER) — the runtime's ActionContext.target reads it back.
 
 export const VARIABLES_PACKAGE_ID = "core:variables";
 
-// Wire config ids: computeWireConfigId → generateId("set/variable"), generateId("set/value").
+// Wire config ids: computeWireConfigId → generateId("set/variable"), generateId("set/value")…
 export const VariablesComponentSchema: IComponentSchema = {
 	displayName: "Variables",
 	description: "Workflow-global values — shared by every action and kept across loops of the program.",
@@ -22,7 +26,7 @@ export const VariablesComponentSchema: IComponentSchema = {
 		{
 			displayName: "Set",
 			description: "Stores a value in a workflow variable. Any config can then read it (drag the variable onto the field), and scripts read it with ctx.var(\"name\").",
-			// No module behind it — handled by the platform's ExecuteCommand.
+			// No module behind it in a package — it's the runtime's (builtin/variables).
 			script: "",
 			configurations: [
 				{
@@ -35,13 +39,12 @@ export const VariablesComponentSchema: IComponentSchema = {
 					displayName: "Value",
 					description: "What to store — a literal, or bind it to an output, another variable or a script.",
 					type: "any",
-					availables: ["int", "float", "bool"],
-					defaultValue: { kind: "int", value: 0 },
+					availables: ["integer", "float", "bool"],
+					defaultValue: { kind: "integer", value: 0 },
 				},
 			],
 		},
-		// List / object variables (handled by the platform's ExecuteCommand too —
-		// "variables/append", "variables/set field", "variables/clear").
+		// List / object variables.
 		{
 			displayName: "Append",
 			description: "Adds an item to the end of a list variable — a reading to a history, say. Max Items keeps only the newest; past the board's value size the oldest go too.",
@@ -50,15 +53,15 @@ export const VariablesComponentSchema: IComponentSchema = {
 				{ displayName: "Variable", description: "The list variable to add to.", type: "variable", required: true },
 				{
 					displayName: "Value",
-					description: "The item — bind it to an output (a number, text, an object…), a variable or a script, or type a number.",
+					description: "The item — bind it to an output (a number, a string, an object…), a variable or a script, or type a number.",
 					type: "any",
-					availables: ["int", "float", "bool"],
+					availables: ["integer", "float", "bool"],
 					defaultValue: { kind: "float", value: 0 },
 				},
 				{
 					displayName: "Max Items",
 					description: "How many it keeps — the oldest go first. Empty: as many as fit.",
-					type: "number",
+					type: "integer",
 					placeholder: "e.g. 20",
 					patterns: [{ name: "Min", value: 1 }],
 				},
@@ -75,7 +78,7 @@ export const VariablesComponentSchema: IComponentSchema = {
 					displayName: "Value",
 					description: "Its value — a literal, or bind it to an output, a variable or a script.",
 					type: "any",
-					availables: ["int", "float", "bool"],
+					availables: ["integer", "float", "bool"],
 					defaultValue: { kind: "float", value: 0 },
 				},
 			],
@@ -86,6 +89,14 @@ export const VariablesComponentSchema: IComponentSchema = {
 			script: "",
 			configurations: [
 				{ displayName: "Variable", description: "The list or object variable to empty.", type: "variable", required: true },
+			],
+		},
+		{
+			displayName: "Remove",
+			description: "Takes a variable's value away — configs bound to it get nothing until a Set writes it again.",
+			script: "",
+			configurations: [
+				{ displayName: "Variable", description: "The variable to empty out.", type: "variable", required: true },
 			],
 		},
 	],

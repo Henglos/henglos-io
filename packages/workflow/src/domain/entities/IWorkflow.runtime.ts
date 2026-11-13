@@ -5,11 +5,9 @@ import { ConnectionRuntime } from "./IConnection.runtime.js";
 import { ActionRuntime } from "./IAction.runtime.js";
 import { VariableRuntime } from "./IVariable.runtime.js";
 import { withTriggerNodesRaw } from "../value-objects/TriggerNodes.js";
-import { withPythonKinds } from "../schemas/IKSchema.schema.js";
 
 // withTriggerNodesRaw: trigger nodes saved with an input come back without one.
-// withPythonKinds: types saved by width (int32, uint8…) come back as int / float.
-export const WorkflowRuntime = zod.preprocess(raw => withTriggerNodesRaw(withPythonKinds(raw)), zod.object({
+export const WorkflowRuntime = zod.preprocess(raw => withTriggerNodesRaw(raw), zod.object({
 	name: zod.string(),
 	description: zod.string(),
 	board: BoardRuntime,
@@ -22,8 +20,10 @@ export const WorkflowRuntime = zod.preprocess(raw => withTriggerNodesRaw(withPyt
 	// by SystemConfig key), compiled into the board's runtime by the
 	// platform's build. Absent / missing key: the platform's default.
 	platformSettings: zod.record(zod.string(), zod.number().int()).optional(),
+	// What it picked for its board's options (the board's `options`, by key),
+	// handed to the board's firmware script. Absent / missing key: the default.
+	boardOptions: zod.record(zod.string(), zod.union([zod.string(), zod.number(), zod.boolean()])).optional(),
 }));
 
 // withTriggerNodesRaw: trigger nodes saved with an input come back without one.
-// withPythonKinds: types saved by width (int32, uint8…) come back as int / float.
 export type IWorkflowRuntime = zod.infer<typeof WorkflowRuntime>;

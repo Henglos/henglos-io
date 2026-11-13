@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DataType } from "../../../domain/wire/DataType.js";
 import * as Y from "yjs";
 import type { IWorkflowRuntime } from "../../../domain/entities/IWorkflow.runtime.js";
 import type { IComponentSchema } from "../../../domain/entities/IComponent.schema.js";
@@ -54,7 +55,7 @@ const chain = () => {
 
 // The flag's entry as GenerateExecuteCommand writes it: CONFIG_ID(16) LITERAL BOOL 1.
 const hasFlag = (payload: Uint8Array) => {
-	const flag = [PASS_CONTEXT_CONFIG_ID & 0xff, PASS_CONTEXT_CONFIG_ID >> 8, 0x00, 12, 1];
+	const flag = [PASS_CONTEXT_CONFIG_ID & 0xff, PASS_CONTEXT_CONFIG_ID >> 8, 0x00, DataType.BOOL, 1];
 	return payload.some((_, i) => flag.every((byte, j) => payload[i + j] === byte));
 };
 
