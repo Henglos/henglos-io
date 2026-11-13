@@ -10,7 +10,8 @@ import { Socket } from 'socket.io';
 import { TokenService } from '@/application/services/Token.service';
 import { TaskRegistry } from '@/application/services/TaskRegistry.service';
 import { ListDevicesUseCase } from '@/application/use-cases/driver/ListDevices.use-case';
-import { ReplTaskUseCase } from '@/application/use-cases/tasks/ReplTask.use-case';
+import { SendReplInputUseCase } from '@/application/use-cases/tasks/repl/SendReplInput.use-case';
+import { EndUserReplTasksUseCase } from '@/application/use-cases/tasks/repl/EndUserReplTasks.use-case';
 import type { ReplData, TaskSubscribeInDTO } from '@henglosio/shared';
 
 /**
@@ -31,7 +32,8 @@ export class AppWSGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		private readonly tokenService: TokenService,
 		private readonly listDevices: ListDevicesUseCase,
 		private readonly taskRegistry: TaskRegistry,
-		private readonly repl: ReplTaskUseCase,
+		private readonly sendReplInput: SendReplInputUseCase,
+		private readonly endUserReplTasks: EndUserReplTasksUseCase,
 	) {
 		// Live task events -> the owning user's socket, on the per-task channel.
 		this.taskRegistry.onEvent(({ userId, taskId, event }) => {
@@ -60,7 +62,7 @@ export class AppWSGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (userId && this.userSockets.get(userId)?.id === client.id) {
 			this.userSockets.delete(userId);
 			// Nobody's left to type in its terminals — they'd hold the board.
-			await this.repl.endFor(userId);
+			await this.endUserReplTasks.execute(userId);
 		}
 	}
 
@@ -72,7 +74,7 @@ export class AppWSGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	) {
 		const userId = client.data.userId as string | undefined;
 		if (!userId || !body?.taskId || !(body.data instanceof Uint8Array)) return;
-		this.repl.input(userId, body);
+		this.sendReplInput.execute(userId, body);
 	}
 
 	/** Sends an event to a user's studio — nothing happens when they aren't connected. */

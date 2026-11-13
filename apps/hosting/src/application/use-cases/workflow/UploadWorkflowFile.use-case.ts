@@ -2,14 +2,14 @@ import { createHash } from "crypto";
 import { Inject, Injectable } from "@nestjs/common";
 import type { IFileValueSchema } from "@henglosio/workflow";
 
-import { InvalidWorkflowFile, WorkflowFileNotFound, WorkflowNotFound } from "@/application/errors/Workflow.error";
+import { InvalidWorkflowFile, WorkflowNotFound } from "@/application/errors/Workflow.error";
 import { OperationNotPermitted } from "@/application/errors/Auth.error";
 import { WORKFLOW_FILE_MAX_BYTES, type WorkflowFile } from "@/domain/entities/WorkflowFile";
 import type { IWorkflowFileRepository } from "@/domain/repositories/IWorkflowFileRepository.repo";
 import type { IWorkflowRepository } from "@/domain/repositories/IWorkflowRepository.repo";
 
 /** A stored file as a `type: file` config's value — what the studio sets on the config. */
-export const toFileValue = (file: WorkflowFile): IFileValueSchema => ({
+const toFileValue = (file: WorkflowFile): IFileValueSchema => ({
 	fileId: file.id,
 	name: file.name,
 	size: file.size,
@@ -18,23 +18,17 @@ export const toFileValue = (file: WorkflowFile): IFileValueSchema => ({
 });
 
 /**
- * Files attached to a workflow's configs: the studio uploads one, then sets
- * the returned value on the config (update:configuration). Only the
- * workflow's owner reaches them.
+ * A file attached to a workflow's config: the studio uploads one, then sets the
+ * returned value on the config (update:configuration). Only the workflow's owner
+ * reaches it.
  */
 @Injectable()
-export class WorkflowFilesUseCase {
+export class UploadWorkflowFileUseCase {
 
 	constructor(
 		@Inject("IWorkflowRepository") private readonly workflowRepository: IWorkflowRepository,
 		@Inject("IWorkflowFileRepository") private readonly fileRepository: IWorkflowFileRepository,
 	) {}
-
-	private async owned(userId: string, workflowId: string): Promise<void> {
-		const workflow = await this.workflowRepository.findById(workflowId);
-		if (!workflow) throw new WorkflowNotFound;
-		if (workflow.userId !== userId) throw new OperationNotPermitted;
-	}
 
 	/**
 	 * Stores a file — the same content uploaded twice is stored once.
@@ -43,8 +37,10 @@ export class WorkflowFilesUseCase {
 	 * @throws WorkflowNotFound, OperationNotPermitted; InvalidWorkflowFile when
 	 *   it's empty or bigger than WORKFLOW_FILE_MAX_BYTES.
 	 */
-	async upload(userId: string, workflowId: string, file: { name: string; mime: string; data: Buffer }): Promise<IFileValueSchema> {
-		await this.owned(userId, workflowId);
+	async execute(userId: string, workflowId: string, file: { name: string; mime: string; data: Buffer }): Promise<IFileValueSchema> {
+		const workflow = await this.workflowRepository.findById(workflowId);
+		if (!workflow) throw new WorkflowNotFound;
+		if (workflow.userId !== userId) throw new OperationNotPermitted;
 		if (file.data.length === 0) throw new InvalidWorkflowFile("The file is empty");
 		if (file.data.length > WORKFLOW_FILE_MAX_BYTES) {
 			throw new InvalidWorkflowFile(`The file has ${file.data.length} bytes — at most ${WORKFLOW_FILE_MAX_BYTES} fit`);
@@ -59,14 +55,6 @@ export class WorkflowFilesUseCase {
 			data: file.data,
 		});
 		return toFileValue(stored);
-	}
-
-	/** A stored file, with its bytes. @throws WorkflowNotFound, OperationNotPermitted, WorkflowFileNotFound. */
-	async get(userId: string, workflowId: string, fileId: string): Promise<WorkflowFile> {
-		await this.owned(userId, workflowId);
-		const file = await this.fileRepository.findById(workflowId, fileId);
-		if (!file) throw new WorkflowFileNotFound;
-		return file;
 	}
 
 }

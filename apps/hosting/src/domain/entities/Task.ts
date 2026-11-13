@@ -62,6 +62,25 @@ export class Task {
 		);
 	}
 
+	/** A task already running on a driver, that this hosting didn't start — it restarted since. */
+	static adopt(input: TaskCreateInput & { id: string; startedAt: Date }): Task {
+		return new Task(
+			input.id,
+			input.type,
+			input.workflowId,
+			input.userId,
+			input.driverId,
+			input.startedAt,
+			"running",
+			input.startedAt,
+			undefined,
+			undefined,
+			undefined,
+			input.port,
+			input.label ?? input.type,
+		);
+	}
+
 	get status(): TaskStatus {
 		return this._status;
 	}

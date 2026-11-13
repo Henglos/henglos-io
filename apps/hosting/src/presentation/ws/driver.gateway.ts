@@ -14,8 +14,11 @@ import { TaskRegistry } from '@/application/services/TaskRegistry.service';
 import { InvalidToken } from '@/application/errors/use-cases/Auth.error';
 import { AppWSGateway } from './app.gateway';
 import { SyncWorkflowsUseCase } from '@/application/use-cases/driver/SyncWorkflow.use-case';
-import { type Device, type ReplData, type TaskEvent, BackendDriverConnectedOutDTO, BackendDriverDisconnectedOutDTO } from '@henglosio/shared';
+import { type Device, type DriverTasksState, type ReplData, type TaskEvent, BackendDriverConnectedOutDTO, BackendDriverDisconnectedOutDTO } from '@henglosio/shared';
 
+
+// How long a driver has to say what it has running, when it connects.
+const TASKS_STATE_TIMEOUT_MS = 5_000;
 
 /**
  * The drivers' socket — Socket.IO on /io/ws, namespace /driver,
@@ -40,9 +43,14 @@ export class DriverWSGateway
 		private readonly taskRegistry: TaskRegistry,
 		private readonly appGateway: AppWSGateway,
 		private readonly driverSyncUseCase: SyncWorkflowsUseCase,
-	) {}
+	) {
+		// Through its connection right now — not the one the task started on.
+		this.taskRegistry.onCancel(({ driverId, taskId }) => {
+			this.registry.getByDriverId(driverId)?.socket.emit("task:cancel", { taskId });
+		});
+	}
 
-	// A driver connects: registered, its user told, and its workflows synced.
+	// A driver connects: registered, its user told, its tasks reconciled, and its workflows synced.
 	async handleConnection(client: Socket) {
 
 		// Auth is the only thing that should drop the connection.
@@ -66,6 +74,8 @@ export class DriverWSGateway
 			driverId: driverAuth.id,
 		} as BackendDriverConnectedOutDTO);
 
+		await this.reconcileTasks(client, driverAuth.id, driverAuth.userId);
+
 		// A failed initial sync shouldn't kill an authenticated connection —
 		// log it and let the driver keep running; the app can re-trigger a sync.
 		try {
@@ -80,11 +90,29 @@ export class DriverWSGateway
 		}
 	}
 
-	// A driver goes: its user is told, and its unfinished tasks fail (driver_disconnected).
+	// Makes the task list match what the driver has. No answer in time: as if it
+	// had nothing, which is what the hosting can tell.
+	private async reconcileTasks(client: Socket, driverId: string, userId: string) {
+		const since = new Date();
+		let state: DriverTasksState = { running: [], finished: [] };
+		try {
+			state = await client.timeout(TASKS_STATE_TIMEOUT_MS).emitWithAck("tasks:state") as DriverTasksState;
+		} catch {
+			this.logger.warn(`Driver ${driverId} didn't say what it has running`);
+		}
+		for (const taskId of await this.taskRegistry.reconcile(driverId, userId, state, since)) {
+			client.emit("task:cancel", { taskId });
+		}
+	}
+
+	// A driver goes: its user is told, and its unfinished tasks wait for it (see
+	// TaskRegistry.markDriverGone). A socket that closes after the driver already
+	// reconnected on another means nothing.
 	async handleDisconnect(client: Socket) {
 
 		const driverAuth = client.data.driverAuth;
-		if (driverAuth) {
+		const current = driverAuth && this.registry.getByDriverId(driverAuth.id);
+		if (driverAuth && (!current || current.socket.id === client.id)) {
 			this.appGateway.emit(driverAuth.userId, "driver:disconnected", {
 				driverId: driverAuth.id,
 			} satisfies BackendDriverDisconnectedOutDTO);

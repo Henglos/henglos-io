@@ -11,6 +11,7 @@ import { OperationNotPermitted } from "@/application/errors/Auth.error";
 import { InvalidPackageType, PackageNotFound } from "@/application/errors/services/Package.error";
 
 import { CreateWorkflow } from "@henglosio/workflow";
+import { PLATFORM_PACKAGE } from "@henglosio/shared";
 import type { IBoardSchema } from "@henglosio/workflow";
 import { Workflow } from "@/domain/entities/Workflow";
 import { WorkflowNameAlreadyInUse } from "@/application/errors/Workflow.error";
@@ -94,7 +95,7 @@ export class CreateWorkflowUseCase {
 						role: boardAccountPkg.pkg.type
 					},
 					{
-						name: "@henglosio/platform",
+						name: PLATFORM_PACKAGE,
 						version: workflow.platform,
 						role: "platform"
 					}

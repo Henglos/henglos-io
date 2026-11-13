@@ -16,6 +16,8 @@ import { WorkflowCollabService } from "./WorkflowCollab.service";
 import { SecretBox } from "./SecretBox.service";
 import { CredentialService } from "./Credential.service";
 import { TelemetryService } from "./Telemetry.service";
+import { BoardFilesTaskService } from "./BoardFilesTask.service";
+import { DebugSessionsService } from "./DebugSessions.service";
 
 /**
  * The application's services — what the use cases, the gateways and the
@@ -39,6 +41,8 @@ import { TelemetryService } from "./Telemetry.service";
 		SecretBox,
 		CredentialService,
 		TelemetryService,
+		BoardFilesTaskService,
+		DebugSessionsService,
 	],
 	exports: [
 		AuthStrategyRegistry,
@@ -54,6 +58,8 @@ import { TelemetryService } from "./Telemetry.service";
 		SecretBox,
 		CredentialService,
 		TelemetryService,
+		BoardFilesTaskService,
+		DebugSessionsService,
 	]
 })
 export class ServiceModule {}

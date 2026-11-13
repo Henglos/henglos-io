@@ -15,7 +15,7 @@ const platformProvider: Provider = {
 	useFactory: (config: ConfigService<Env, true>) => {
 		const registry = new RegistryPlatformRepository(config.get("HIO_REGISTRY_URL", { infer: true }));
 		const local = config.get("HIO_LOCAL_PACKAGES", { infer: true });
-		return local ? new LocalPlatformRepository(path.resolve(local, "platform"), registry) : registry;
+		return local ? new LocalPlatformRepository(path.resolve(local, "hio-system"), registry) : registry;
 	},
 };
 

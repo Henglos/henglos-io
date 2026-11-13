@@ -17,15 +17,15 @@ import type { Env } from '@/config/env.schema';
 import { Package } from '@/domain/entities/Package';
 import { LocalPackagesService, type LocalPackage } from './LocalPackages.service';
 
-// manifest.yaml + <schema>.yaml, at the package root or under workspace/
-// (the older layout, still used by board packages) — the only files metadata
-// needs, as opposed to src/ or build/ which can hold arbitrarily large (and
-// irrelevant, for metadata purposes) content.
-const METADATA_YAML_PATTERN = /^(workspace\/)?[^/]+\.ya?ml$/;
-const MANIFEST_LOCATIONS = ['manifest.yaml', 'workspace/manifest.yaml'];
+// The package's YAML files, wherever they are: manifest.yaml at its root, and a
+// board's schema in the folder its manifest names — the only files metadata
+// needs, as opposed to the sources and builds, which can hold arbitrarily large
+// (and irrelevant, for metadata purposes) content.
+const METADATA_YAML_PATTERN = /^(?!(?:.*\/)?node_modules\/).*\.ya?ml$/;
+const MANIFEST_FILE = 'manifest.yaml';
 
 /**
- * Reads board and component packages from npm registries. npm, Verdaccio and
+ * Reads board and component packages from npm registries. npm, Gitea and
  * GitHub Packages speak the same registry HTTP API (metadata + tarball) — all
  * that changes between them is the base URL and an optional token, so there's
  * no class per provider: it's always the same request, to another place.
@@ -145,12 +145,8 @@ export class PackageRegistryService {
 			description?: string;
 		};
 
-		// The folder the manifest is in is the package's root: the board's
-		// ui.schema resolves against it.
-		const manifestPath = MANIFEST_LOCATIONS.find(location => files.has(location));
-		if (!manifestPath) throw new ManifestNotFound();
-		const manifestRaw = files.get(manifestPath)!;
-		const manifestDir = path.posix.dirname(manifestPath);
+		const manifestRaw = files.get(MANIFEST_FILE);
+		if (!manifestRaw) throw new ManifestNotFound();
 
 		const manifest = ManifestSchema.parse(YAML.parse(manifestRaw));
 		if (manifest.kind !== 'board' && manifest.kind !== 'component') {
@@ -162,7 +158,7 @@ export class PackageRegistryService {
 		// manifest.schema (single-file component packages).
 		let schemaData: unknown;
 		if (manifest.kind === 'board') {
-			const schemaRaw = files.get(path.posix.join(manifestDir, manifest.ui.schema));
+			const schemaRaw = files.get(path.posix.normalize(manifest.ui.schema));
 			if (!schemaRaw) throw new InvalidPackageSchema();
 			try {
 				schemaData = YAML.parse(schemaRaw);
@@ -179,6 +175,9 @@ export class PackageRegistryService {
 		const capabilities = manifest.kind === 'board' ? manifest.capabilities : manifest.dependences.capabilities;
 		if (capabilities && schemaData && typeof schemaData === 'object') {
 			schemaData = { ...(schemaData as Record<string, unknown>), capabilities };
+		}
+		if (manifest.kind === 'board' && manifest.options && schemaData && typeof schemaData === 'object') {
+			schemaData = { ...(schemaData as Record<string, unknown>), options: manifest.options };
 		}
 
 		const parsed = manifest.kind === 'board'
@@ -201,8 +200,7 @@ export class PackageRegistryService {
 	}
 
 	/**
-	 * Reads only the package.json and the *.yaml files at the root or directly
-	 * in workspace/, straight from the tarball's stream, never extracting the
+	 * Reads only the package.json and the *.yaml files, straight from the tarball's stream, never extracting the
 	 * package to disk — src/, build/ and any other large file are drained by
 	 * the tar.Parser itself (via `filter`) and never buffered.
 	 *

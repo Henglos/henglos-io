@@ -9,7 +9,7 @@ import {
 } from "@henglosio/shared";
 import { GenerateExecuteCommand, RUN_COMMAND_ID, resolveWorkflowAction } from "@henglosio/workflow";
 import { awaitDriverResponse, describeOutput, FIRST_RESPONSE_TIMEOUT_MS, readResponse, readValues, type RunActionResult, type RunValue } from "./actionResponse";
-import { BuildBoardInstall } from "./BuildBoardInstall";
+import { BuildBoardInstall } from "../BuildBoardInstall";
 
 export type { RunActionResult, RunValue };
 

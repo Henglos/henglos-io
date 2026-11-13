@@ -2,11 +2,13 @@ import pacote from "pacote";
 import type { IPlatformRepository } from "@/domain/repositories/IPlatformRepository.repo";
 import { PlatformNotFound } from "@/application/errors/services/Platform.error";
 
-const PACKAGE_NAME = "@henglosio/platform";
+import { PLATFORM_PACKAGE } from "@henglosio/shared";
+
+const PACKAGE_NAME = PLATFORM_PACKAGE;
 
 /**
- * The platform's releases: the published versions of @henglosio/platform on
- * an npm registry (npmjs, Verdaccio…) — the same place the drivers install
+ * The platform's releases: the published versions of @henglosio/hio-system on
+ * an npm registry (npmjs, Gitea…) — the same place the drivers install
  * it from, so every version offered is one a driver can get.
  */
 export class RegistryPlatformRepository implements IPlatformRepository {

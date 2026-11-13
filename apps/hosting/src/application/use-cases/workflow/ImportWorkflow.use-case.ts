@@ -8,6 +8,7 @@ import {
 	HIO_MAX_BYTES,
 	HIO_WORKFLOW_FILE,
 	HioManifestSchema,
+	PLATFORM_PACKAGE,
 	type HioPackageRef,
 	type ImportWorkflowOut,
 } from "@henglosio/shared";
@@ -146,7 +147,7 @@ export class ImportWorkflowUseCase {
 		// The drivers fetch what it needs, as for a new workflow.
 		const packages = [
 			{ name: boardPackage.pkg.spec, version: boardPackage.pkg.version, role: "board" as const },
-			{ name: "@henglosio/platform", version: workflow.platform, role: "platform" as const },
+			{ name: PLATFORM_PACKAGE, version: workflow.platform, role: "platform" as const },
 			...[...new Set(workflowData.components.map(c => c.packageId))]
 				.map(id => [...byRef.values()].find(accountPackage => accountPackage.id === id))
 				.filter((accountPackage): accountPackage is AccountPackage => !!accountPackage) // built-ins have none

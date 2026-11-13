@@ -1,6 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { randomUUID } from "crypto";
-import { type PackageDTO, type DriverSyncWorkflowsInDTO } from "@henglosio/shared";
+import { PLATFORM_PACKAGE, type PackageDTO, type DriverSyncWorkflowsInDTO } from "@henglosio/shared";
 
 import { OperationNotPermitted } from "@/application/errors/Auth.error";
 import { DriverNotFound } from "@/application/errors/Driver.error";
@@ -68,7 +68,7 @@ export class SyncWorkflowsUseCase {
 
 			const packages: PackageDTO[] = [
 				...(boardPkg?.pkg ? [{ name: boardPkg.pkg.spec, version: boardPkg.pkg.version, role: 'board' as const }] : []),
-				{ name: '@henglosio/platform', version: workflow.platform, role: 'platform' as const },
+				{ name: PLATFORM_PACKAGE, version: workflow.platform, role: 'platform' as const },
 				...[...new Set(workflow.data.components.map(c => c.packageId))]
 					.map(id => pkgMap.get(id))
 					.filter((p): p is NonNullable<typeof p> => p?.pkg != null)

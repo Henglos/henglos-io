@@ -28,7 +28,8 @@ import { UpdateWorkflowUseCase } from '@/application/use-cases/workflow/UpdateWo
 import { GetWorkflowUseCase } from '@/application/use-cases/workflow/GetWorkflow.use-case';
 import { ExportWorkflowUseCase } from '@/application/use-cases/workflow/ExportWorkflow.use-case';
 import { ImportWorkflowUseCase } from '@/application/use-cases/workflow/ImportWorkflow.use-case';
-import { WorkflowFilesUseCase } from '@/application/use-cases/workflow/WorkflowFiles.use-case';
+import { UploadWorkflowFileUseCase } from '@/application/use-cases/workflow/UploadWorkflowFile.use-case';
+import { GetWorkflowFileUseCase } from '@/application/use-cases/workflow/GetWorkflowFile.use-case';
 import { InvalidWorkflowArchive, InvalidWorkflowFile } from '@/application/errors/Workflow.error';
 import { WORKFLOW_FILE_MAX_BYTES } from '@/domain/entities/WorkflowFile';
 import type { IFileValueSchema } from '@henglosio/workflow';
@@ -58,7 +59,8 @@ export class WorkflowController {
 		private readonly updateWorkflowUseCase: UpdateWorkflowUseCase,
 		private readonly exportWorkflowUseCase: ExportWorkflowUseCase,
 		private readonly importWorkflowUseCase: ImportWorkflowUseCase,
-		private readonly workflowFilesUseCase: WorkflowFilesUseCase,
+		private readonly uploadWorkflowFileUseCase: UploadWorkflowFileUseCase,
+		private readonly getWorkflowFileUseCase: GetWorkflowFileUseCase,
 	) {}
 
 	/** GET /workflows/:workflowId/export — the workflow as a .hio (see @henglosio/shared's hio.ts), as a download. */
@@ -104,7 +106,7 @@ export class WorkflowController {
 		@UploadedFile() file: Express.Multer.File | undefined,
 	): Promise<IFileValueSchema> {
 		if (!file?.buffer) throw new InvalidWorkflowFile('No file uploaded');
-		return this.workflowFilesUseCase.upload(minimalUser.userId, workflowId, {
+		return this.uploadWorkflowFileUseCase.execute(minimalUser.userId, workflowId, {
 			// Multer reads the name as latin1 — back to the UTF-8 it was sent in.
 			name: Buffer.from(file.originalname, 'latin1').toString('utf8'),
 			mime: file.mimetype,
@@ -121,7 +123,7 @@ export class WorkflowController {
 		@Param('fileId') fileId: string,
 		@Res({ passthrough: true }) res: Response,
 	): Promise<StreamableFile> {
-		const file = await this.workflowFilesUseCase.get(minimalUser.userId, workflowId, fileId);
+		const file = await this.getWorkflowFileUseCase.execute(minimalUser.userId, workflowId, fileId);
 		res.set({
 			'Content-Type': file.mime,
 			'Content-Disposition': `inline; filename*=UTF-8''${encodeURIComponent(file.name)}`,

@@ -60,8 +60,8 @@ const ERROR_CODE = /^[a-z][a-z0-9_]{1,63}$/;
  * installation (HIO_TELEMETRY_ID_FILE), never a person's: no person profiles,
  * no geo-IP, nothing anyone wrote (workflow names, configs, code, files).
  *
- * Off with HIO_TELEMETRY=false (or DO_NOT_TRACK=1); nothing's sent without a
- * HIO_TELEMETRY_KEY either. HIO_TELEMETRY_DEBUG=true logs each event as it goes.
+ * Off with HIO_TELEMETRY=false (or DO_NOT_TRACK=1), or with an empty
+ * HIO_TELEMETRY_KEY. HIO_TELEMETRY_DEBUG=true logs each event as it goes.
  * It never throws: a telemetry failure is never the user's problem.
  */
 @Injectable()

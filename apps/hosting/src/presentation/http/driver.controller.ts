@@ -10,6 +10,8 @@ import {
 	UseGuards,
 	UseInterceptors,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
+import { AUTH_RATE_LIMIT } from '@/infrastructure/http/guards/RateLimit.guard';
 
 import { AuthUser } from '@/infrastructure/http/decorators/AuthUser.decorator';
 import { AuthGuard } from '@/infrastructure/http/guards/Auth.guard';
@@ -52,16 +54,27 @@ import {
 import { ListDevicesUseCase } from '@/application/use-cases/driver/ListDevices.use-case';
 import { RestartDriverUseCase } from '@/application/use-cases/driver/RestartDriver.use-case';
 import { GetPortStatusUseCase } from '@/application/use-cases/driver/GetPortStatus.use-case';
-import { CompileWorkflowTaskUseCase } from '@/application/use-cases/tasks/CompileWorkflowTask.use-case';
-import { FlashWorkflowTaskUseCase } from '@/application/use-cases/tasks/FlashWorkflowTask.use-case';
-import { ExecuteWorkflowTaskUseCase } from '@/application/use-cases/tasks/ExecuteWorkflowTask.use-case';
-import { RunActionTaskUseCase, type RunActionResult } from '@/application/use-cases/tasks/RunActionTask.use-case';
-import { DebugWorkflowTaskUseCase, type DebugState } from '@/application/use-cases/tasks/DebugWorkflowTask.use-case';
+import { CompileWorkflowTaskUseCase } from '@/application/use-cases/tasks/workflow/CompileWorkflowTask.use-case';
+import { ReleasePortUseCase } from '@/application/use-cases/driver/ReleasePort.use-case';
+import { FlashWorkflowTaskUseCase } from '@/application/use-cases/tasks/workflow/FlashWorkflowTask.use-case';
+import { ExecuteWorkflowTaskUseCase } from '@/application/use-cases/tasks/workflow/ExecuteWorkflowTask.use-case';
+import { RunActionTaskUseCase, type RunActionResult } from '@/application/use-cases/tasks/workflow/RunActionTask.use-case';
+import type { DebugState } from '@/application/services/DebugSessions.service';
+import { StartDebugSessionUseCase } from '@/application/use-cases/tasks/debug/StartDebugSession.use-case';
+import { ContinueDebugSessionUseCase } from '@/application/use-cases/tasks/debug/ContinueDebugSession.use-case';
+import { SetDebugValuesUseCase } from '@/application/use-cases/tasks/debug/SetDebugValues.use-case';
+import { GetDebugSessionUseCase } from '@/application/use-cases/tasks/debug/GetDebugSession.use-case';
+import { StopDebugSessionUseCase } from '@/application/use-cases/tasks/debug/StopDebugSession.use-case';
 import { DebugValuesInSchema, type DebugValuesIn } from '@henglosio/shared';
-import { RecordWorkflowTaskUseCase } from '@/application/use-cases/tasks/RecordWorkflowTask.use-case';
+import { RecordWorkflowTaskUseCase } from '@/application/use-cases/tasks/workflow/RecordWorkflowTask.use-case';
 import { StopTaskUseCase } from '@/application/use-cases/tasks/StopTask.use-case';
-import { ReplTaskUseCase } from '@/application/use-cases/tasks/ReplTask.use-case';
-import { BOARD_FILE_MAX_BYTES, BoardFilesTaskUseCase } from '@/application/use-cases/tasks/BoardFilesTask.use-case';
+import { StartReplTaskUseCase } from '@/application/use-cases/tasks/repl/StartReplTask.use-case';
+import { ListBoardFilesTaskUseCase } from '@/application/use-cases/tasks/fs/ListBoardFilesTask.use-case';
+import { ReadBoardFileTaskUseCase } from '@/application/use-cases/tasks/fs/ReadBoardFileTask.use-case';
+import { DeleteBoardFileTaskUseCase } from '@/application/use-cases/tasks/fs/DeleteBoardFileTask.use-case';
+import { MakeBoardFolderTaskUseCase } from '@/application/use-cases/tasks/fs/MakeBoardFolderTask.use-case';
+import { RenameBoardFileTaskUseCase } from '@/application/use-cases/tasks/fs/RenameBoardFileTask.use-case';
+import { BOARD_FILE_MAX_BYTES, WriteBoardFileTaskUseCase } from '@/application/use-cases/tasks/fs/WriteBoardFileTask.use-case';
 import { ActionRunFailed } from '@/application/errors/Workflow.error';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GenerateDriverPairTokenUseCase } from '@/application/use-cases/driver/GenerateDriverPairToken.use-case';
@@ -84,15 +97,25 @@ export class DriverController {
 		private readonly listDevicesUseCase: ListDevicesUseCase,
 		private readonly restartDriverUseCase: RestartDriverUseCase,
 		private readonly compileWorkflowTaskUseCase: CompileWorkflowTaskUseCase,
+		private readonly releasePortUseCase: ReleasePortUseCase,
 		private readonly executeWorkflowTaskUseCase: ExecuteWorkflowTaskUseCase,
 		private readonly runActionTaskUseCase: RunActionTaskUseCase,
-		private readonly debugWorkflowTaskUseCase: DebugWorkflowTaskUseCase,
+		private readonly startDebugSessionUseCase: StartDebugSessionUseCase,
+		private readonly continueDebugSessionUseCase: ContinueDebugSessionUseCase,
+		private readonly setDebugValuesUseCase: SetDebugValuesUseCase,
+		private readonly getDebugSessionUseCase: GetDebugSessionUseCase,
+		private readonly stopDebugSessionUseCase: StopDebugSessionUseCase,
 		private readonly recordWorkflowTaskUseCase: RecordWorkflowTaskUseCase,
 		private readonly flashWorkflowTaskUseCase: FlashWorkflowTaskUseCase,
 		private readonly stopTaskUseCase: StopTaskUseCase,
 		private readonly getPortStatusUseCase: GetPortStatusUseCase,
-		private readonly replTaskUseCase: ReplTaskUseCase,
-		private readonly boardFilesTaskUseCase: BoardFilesTaskUseCase,
+		private readonly startReplTaskUseCase: StartReplTaskUseCase,
+		private readonly listBoardFilesTaskUseCase: ListBoardFilesTaskUseCase,
+		private readonly readBoardFileTaskUseCase: ReadBoardFileTaskUseCase,
+		private readonly writeBoardFileTaskUseCase: WriteBoardFileTaskUseCase,
+		private readonly deleteBoardFileTaskUseCase: DeleteBoardFileTaskUseCase,
+		private readonly makeBoardFolderTaskUseCase: MakeBoardFolderTaskUseCase,
+		private readonly renameBoardFileTaskUseCase: RenameBoardFileTaskUseCase,
 	) {}
 
 
@@ -116,6 +139,7 @@ export class DriverController {
 	 * pair token is the proof). Pairs it, and answers its access and refresh tokens.
 	 */
 	@Post("pair/:pairToken")
+	@Throttle({ default: AUTH_RATE_LIMIT })
 	async pairDriver(
 		@Param("pairToken") pairToken: string,
 		@Body(new ZodValidationPipe(PairDriverInSchema)) body: PairDriverIn,
@@ -200,6 +224,17 @@ export class DriverController {
 	}
 
 
+	/** POST /drivers/:driverId/ports/release?port= — frees the board on `port`, whatever is holding it. */
+	@Post(':driverId/ports/release')
+	@UseGuards(AuthGuard)
+	async releasePort(
+		@Param('driverId') driverId: string,
+		@Query('port') port: string,
+		@AuthUser() authUser: MinimalUser,
+	): Promise<PortStatusOut> {
+		return this.releasePortUseCase.execute(authUser.userId, driverId, port);
+	}
+
 	/** GET /drivers/:driverId/workflows/:workflowId/compile — starts a compile; answers its task id. */
 	@Get(":driverId/workflows/:workflowId/compile")
 	@UseGuards(AuthGuard)
@@ -278,21 +313,21 @@ export class DriverController {
 		@Param("workflowId") workflowId: string,
 		@Body(new ZodValidationPipe(DebugStartInSchema)) body: DebugStartIn,
 	): Promise<DebugState> {
-		return this.debugWorkflowTaskUseCase.start(authUser.userId, driverId, workflowId, body.port, body.baudrate, body.entryId);
+		return this.startDebugSessionUseCase.execute(authUser.userId, driverId, workflowId, body.port, body.baudrate, body.entryId);
 	}
 
 	/** GET /drivers/:driverId/debug/:sessionId — where a debug session stands (to reopen it). */
 	@Get(":driverId/debug/:sessionId")
 	@UseGuards(AuthGuard)
 	debugGet(@AuthUser() authUser: MinimalUser, @Param("sessionId") sessionId: string): DebugState & { workflowId: string; entryId: string; busy: boolean } {
-		return this.debugWorkflowTaskUseCase.get(authUser.userId, sessionId);
+		return this.getDebugSessionUseCase.execute(authUser.userId, sessionId);
 	}
 
 	/** POST /drivers/:driverId/debug/:sessionId/continue — runs the next action and pauses. */
 	@Post(":driverId/debug/:sessionId/continue")
 	@UseGuards(AuthGuard)
 	async debugContinue(@AuthUser() authUser: MinimalUser, @Param("sessionId") sessionId: string): Promise<DebugState> {
-		return this.debugWorkflowTaskUseCase.continue(authUser.userId, sessionId);
+		return this.continueDebugSessionUseCase.execute(authUser.userId, sessionId);
 	}
 
 	/** POST /drivers/:driverId/debug/:sessionId/values — overwrites values the board holds before the next step. */
@@ -303,14 +338,14 @@ export class DriverController {
 		@Param("sessionId") sessionId: string,
 		@Body(new ZodValidationPipe(DebugValuesInSchema)) body: DebugValuesIn,
 	): Promise<{ ok: true }> {
-		return this.debugWorkflowTaskUseCase.setValues(authUser.userId, sessionId, body.values);
+		return this.setDebugValuesUseCase.execute(authUser.userId, sessionId, body.values);
 	}
 
 	/** POST /drivers/:driverId/debug/:sessionId/stop — ends the debug session. */
 	@Post(":driverId/debug/:sessionId/stop")
 	@UseGuards(AuthGuard)
 	async debugStop(@AuthUser() authUser: MinimalUser, @Param("sessionId") sessionId: string): Promise<{ stopped: true }> {
-		return this.debugWorkflowTaskUseCase.stop(authUser.userId, sessionId);
+		return this.stopDebugSessionUseCase.execute(authUser.userId, sessionId);
 	}
 
 	/** POST /drivers/:driverId/workflows/:workflowId/record — stores the workflow on the board; answers its task id. */
@@ -390,7 +425,7 @@ export class DriverController {
 		@Body(new ZodValidationPipe(ReplStartInSchema)) body: ReplStartIn,
 	): Promise<LogsIdOut> {
 
-		const task = await this.replTaskUseCase.start(authUser.userId, driverId, workflowId, body.port);
+		const task = await this.startReplTaskUseCase.execute(authUser.userId, driverId, workflowId, body.port);
 		return { id: task.id };
 
 	}
@@ -404,7 +439,7 @@ export class DriverController {
 		@Param("workflowId") workflowId: string,
 		@Query("port") port: string,
 	): Promise<FsListOut> {
-		return this.boardFilesTaskUseCase.list(authUser.userId, driverId, workflowId, port);
+		return this.listBoardFilesTaskUseCase.execute(authUser.userId, driverId, workflowId, port);
 	}
 
 	/** One of the board's files — base64, cut past 128 KB. */
@@ -417,7 +452,7 @@ export class DriverController {
 		@Query("port") port: string,
 		@Query("path") path: string,
 	): Promise<FsReadOut> {
-		return this.boardFilesTaskUseCase.read(authUser.userId, driverId, workflowId, port, path);
+		return this.readBoardFileTaskUseCase.execute(authUser.userId, driverId, workflowId, port, path);
 	}
 
 	/** Writes a file on the board — an upload, or an edit saved — as multipart `file`. Its folders are made. */
@@ -432,7 +467,7 @@ export class DriverController {
 		@UploadedFile() file: Express.Multer.File | undefined,
 	): Promise<FsListOut> {
 		if (!file) throw new ActionRunFailed("No file uploaded");
-		return this.boardFilesTaskUseCase.write(authUser.userId, driverId, workflowId, query.port, query.path, file.buffer);
+		return this.writeBoardFileTaskUseCase.execute(authUser.userId, driverId, workflowId, query.port, query.path, file.buffer);
 	}
 
 	/** Deletes a file, or a folder with everything in it. */
@@ -444,7 +479,7 @@ export class DriverController {
 		@Param("workflowId") workflowId: string,
 		@Body(new ZodValidationPipe(FsPathInSchema)) body: FsPathIn,
 	): Promise<FsListOut> {
-		return this.boardFilesTaskUseCase.remove(authUser.userId, driverId, workflowId, body.port, body.path);
+		return this.deleteBoardFileTaskUseCase.execute(authUser.userId, driverId, workflowId, body.port, body.path);
 	}
 
 	/** Makes a folder, and the missing ones above it. */
@@ -456,7 +491,7 @@ export class DriverController {
 		@Param("workflowId") workflowId: string,
 		@Body(new ZodValidationPipe(FsPathInSchema)) body: FsPathIn,
 	): Promise<FsListOut> {
-		return this.boardFilesTaskUseCase.mkdir(authUser.userId, driverId, workflowId, body.port, body.path);
+		return this.makeBoardFolderTaskUseCase.execute(authUser.userId, driverId, workflowId, body.port, body.path);
 	}
 
 	/** Renames or moves a file or folder — never over something. */
@@ -468,7 +503,7 @@ export class DriverController {
 		@Param("workflowId") workflowId: string,
 		@Body(new ZodValidationPipe(FsRenameInSchema)) body: FsRenameIn,
 	): Promise<FsListOut> {
-		return this.boardFilesTaskUseCase.rename(authUser.userId, driverId, workflowId, body.port, body.path, body.to);
+		return this.renameBoardFileTaskUseCase.execute(authUser.userId, driverId, workflowId, body.port, body.path, body.to);
 	}
 
 	/** POST /drivers/:driverId/tasks/repl/:taskId/stop — closes a REPL terminal. */

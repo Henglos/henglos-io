@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ZodValidationPipe } from '@/infrastructure/http/pipes/ZodValidation.pipe';
+import { AUTH_RATE_LIMIT, REFRESH_RATE_LIMIT } from '@/infrastructure/http/guards/RateLimit.guard';
 import { LoginUserUseCase } from '@/application/use-cases/auth/LoginUser.use-case';
 import { RegisterUserUseCase } from '@/application/use-cases/auth/RegisterUser.use-case';
 import { RefreshTokenUseCase } from '@/application/use-cases/auth/RefreshToken.use-case';
@@ -33,6 +35,7 @@ export class AuthController {
 
 	/** POST /auth/register — creates the installation's user (once). */
 	@Post('/register')
+	@Throttle({ default: AUTH_RATE_LIMIT })
 	async register(
 		@Body(new ZodValidationPipe(RegisterUserInSchema)) body: RegisterUserIn,
 	): Promise<RegisterUserOut> {
@@ -49,6 +52,7 @@ export class AuthController {
 	 * Answers an access token and a refresh token.
 	 */
 	@Post('/login/:provider')
+	@Throttle({ default: AUTH_RATE_LIMIT })
 	async login(
 		@Param('provider') provider: string,
 		@Body() body: any,
@@ -58,6 +62,7 @@ export class AuthController {
 
 	/** POST /auth/refresh — a new access token (and refresh token) from the refresh token. */
 	@Post('/refresh')
+	@Throttle({ default: REFRESH_RATE_LIMIT })
 	async refresh(
 		@Body(new ZodValidationPipe(RefreshTokenInSchema)) body: RefreshTokenIn,
 	): Promise<RefreshTokenOut> {

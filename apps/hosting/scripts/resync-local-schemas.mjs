@@ -1,6 +1,5 @@
 // Dev helper: push the on-disk board/component schemas from
-// packages/packages/{boards,components}/* (the package folder, or its older
-// workspace/ subfolder) into the local `packages` table.
+// packages/library/{boards,components}/* into the local `packages` table.
 //
 // Why this exists: package schemas only ever reach the DB through
 // PackageRegistryService.fetchPackage (the registry), and `packages` rows are
@@ -23,7 +22,7 @@ import { BoardSchema, ComponentSchema } from "@henglosio/workflow";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "../../..");
-const packagesRoot = path.join(repoRoot, "packages/packages");
+const packagesRoot = path.join(repoRoot, "packages/library");
 
 const dbUrl = (() => {
 	const envPath = path.join(here, "..", ".env");
@@ -44,11 +43,9 @@ for (const kind of ["boards", "components"]) {
 	const dir = path.join(packagesRoot, kind);
 	if (!fs.existsSync(dir)) continue;
 	for (const entry of fs.readdirSync(dir)) {
-		// The package folder itself, or the older layout's workspace/ in it.
-		for (const ws of [path.join(dir, entry), path.join(dir, entry, "workspace")]) {
-			const manifestPath = path.join(ws, "manifest.yaml");
-			if (fs.existsSync(manifestPath)) { workspaces.push({ entry, ws, manifestPath }); break; }
-		}
+		const ws = path.join(dir, entry);
+		const manifestPath = path.join(ws, "manifest.yaml");
+		if (fs.existsSync(manifestPath)) workspaces.push({ entry, ws, manifestPath });
 	}
 }
 
@@ -58,8 +55,7 @@ let skipped = 0;
 for (const { entry, ws, manifestPath } of workspaces) {
 	const manifest = YAML.parse(fs.readFileSync(manifestPath, "utf8"));
 
-	// Board still ships its schema as a separate workspace/<name>.schema.yaml
-	// pointed to by ui.schema; component inlines it under manifest.schema.
+	// Board still ships its schema as a separate file pointed to by ui.schema; component inlines it under manifest.schema.
 	let parsed;
 	// The file the schema was read from — for the log line.
 	let schemaPath = manifestPath;

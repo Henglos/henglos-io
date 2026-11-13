@@ -3,9 +3,11 @@ import { Inject, Injectable } from "@nestjs/common";
 import type { IPlatformRepository } from "@/domain/repositories/IPlatformRepository.repo";
 import { PlatformNotFound } from "@/application/errors/services/Platform.error";
 
-const PACKAGE_NAME = "@henglosio/platform";
+import { PLATFORM_PACKAGE } from "@henglosio/shared";
 
-/** The platform's releases — the versions of @henglosio/platform on the registry (see PlatformModule). */
+const PACKAGE_NAME = PLATFORM_PACKAGE;
+
+/** The platform's releases — the versions of @henglosio/hio-system on the registry (see PlatformModule). */
 @Injectable()
 export class PlatformService {
 

@@ -1,6 +1,6 @@
 import type { Socket } from "socket.io";
 import { OutputId, parseFrame, parseResponse, FrameType, type ParsedResponse } from "@henglosio/shared";
-import { computeWireOutputId, generateId, getActionOutputs, isJsonShape, isStrShape, shapeLabel, type IActionRuntime } from "@henglosio/workflow";
+import { computeWireOutputId, generateId, getActionOutputs, isJsonShape, isStringShape, shapeLabel, type IActionRuntime } from "@henglosio/workflow";
 
 // What the ▶ run and the debugger share: waiting for the board's answer
 // through the driver's execute session, and reading what an action did.
@@ -73,16 +73,17 @@ export function awaitDriverResponse(socket: Socket, taskId: string, signal: Abor
 /**
  * One published value's bytes, decoded as well as the wire allows.
  *
- * RESPONSE DATA carries no type byte: the firmware publishes ints as INT_32,
- * floats as FLOAT_32, bools as one byte, text and bytes as arrays (Context.py
- * encode_value). The outputSchema only tells int from float and what a bool
- * is — `type` is one kind, or a list of the kinds it may be.
+ * RESPONSE DATA carries no type byte: the firmware publishes ints as INTEGER
+ * (int32), floats as FLOAT (float32), bools as one byte, strings and bytes as
+ * they are (Context.py encode_value). The outputSchema only tells an integer
+ * from a float and what a bool is — `type` is one kind, or a list of the kinds
+ * it may be.
  */
 export function decodeValue(data: Uint8Array, type: unknown): RunValue["value"] {
-	// A list or an object (its JSON), or text — as the outputSchema shape says.
-	if (isJsonShape(type) || isStrShape(type)) {
+	// A list or an object (its JSON), or a string — as the outputSchema shape says.
+	if (isJsonShape(type) || isStringShape(type)) {
 		const text = new TextDecoder().decode(data);
-		if (isStrShape(type)) return text;
+		if (isStringShape(type)) return text;
 		try {
 			return JSON.parse(text) as RunValue["value"];
 		} catch {
@@ -92,7 +93,7 @@ export function decodeValue(data: Uint8Array, type: unknown): RunValue["value"] 
 	const kinds = (Array.isArray(type) ? type : [type]).filter((kind): kind is string => typeof kind === "string");
 	const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
 	if (data.length === 1 && kinds.includes("bool")) return data[0] !== 0;
-	if (data.length === 4 && kinds.length > 0 && kinds.every(kind => kind.includes("float"))) return Math.round(view.getFloat32(0, true) * 1e6) / 1e6;
+	if (data.length === 4 && kinds.length > 0 && kinds.every(kind => kind === "float")) return Math.round(view.getFloat32(0, true) * 1e6) / 1e6;
 	if (data.length === 4) return view.getInt32(0, true);
 	if (data.length > 0 && data.every(byte => byte >= 0x20 && byte < 0x7f)) return new TextDecoder().decode(data);
 	return Array.from(data);

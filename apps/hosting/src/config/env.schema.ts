@@ -28,7 +28,7 @@ export const EnvSchema = zod.object({
 	HIO_SECRETS_KEY: zod.string().min(16).optional(),
 
 	// The npm registry everything comes from: the boards and components (when
-	// none is given) and the platform's releases (@henglosio/platform). Point
+	// none is given) and the platform's releases (@henglosio/hio-system). Point
 	// the drivers (HENGLOS_REGISTRY) at the same one.
 	HIO_REGISTRY_URL: zod.string().default("https://registry.npmjs.org/"),
 
@@ -40,16 +40,26 @@ export const EnvSchema = zod.object({
 	// The origins the browser may call the API from: `*`, or a comma-separated list.
 	HIO_CORS_ORIGIN: zod.string().default("*"),
 
+	// Requests a minute one address may make to the API (see RateLimit.guard);
+	// signing in, registering and pairing a driver have tighter limits of their
+	// own. 0 turns rate limiting off.
+	HIO_RATE_LIMIT: zod.coerce.number().int().min(0).default(600),
+	// How many proxies sit in front of the hosting (Caddy in the Docker setup:
+	// 1). The rate limit counts per client address, which only the proxy knows —
+	// it's read from X-Forwarded-For, trusting this many hops. 0: no proxy.
+	HIO_TRUST_PROXY: zod.coerce.number().int().min(0).default(0),
+
 	// Anonymous telemetry (TelemetryService): on unless one of these says
 	// otherwise — HIO_TELEMETRY=false|0|off|no, or the standard DO_NOT_TRACK=1.
 	// Nothing a person wrote is sent: counts, versions, package names. See
 	// docs/telemetry.md for every field.
 	HIO_TELEMETRY: zod.string().optional().transform(flag),
 	DO_NOT_TRACK: zod.string().optional().transform(value => value !== undefined && flag(value)),
-	// Where it goes — PostHog (its EU region by default) and the project's
-	// public key. No key: nothing is sent.
+	// Where it goes — Henglos IO's PostHog project (EU Cloud, project 326530).
+	// The key is the project's public one (phc_…), meant to be shipped in
+	// clients — setting either sends an installation's events somewhere else.
 	HIO_TELEMETRY_HOST: zod.string().default("https://eu.i.posthog.com"),
-	HIO_TELEMETRY_KEY: zod.string().optional(),
+	HIO_TELEMETRY_KEY: zod.string().default("phc_vsdW29LhfAfQzE6wToJjqGdHTErsqbW8f2FpH65NKRpJ"),
 	// Logs every event instead of (only) sending it — to see exactly what leaves.
 	HIO_TELEMETRY_DEBUG: zod.string().optional().transform(value => value !== undefined && flag(value)),
 	// The installation's random id, kept across restarts.

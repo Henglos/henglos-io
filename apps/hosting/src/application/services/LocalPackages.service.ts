@@ -15,7 +15,7 @@ export type LocalPackage = {
 };
 
 // The monorepo's layout, under HIO_LOCAL_PACKAGES.
-const PACKAGE_KINDS = ['packages/boards', 'packages/components'];
+const PACKAGE_KINDS = ['library/boards', 'library/components'];
 
 /**
  * The boards and components that come with the hosting, read from a folder
@@ -40,16 +40,13 @@ export class LocalPackagesService {
 		return wanted === 'latest' || semver.satisfies(found.version, wanted) ? found : null;
 	}
 
-	/** Reads the files of `dir` whose path (relative to it) `wanted` accepts, at its root or in workspace/. */
+	/** Reads the files of `dir`, in any folder, whose path (relative to it) `wanted` accepts. */
 	async readFiles(dir: string, wanted: (relativePath: string) => boolean): Promise<Map<string, string>> {
 		const files = new Map<string, string>();
 
-		for (const folder of ['', 'workspace']) {
-			const entries = await fs.readdir(path.join(dir, folder)).catch(() => [] as string[]);
-			for (const entry of entries) {
-				const relativePath = path.posix.join(folder, entry);
-				if (wanted(relativePath)) files.set(relativePath, await fs.readFile(path.join(dir, folder, entry), 'utf-8'));
-			}
+		for (const entry of await fs.readdir(dir, { recursive: true })) {
+			const relativePath = entry.replaceAll(path.sep, '/');
+			if (wanted(relativePath)) files.set(relativePath, await fs.readFile(path.join(dir, entry), 'utf-8'));
 		}
 
 		return files;

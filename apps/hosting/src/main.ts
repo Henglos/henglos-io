@@ -22,6 +22,23 @@ const bootstrap = async () => {
 	const config = app.get(ConfigService<Env, true>);
 
 	app.useGlobalInterceptors(new ExceptionInterceptor());
+
+	// The API answers with what's true now (a board's status, a task's): never
+	// cached, never revalidated — an ETag let the browser get a 304, which the
+	// studio's requests see as a failure.
+	app.getHttpAdapter().getInstance().set('etag', false);
+
+	// Behind a proxy (Caddy), every request comes from the proxy's address:
+	// trusting its X-Forwarded-For makes req.ip the client's — what the rate
+	// limit counts per. Only as many hops as HIO_TRUST_PROXY says, so a client
+	// can't pick its own address by sending the header.
+	const trustProxy = config.get('HIO_TRUST_PROXY', { infer: true });
+	if (trustProxy > 0) app.getHttpAdapter().getInstance().set('trust proxy', trustProxy);
+	app.use('/io/api', (_req: unknown, res: { setHeader: (name: string, value: string) => void }, next: () => void) => {
+		res.setHeader('Cache-Control', 'no-store');
+		next();
+	});
+
 	app.setGlobalPrefix('/io/api');
 	app.enableVersioning({
 		type: VersioningType.URI,

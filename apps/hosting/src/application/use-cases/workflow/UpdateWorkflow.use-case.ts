@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { type IBoardSchema, type IComponentSchema, type IWorkflowRuntime, AddComponentToWorkflow, RemoveComponentFromWorkflow, AddActionToWorkflowComponent, RemoveActionFromWorkflowComponent, UpdateWorkflowActionConfiguration, BindWorkflowActionConfigurationOutput, SetWorkflowActionConfigurationCode, SetWorkflowActionNotes, SetWorkflowActionDisabled, SetWorkflowActionPassContext, AddSwitchCase, RemoveSwitchCase, SetPlatformSetting, AddWorkflowVariable, UpdateWorkflowVariable, RemoveWorkflowVariable, BindWorkflowActionConfigurationVariable } from '@henglosio/workflow';
+import { type IBoardSchema, type IComponentSchema, type IWorkflowRuntime, AddComponentToWorkflow, RemoveComponentFromWorkflow, AddActionToWorkflowComponent, RemoveActionFromWorkflowComponent, UpdateWorkflowActionConfiguration, BindWorkflowActionConfigurationOutput, SetWorkflowActionConfigurationCode, SetWorkflowActionNotes, SetWorkflowActionDisabled, SetWorkflowActionPassContext, AddSwitchCase, RemoveSwitchCase, SetPlatformSetting, SetBoardOption, AddWorkflowVariable, UpdateWorkflowVariable, RemoveWorkflowVariable, BindWorkflowActionConfigurationVariable } from '@henglosio/workflow';
 import { CreateBoard, findAddableComponent, findNodeSchema } from '@henglosio/workflow';
 import { hmutate } from 'hmutate';
 import {
@@ -8,6 +8,7 @@ import {
 	ChangeBoardOperationSchema,
 	ChangePlatformOperationSchema,
 	SetPlatformSettingOperationSchema,
+	SetBoardOptionOperationSchema,
 	AddComponentOperationSchema,
 	RemoveComponentOperationSchema,
 	AddActionOperationSchema,
@@ -26,6 +27,7 @@ import {
 	UpdateVariableOperationSchema,
 	RemoveVariableOperationSchema,
 	BindActionConfigurationVariableOperationSchema,
+	PLATFORM_PACKAGE,
 	type UpdateWorkflowIn,
 	type SyncPackage,
 } from '@henglosio/shared';
@@ -77,6 +79,7 @@ export class UpdateWorkflowUseCase {
 	private readonly addSwitchCase = new AddSwitchCase();
 	private readonly removeSwitchCase = new RemoveSwitchCase();
 	private readonly setPlatformSetting = new SetPlatformSetting();
+	private readonly setBoardOption = new SetBoardOption();
 	private readonly addWorkflowVariable = new AddWorkflowVariable();
 	private readonly updateWorkflowVariable = new UpdateWorkflowVariable();
 	private readonly removeWorkflowVariable = new RemoveWorkflowVariable();
@@ -331,6 +334,11 @@ export class UpdateWorkflowUseCase {
 			return this.setPlatformSetting.execute(runtime, ctx.patch.key, ctx.patch.value) as unknown;
 		});
 
+		mutate.operator(SetBoardOptionOperationSchema, (ctx) => {
+			const runtime = ctx.target as unknown as IWorkflowRuntime;
+			return this.setBoardOption.execute(runtime, ctx.patch.key, ctx.patch.value) as unknown;
+		});
+
 		mutate.operator(AddVariableOperationSchema, (ctx) => {
 			const runtime = ctx.target as unknown as IWorkflowRuntime;
 			return this.addWorkflowVariable.execute(runtime, ctx.patch.variable).workflow as unknown;
@@ -463,7 +471,7 @@ export class UpdateWorkflowUseCase {
 
 			const packages: SyncPackage[] = [
 				...(boardPkg ? [{ name: boardPkg.pkg.spec, version: boardPkg.pkg.version, role: 'board' as const }] : []),
-				{ name: '@henglosio/platform', version: workflow.platform, role: 'platform' as const },
+				{ name: PLATFORM_PACKAGE, version: workflow.platform, role: 'platform' as const },
 				...componentPkgs
 					.filter(Boolean)
 					.map(pkg => ({ name: pkg!.pkg.spec, version: pkg!.pkg.version, role: 'component' as const })),

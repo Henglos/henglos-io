@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 import { Injectable, Logger } from "@nestjs/common";
-import type { TaskEvent, TaskRecord, TaskType } from "@henglosio/shared";
+import type { DriverTasksState, TaskEvent, TaskRecord, TaskType } from "@henglosio/shared";
 import { Task } from "@/domain/entities/Task";
 import { TaskNotFound } from "@/application/errors/Task.error";
 import { TelemetryService } from "./Telemetry.service";
@@ -14,6 +14,15 @@ const RING_CAP_TERMINAL = 400;
 // store behind this, so an evicted task is just gone. The registry only ever
 // answers for operations it currently holds in memory.
 const MAX_TERMINAL_ENTRIES = 100;
+// How long a driver has to answer a `task:start` with its first event. It always
+// answers right away (running, or failed), so silence means it never got it.
+const START_TIMEOUT_MS = 30_000;
+// How long a driver that dropped off has to come back before its tasks fail: a
+// blip in the connection shouldn't cost a build.
+const DRIVER_GRACE_MS = 30_000;
+// What the hosting drives step by step, over a socket it holds. They can't carry
+// on across a reconnection: they fail at once, and the driver is told to stop them.
+const INTERACTIVE: readonly TaskType[] = ["execute", "repl"];
 
 type DistributiveOmit<T, K extends keyof never> = T extends unknown ? Omit<T, K> : never;
 /** A TaskEvent minus the envelope fields the registry stamps on. */
@@ -35,10 +44,14 @@ type Entry = {
 	teardown: () => void | Promise<void>;
 	/** Its end went to the telemetry — once, whatever comes after it. */
 	reported?: boolean;
+	/** Fails it if the driver never answers its `task:start`. */
+	startTimer?: NodeJS.Timeout;
 };
 
 /** A task event on its way to the studio — `userId` says whose sockets get it. */
 export type TaskFanoutMessage = { userId: string; taskId: string; event: TaskEvent };
+/** A task its driver must stop. */
+export type TaskCancelMessage = { driverId: string; taskId: string };
 
 /**
  * The façade over task state — create an operation, stop it, watch it through
@@ -58,6 +71,7 @@ export class TaskRegistry {
 	private readonly logger = new Logger(TaskRegistry.name);
 	private readonly entries = new Map<string, Entry>();
 	private readonly bus = new EventEmitter();
+	private readonly goneDrivers = new Map<string, NodeJS.Timeout>();
 	private seqOut = 0;
 
 	constructor(private readonly telemetry: TelemetryService) {
@@ -74,18 +88,37 @@ export class TaskRegistry {
 		return () => this.bus.off("task.event", listener);
 	}
 
+	/**
+	 * Listens to the tasks a driver must stop. Sent through the driver's current
+	 * connection, which may not be the one the task started on.
+	 *
+	 * @returns A function that stops listening.
+	 */
+	onCancel(listener: (msg: TaskCancelMessage) => void): () => void {
+		this.bus.on("task.cancel", listener);
+		return () => this.bus.off("task.cancel", listener);
+	}
+
 	/** Open the task's runtime entry, return the AbortSignal for any background
 	 *  work the caller runs (execute's graph loop). */
 	async register(input: RegisterInput): Promise<AbortSignal> {
 		const abort = new AbortController();
-		this.entries.set(input.task.id, {
+		const entry: Entry = {
 			task: input.task,
 			ring: [],
 			dropped: 0,
 			lastSeq: -1,
 			abort,
 			teardown: input.teardown,
-		});
+		};
+		this.entries.set(input.task.id, entry);
+
+		entry.startTimer = setTimeout(() => {
+			if (entry.task.status !== "queued") return;
+			this.requestCancel(entry.task.driverId, entry.task.id);
+			void this.applyEvent(entry, { kind: "result", ok: false, error: "driver_no_response" });
+		}, START_TIMEOUT_MS);
+		entry.startTimer.unref?.();
 
 		this.telemetry.taskStarted(input.task.type, input.task.label ?? input.task.type);
 		return abort.signal;
@@ -120,7 +153,11 @@ export class TaskRegistry {
 		if (!task || task.userId !== userId) throw new TaskNotFound();
 		if (expectedType && task.type !== expectedType) throw new TaskNotFound();
 
-		if (task.isTerminal) return task;
+		// Over here, but the driver may not know — if it does, this does nothing.
+		if (task.isTerminal) {
+			this.requestCancel(task.driverId, task.id);
+			return task;
+		}
 
 		task.requestStop();
 		this.emitOut(entry, { kind: "status", status: task.status });
@@ -131,6 +168,7 @@ export class TaskRegistry {
 		} catch (err) {
 			this.logger.warn(`Task ${taskId} teardown failed: ${(err as Error).message}`);
 		}
+		this.requestCancel(task.driverId, task.id);
 
 		return task;
 	}
@@ -161,12 +199,79 @@ export class TaskRegistry {
 		return { record: entry.task.toRecord(), events: [...entry.ring], dropped: entry.dropped };
 	}
 
-	/** A driver dropped off — fail everything of its that hadn't finished. */
+	/**
+	 * A driver dropped off. It keeps running what it has, so its tasks wait a
+	 * while for it to come back ({@link reconcile}) — all but the interactive
+	 * ones, which need the socket that's gone.
+	 */
 	async markDriverGone(driverId: string): Promise<void> {
-		for (const entry of this.entries.values()) {
-			if (entry.task.driverId !== driverId || entry.task.isTerminal) continue;
-			await this.applyEvent(entry, { kind: "result", ok: false, error: "driver_disconnected" });
+		for (const entry of this.unfinishedOf(driverId)) {
+			if (INTERACTIVE.includes(entry.task.type)) await this.applyEvent(entry, { kind: "result", ok: false, error: "driver_disconnected" });
+			else this.emitOut(entry, { kind: "log", stream: "info", line: "The driver disconnected — waiting for it to come back.", ts: new Date().toISOString() });
 		}
+
+		clearTimeout(this.goneDrivers.get(driverId));
+		const timer = setTimeout(() => {
+			this.goneDrivers.delete(driverId);
+			for (const entry of this.unfinishedOf(driverId)) void this.applyEvent(entry, { kind: "result", ok: false, error: "driver_disconnected" });
+		}, DRIVER_GRACE_MS);
+		timer.unref?.();
+		this.goneDrivers.set(driverId, timer);
+	}
+
+	/**
+	 * A driver connected and said what it has: makes this hosting's view match.
+	 *
+	 * - Running there, unknown here (this hosting restarted): adopted, so it can
+	 *   be seen and stopped again — if it's interactive, nothing can drive it any
+	 *   more, so it's stopped instead.
+	 * - Running there, over here: stopped.
+	 * - Unfinished here, not running there: ended as the driver says it ended, or
+	 *   failed when it doesn't know it (it restarted).
+	 *
+	 * @param since When the driver was asked: a task created after it isn't in its answer.
+	 * @returns The tasks the driver must stop.
+	 */
+	async reconcile(driverId: string, userId: string, state: DriverTasksState, since: Date): Promise<string[]> {
+		clearTimeout(this.goneDrivers.get(driverId));
+		this.goneDrivers.delete(driverId);
+
+		const toCancel: string[] = [];
+		const running = new Set(state.running.map(task => task.taskId));
+
+		for (const remote of state.running) {
+			const entry = this.entries.get(remote.taskId);
+
+			if (entry) {
+				if (entry.task.isTerminal || entry.task.status === "stopping") toCancel.push(remote.taskId);
+				continue;
+			}
+
+			if (INTERACTIVE.includes(remote.type) || !remote.workflowId) {
+				toCancel.push(remote.taskId);
+				continue;
+			}
+
+			const task = Task.adopt({ id: remote.taskId, type: remote.type, workflowId: remote.workflowId, userId, driverId, port: remote.port, startedAt: new Date(remote.startedAt) });
+			this.entries.set(task.id, { task, ring: [], dropped: 0, lastSeq: -1, abort: new AbortController(), teardown: () => {} });
+		}
+
+		const finished = new Map(state.finished.map(({ taskId, ...outcome }) => [taskId, outcome]));
+		for (const entry of this.unfinishedOf(driverId)) {
+			if (running.has(entry.task.id) || entry.task.createdAt >= since) continue;
+			const outcome = finished.get(entry.task.id);
+			await this.applyEvent(entry, outcome ? { kind: "result", ...outcome } : { kind: "result", ok: false, error: "driver_lost_task" });
+		}
+
+		return toCancel;
+	}
+
+	private unfinishedOf(driverId: string): Entry[] {
+		return [...this.entries.values()].filter(entry => entry.task.driverId === driverId && !entry.task.isTerminal);
+	}
+
+	private requestCancel(driverId: string, taskId: string): void {
+		this.bus.emit("task.cancel", { driverId, taskId } satisfies TaskCancelMessage);
 	}
 
 	// ── internals ────────────────────────────────────────────────────────────
@@ -186,6 +291,8 @@ export class TaskRegistry {
 				: task.status === "stopping" ? "cancelled" as const : "failed" as const;
 			task.finish(outcome, body.error, body.exitCode);
 		}
+
+		if (task.status !== "queued" && entry.startTimer) clearTimeout(entry.startTimer);
 
 		this.emitOut(entry, body);
 

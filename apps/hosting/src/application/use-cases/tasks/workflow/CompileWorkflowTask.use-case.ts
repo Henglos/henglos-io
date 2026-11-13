@@ -66,8 +66,9 @@ export class CompileWorkflowTaskUseCase {
 			connection.socket.emit("task:start", {
 				taskId: task.id,
 				type: "compile",
-				// The platform's build compiles these overrides into the board's runtime.
-				payload: { workflowId, settings: workflow.data.platformSettings ?? {} },
+				// The platform's build compiles these overrides into the board's runtime,
+				// and hands the board's options to its firmware script.
+				payload: { workflowId, settings: workflow.data.platformSettings ?? {}, options: workflow.data.boardOptions ?? {} },
 			} satisfies TaskStartInDTO);
 		} catch (err) {
 			await this.taskRegistry.fail(task.id, err instanceof Error ? err.message : String(err));

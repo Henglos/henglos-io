@@ -27,7 +27,7 @@ export class PackageNotFound extends BaseError {
 
 }
 
-/** The package has no manifest.yaml (at its root, or in workspace/). */
+/** The package has no manifest.yaml at its root. */
 export class ManifestNotFound extends BaseError {
 
 	constructor() {

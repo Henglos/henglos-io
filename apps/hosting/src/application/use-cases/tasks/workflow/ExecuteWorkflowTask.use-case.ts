@@ -32,7 +32,7 @@ import { WorkflowCollabService } from "@/application/services/WorkflowCollab.ser
 import { UserNotFound } from "@/application/errors/User.error";
 import { DriverNotFound, DriverOffline } from "@/application/errors/Driver.error";
 import { ActionNotFound, WorkflowNotFound } from "@/application/errors/Workflow.error";
-import { BuildBoardInstall } from "./BuildBoardInstall";
+import { BuildBoardInstall } from "../BuildBoardInstall";
 import { FIRST_RESPONSE_TIMEOUT_MS, RESPONSE_TIMEOUT_MS } from "./actionResponse";
 
 // How long a TRIGGER_POLL waits on the board for a trigger to fire, between
