@@ -6,10 +6,11 @@ import { ManifestService } from "@henglosio/shared";
 import { injectable } from "tsyringe";
 
 // The public npm registry. In development, point HENGLOS_REGISTRY at the
-// local Verdaccio (http://localhost:4873).
+// dev Gitea (http://localhost:3000/api/packages/henglosio/npm/).
 const DEFAULT_REGISTRY = "https://registry.npmjs.org/";
 
 function registryUrl(): string {
+	console.log(process.env["HENGLOS_REGISTRY"] ?? DEFAULT_REGISTRY);
 	return process.env["HENGLOS_REGISTRY"] ?? DEFAULT_REGISTRY;
 }
 
@@ -47,15 +48,18 @@ export class PackageService {
 	}
 
 	async install(name: string, version: string): Promise<CachedPackage | null> {
-		const tmpDir = path.join(os.tmpdir(), `henglos-${Date.now()}`);
 		const finalDir = path.join(this.GLOBAL_PACKAGES_PATH, this.safeName(name), version);
 
+		// Straight into its folder, never extracted elsewhere and renamed: on
+		// Windows a rename fails (EPERM) while an antivirus still holds the fresh
+		// files, or when the folder is already there. What's there now — a stale
+		// copy the cache can't use — goes first, so no old file outlives it.
+		await fs.rm(finalDir, { recursive: true, force: true });
+
 		try {
-			await pacote.extract(`${name}@${version}`, tmpDir, { registry: registryUrl() });
-			await fs.mkdir(path.dirname(finalDir), { recursive: true });
-			await fs.rename(tmpDir, finalDir);
+			await pacote.extract(`${name}@${version}`, finalDir, { registry: registryUrl() });
 		} catch (e) {
-			await fs.rm(tmpDir, { recursive: true, force: true });
+			await fs.rm(finalDir, { recursive: true, force: true });
 			throw e;
 		}
 
@@ -154,13 +158,9 @@ export class PackageService {
 }
 
 async function resolveManifestPath(packagePath: string): Promise<string | null> {
-	const candidates = [
-		path.join(packagePath, "manifest.yaml"),
-		path.join(packagePath, "workspace", "manifest.yaml"),
-	];
-	for (const candidate of candidates) {
-		const exists = await fs.access(candidate).then(() => true).catch(() => false);
-		if (exists) return candidate;
-	}
+	const rootManifest = path.join(packagePath, "manifest.yaml");
+	if (await fs.access(rootManifest).then(() => true).catch(() => false)) return rootManifest;
+	const workspaceManifest = path.join(packagePath, "workspace", "manifest.yaml");
+	if (await fs.access(workspaceManifest).then(() => true).catch(() => false)) return workspaceManifest;
 	return null;
 }

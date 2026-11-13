@@ -1,8 +1,11 @@
 import { injectable } from "tsyringe";
 import { OutputId, parseResponse, type BoardInstall } from "@henglosio/shared";
 import { TaskContext } from "../../../domain/entities/TaskContext.js";
-import { ReplSession } from "../../services/ReplSession.js";
-import { BoardInstaller } from "../../services/BoardInstaller.js";
+import { ReplSession } from "../../services/ReplSession.service.js";
+import { BoardInstaller } from "../../services/BoardInstaller.service.js";
+import { createLogger } from "../../../infrastructure/logger/Logger.js";
+
+const log = createLogger("record");
 
 const isAbortError = (err: unknown): boolean => err instanceof Error && err.name === "AbortError";
 
@@ -19,7 +22,7 @@ export class RecordWorkflowUseCase {
 
 	async execute(port: string, _baudrate: number, frames: Uint8Array[], ctx: TaskContext, install?: BoardInstall): Promise<boolean> {
 
-		console.log(`[record] opening ${port} (${frames.length} frame(s))`);
+		log.info(`Opening ${port} (${frames.length} frame(s))`);
 		const repl = await ReplSession.open(port);
 		let restart = false;
 
@@ -43,7 +46,7 @@ export class RecordWorkflowUseCase {
 				if (ctx.signal.aborted) throw new DOMException("aborted", "AbortError");
 				ctx.progress("record", Math.round((i / frames.length) * 100));
 
-				const { response } = await repl.exchange(frames[i]!, line => console.log(`[record] (device log) ${line}`));
+				const { response } = await repl.exchange(frames[i]!, line => log.info(`board: ${line}`));
 				const answer = response ? parseResponse(response.payload) : null;
 
 				if (!answer) throw new Error(`No answer for frame ${i + 1}/${frames.length}`);
@@ -64,7 +67,7 @@ export class RecordWorkflowUseCase {
 			return true;
 
 		} catch (err) {
-			console.log(`[record] failed: ${err instanceof Error ? err.message : err}`);
+			log.error(`Failed: ${err instanceof Error ? err.message : err}`);
 			// Normalise the AbortError to the message TaskManager keys on.
 			if (isAbortError(err) || ctx.signal.aborted) throw new Error("aborted");
 			throw err;
@@ -72,7 +75,7 @@ export class RecordWorkflowUseCase {
 
 			// A finished recording restarts the board, so it plays right away.
 			await repl.close(restart);
-			console.log(`[record] ${port} closed`);
+			log.info(`${port} closed`);
 
 		}
 

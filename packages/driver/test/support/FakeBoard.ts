@@ -4,7 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { SerialPortMock } from "serialport";
 
-import { ReplSession } from "../../src/daemon/application/services/ReplSession.js";
+import { ReplSession } from "../../src/daemon/application/services/ReplSession.service.js";
 
 const FAKE_BOARD = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "fixtures", "fake_board.py");
 

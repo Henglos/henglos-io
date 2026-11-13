@@ -1,6 +1,6 @@
 import type { DriverDeleteWorkflowOutDTO } from "@henglosio/shared";
 import { inject, injectable } from "tsyringe";
-import { WorkflowService } from "../../services/WorkflowService.js";
+import { WorkflowService } from "../../services/WorkflowService.service.js";
 import { IContainerRuntime } from "../../../domain/interfaces/IContainerRuntime.interface.js";
 import { CommandContext } from "../../../domain/entities/CommandContext.js";
 

@@ -2,7 +2,8 @@ import { SerialPort } from "serialport";
 import { injectable } from "tsyringe";
 import { TaskContext } from "../../../domain/entities/TaskContext.js";
 import { SocketIOClient } from "../../../infrastructure/ws/SocketIOClient.impl.js";
-import { REPL_BAUDRATE } from "../../services/ReplSession.js";
+import { REPL_BAUDRATE } from "../../services/ReplSession.service.js";
+import { ReplTerminalsService } from "../../services/ReplTerminals.service.js";
 
 // Ctrl-C twice stops main.py (and anything it awaits).
 const INTERRUPT = Buffer.from([0x03, 0x03]);
@@ -24,24 +25,25 @@ const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, m
 /**
  * A terminal on the board's own REPL: the friendly one, the way a serial
  * monitor shows it — bytes from the board go out as `repl:output`, what's
- * typed comes in through write(). Runs as a task holding the port, so nothing
- * else uses the board meanwhile; ends when the task is cancelled (the studio's
- * Disconnect) or the board goes away.
+ * typed comes in through WriteReplTerminalUseCase. Runs as a task holding the
+ * port, so nothing else uses the board meanwhile; ends when the task is
+ * cancelled (the studio's Disconnect) or the board goes away.
  */
 @injectable()
-export class ReplTerminalUseCase {
+export class RunReplTerminalUseCase {
 
-	private readonly terminals = new Map<string, SerialPort>();
+	constructor(
+		private readonly ws: SocketIOClient,
+		private readonly replTerminals: ReplTerminalsService,
+	) {}
 
-	constructor(private readonly ws: SocketIOClient) {}
-
-	async run(taskId: string, path: string, ctx: TaskContext): Promise<void> {
+	async execute(taskId: string, path: string, ctx: TaskContext): Promise<void> {
 
 		const port = await new Promise<SerialPort>((resolve, reject) => {
 			const opening = new SerialPort({ path, baudRate: REPL_BAUDRATE, autoOpen: false });
 			opening.open(err => err ? reject(err) : resolve(opening));
 		});
-		this.terminals.set(taskId, port);
+		this.replTerminals.terminals.set(taskId, port);
 		ctx.info(`REPL on ${path} — the board's program is stopped while it's open, and plays again when it closes`);
 
 		try {
@@ -61,15 +63,10 @@ export class ReplTerminalUseCase {
 				port.write(PROMPT_REQUEST);
 			});
 		} finally {
-			this.terminals.delete(taskId);
+			this.replTerminals.terminals.delete(taskId);
 			await this.close(port);
 		}
 
-	}
-
-	/** What's typed, as it is — keys, Ctrl-C, a paste. */
-	write(taskId: string, data: Uint8Array): void {
-		this.terminals.get(taskId)?.write(Buffer.from(data));
 	}
 
 	/**

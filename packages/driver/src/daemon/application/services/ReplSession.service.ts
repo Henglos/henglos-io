@@ -2,7 +2,7 @@ import { SerialPort } from "serialport";
 import { FrameType, parseDebug, parseFrame, type ParsedFrame } from "@henglosio/shared";
 
 // How the driver talks to a MicroPython board: through its USB REPL, in raw
-// mode (the protocol mpremote uses — see packages/platform/scripts/repl_link.py
+// mode (the protocol mpremote uses — see packages/hio-system/scripts/repl_link.py
 // for the reference implementation). Frames travel as hex inside Python calls
 // to hio.tools.repl.exchange, so their ETX (0x03 = Ctrl-C) never reaches the
 // wire raw. Files (the runtime, components) are written the same way.

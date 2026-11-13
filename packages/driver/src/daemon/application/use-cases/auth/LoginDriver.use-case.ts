@@ -3,8 +3,11 @@ import axios, { AxiosError } from "axios";
 import { getMachineIdSync } from "native-machine-id";
 import { injectable } from "tsyringe";
 import type { PairDriverIn, PairDriverOut } from "@henglosio/shared";
-import { ConfigStore } from "../../services/ConfigStore.js";
+import { ConfigStore } from "../../services/ConfigStore.service.js";
 import { serverHttpAgent, serverHttpsAgent } from "../../../infrastructure/ws/serverAgents.js";
+import { createLogger } from "../../../infrastructure/logger/Logger.js";
+
+const log = createLogger("auth");
 
 /**
  * `hio driver login <pairToken> <name>`: pairs this machine with the account the pair token
@@ -28,7 +31,7 @@ export class LoginDriverUseCase {
 		const deviceUser = os.userInfo().username;
 		const deviceName = os.hostname();
 
-		console.log("[auth] Pairing driver...");
+		log.start(`Pairing with ${baseUrl}`);
 
 		let data: PairDriverOut;
 		try {
@@ -52,7 +55,7 @@ export class LoginDriverUseCase {
 			refreshToken: data.refreshToken,
 		});
 
-		console.log("[auth] Driver registered and logged.");
+		log.success("Paired — start it with 'hio driver start'");
 
 	}
 

@@ -1,9 +1,10 @@
 import type { SyncPackage } from "@henglosio/shared";
-
-import { type PackageMetadata, type WorkflowDependencies, WorkflowService } from "../../services/WorkflowService.js";
-import { CachedPackage, PackageService } from "../../services/PackageService.js";
-import { CommandContext } from "../../../domain/entities/CommandContext.js";
 import { injectable } from "tsyringe";
+
+import { type PackageMetadata, type WorkflowDependencies, WorkflowService } from "../../services/WorkflowService.service.js";
+import { CachedPackage, PackageService } from "../../services/PackageService.service.js";
+import { CommandContext } from "../../../domain/entities/CommandContext.js";
+import { PlatformService } from "../../services/PlatformService.service.js";
 
 const isSamePackage = (a: { name: string; version: string }, b: { name: string; version: string }) =>
 	a.name === b.name && a.version === b.version;
@@ -36,7 +37,12 @@ export class SyncWorkflowUseCase {
 			const cachedPkg = await this.packageService.getPackage(pkg.name, pkg.version);
 
 			if (!cachedPkg) {
-				const installedPkg = await this.packageService.install(pkg.name, pkg.version);
+				const installedPkg = await this.packageService.install(pkg.name, pkg.version).catch(async (error: unknown) => {
+					// Kept for whoever builds this workflow next, long after this sync.
+					const reason = (error as { code?: string }).code === "E404" ? "not on the registry" : error instanceof Error ? error.message : String(error);
+					await this.workflowService.saveMetadata(workflowId, { ...metadata, syncError: `${pkg.name}@${pkg.version}: ${reason}` });
+					throw error;
+				});
 				if (!installedPkg) {
 					ctx.fail(`Package not find to install: ${pkg.name}@${pkg.version}`);
 					throw new Error(`Package not find to install: ${pkg.name}@${pkg.version}`);

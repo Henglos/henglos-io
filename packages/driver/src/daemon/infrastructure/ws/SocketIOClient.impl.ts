@@ -1,6 +1,9 @@
 import { io, Socket } from "socket.io-client";
 import { injectable } from "tsyringe";
 import { serverHttpAgent, serverHttpsAgent } from "./serverAgents.js";
+import { createLogger } from "../logger/Logger.js";
+
+const log = createLogger("ws");
 
 /** The driver's socket to the hosting (/io/ws, namespace /driver), authenticated with its token. */
 @injectable()
@@ -26,12 +29,14 @@ export class SocketIOClient {
 			agent,
 		});
 
+		log.info(`Connecting to ${host}`);
+
 		this.socket.on("connect", () => {
-			console.log("Connected");
+			log.success(`Connected to ${host}`);
 		});
 
 		this.socket.on("disconnect", (reason) => {
-			console.log(`Disconnected: ${reason}`);
+			log.warn(`Disconnected: ${reason}`);
 
 			// `io server disconnect` = the hosting dropped us in handleConnection
 			// (an invalid / expired token). socket.io doesn't reconnect on its own
@@ -39,10 +44,10 @@ export class SocketIOClient {
 			// rejected: <...>". Other reasons ("transport close" on a hosting
 			// restart, etc.) reconnect on their own.
 			if (reason === "io server disconnect") {
-				console.error(
-					"[ws] O servidor recusou a conexão. Causas comuns: token do driver expirado/invalido " +
-					"(rode 'hio driver login <pairToken> <name>' de novo) ou HIO_JWT_SECRET do hosting mudou. " +
-					"Veja 'Driver connection rejected:' no log do hosting.",
+				log.error(
+					"The hosting refused the connection: the driver's token expired or is invalid " +
+					"(run 'hio driver login <pairToken> <name>' again), or the hosting's HIO_JWT_SECRET changed. " +
+					"See 'Driver connection rejected:' in the hosting's log.",
 				);
 			}
 		});
@@ -50,7 +55,7 @@ export class SocketIOClient {
 		// During a hosting restart this fires in bursts (ECONNREFUSED) until the
 		// server is back — just the message, without the error's huge dump.
 		this.socket.on("connect_error", (err) => {
-			console.error(`Connection error: ${err.message}`);
+			log.warn(`Can't reach the hosting: ${err.message}`);
 		});
 
 	}

@@ -8,12 +8,12 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { SerialPortMock } from "serialport";
 import type { BoardInstall } from "@henglosio/shared";
 
-import { BoardInstaller, relativeImports } from "../src/daemon/application/services/BoardInstaller.js";
-import { MpyCompiler } from "../src/daemon/application/services/MpyCompiler.js";
-import type { PackageService } from "../src/daemon/application/services/PackageService.js";
+import { BoardInstaller, relativeImports } from "../src/daemon/application/services/BoardInstaller.service.js";
+import { MpyCompiler } from "../src/daemon/application/services/MpyCompiler.service.js";
+import type { PackageService } from "../src/daemon/application/services/PackageService.service.js";
 import { FakeBoard, openFake } from "./support/FakeBoard.js";
 
-const COMPONENTS = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "packages", "packages", "components");
+const COMPONENTS = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "packages", "library", "components");
 
 // The packages "cached on the driver": the real component folders of the repo.
 const packages = {

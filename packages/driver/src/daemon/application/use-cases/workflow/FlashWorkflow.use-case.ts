@@ -1,23 +1,23 @@
 import fs from "fs/promises";
 import path from "path";
 import { inject, injectable } from "tsyringe";
-import { ContainerTunnel } from "../../services/ContainerTunnel.js";
+import { ContainerTunnel } from "../../services/ContainerTunnel.service.js";
 import { IContainerRuntime } from "../../../domain/interfaces/IContainerRuntime.interface.js";
-import { WorkflowService } from "../../services/WorkflowService.js";
-import { USBTunnel } from "../../services/USBTunnel.js";
-import { ReplError, ReplSession, REPL_BAUDRATE } from "../../services/ReplSession.js";
+import { WorkflowService } from "../../services/WorkflowService.service.js";
+import { USBTunnel } from "../../services/USBTunnel.service.js";
+import { ReplError, ReplSession, REPL_BAUDRATE } from "../../services/ReplSession.service.js";
 import { TaskContext } from "../../../domain/entities/TaskContext.js";
 import { WorkflowNotCompiled, WorkflowNotFound } from "../../errors/Workflow.error.js";
-import { WorkflowStateService } from "../../services/WorkflowStateService.js";
-import { PackageService } from "../../services/PackageService.js";
+import { WorkflowStateService } from "../../services/WorkflowStateService.service.js";
+import { PackageService } from "../../services/PackageService.service.js";
 import { PackageService as PackageValidator } from "@henglosio/shared";
 
 // esptool's speed once connected — the tunnel opens the port at the REPL's
 // speed, esptool raises it over RFC2217.
 const FIRMWARE_FLASH_BAUDRATE = 460800;
 
-// What the platform's build left when it froze the runtime into the board's
-// firmware (its runner/build.ts, FirmwareInfo).
+// What the platform's build left when the board's script froze the runtime into
+// its firmware (the platform's runner/build.ts, FirmwareInfo).
 type FirmwareInfo = { buildId: string; micropython: string; image: string };
 const FIRMWARE_INFO = "firmware.json";
 
@@ -35,8 +35,8 @@ const FIRMWARE_INFO = "firmware.json";
 //
 // The runtime as .mpy files:
 //   1. the board must run a MicroPython that imports this build's .mpy files —
-//      if it doesn't (fresh board, other version), the platform's container
-//      writes the board's firmware first (Runner.flash, esptool over the USB
+//      if it doesn't (fresh board, other version), the board's container
+//      writes its firmware first (Runner.flash, the board's script over the USB
 //      tunnel);
 //   2. the build (the runtime + main.py/boot.py) is uploaded over the REPL,
 //      replacing the runtime that was there — the components are installed by
@@ -228,10 +228,10 @@ export class FlashWorkflowUseCase {
 		return platform.build.output;
 	}
 
-	// Runner.flash in the platform's container: esptool writes a MicroPython
-	// firmware through the RFC2217 tunnel to `port` — the board's official image,
-	// or `firmware.image` (a path in the container) — erasing the flash first
-	// unless `firmware.erase` is false.
+	// Runner.flash in the board's container: its script writes a MicroPython
+	// firmware through the RFC2217 tunnel to `port` — its stock one, or
+	// `firmware.image` (a path in the container) — erasing the flash first unless
+	// `firmware.erase` is false.
 	private async flashFirmware(workflowId: string, port: string, ctx: TaskContext, firmware?: { image: string; erase: boolean }): Promise<void> {
 
 		const containerName = `henglosio-${workflowId}`;

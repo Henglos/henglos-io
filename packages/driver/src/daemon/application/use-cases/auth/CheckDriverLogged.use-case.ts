@@ -1,5 +1,5 @@
 import { injectable } from "tsyringe";
-import { ConfigStore } from "../../services/ConfigStore.js";
+import { ConfigStore } from "../../services/ConfigStore.service.js";
 
 /** Whether the driver is paired — it has a token. */
 @injectable()

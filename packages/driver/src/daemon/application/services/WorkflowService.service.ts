@@ -17,6 +17,8 @@ export type WorkflowDependencies = {
 	board: PackageMetadata | null;
 	platform: PackageMetadata | null;
 	components: PackageMetadata[];
+	/** Why the last sync couldn't install a package. Absent: it could. */
+	syncError?: string;
 
 };
 

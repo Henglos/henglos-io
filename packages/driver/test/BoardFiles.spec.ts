@@ -5,14 +5,25 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { SerialPortMock } from "serialport";
 
-import { BoardFilesUseCase } from "../src/daemon/application/use-cases/fs/BoardFiles.use-case.js";
+import { BoardFilesService } from "../src/daemon/application/services/BoardFiles.service.js";
+import { ListBoardFilesUseCase } from "../src/daemon/application/use-cases/fs/ListBoardFiles.use-case.js";
+import { ReadBoardFileUseCase } from "../src/daemon/application/use-cases/fs/ReadBoardFile.use-case.js";
+import { WriteBoardFileUseCase } from "../src/daemon/application/use-cases/fs/WriteBoardFile.use-case.js";
+import { DeleteBoardFileUseCase } from "../src/daemon/application/use-cases/fs/DeleteBoardFile.use-case.js";
+import { MakeBoardFolderUseCase } from "../src/daemon/application/use-cases/fs/MakeBoardFolder.use-case.js";
+import { RenameBoardFileUseCase } from "../src/daemon/application/use-cases/fs/RenameBoardFile.use-case.js";
 import type { TaskContext } from "../src/daemon/domain/entities/TaskContext.js";
 import { FakeBoard, openFake } from "./support/FakeBoard.js";
 
 const ctx = { signal: new AbortController().signal } as unknown as TaskContext;
 
 let board: FakeBoard;
-let files: BoardFilesUseCase;
+let list: ListBoardFilesUseCase;
+let read: ReadBoardFileUseCase;
+let write: WriteBoardFileUseCase;
+let remove: DeleteBoardFileUseCase;
+let mkdir: MakeBoardFolderUseCase;
+let rename: RenameBoardFileUseCase;
 
 const put = (boardPath: string, data: string | Buffer) => {
 	const file = path.join(board.sandbox, boardPath);
@@ -20,13 +31,19 @@ const put = (boardPath: string, data: string | Buffer) => {
 	fs.writeFileSync(file, data);
 };
 
-describe("BoardFilesUseCase", () => {
+describe("the board's files", () => {
 
 	beforeEach(() => {
 		SerialPortMock.binding.createPort("/dev/fake");
 		board = new FakeBoard(fs.mkdtempSync(path.join(os.tmpdir(), "hio-fake-board-")));
-		files = new BoardFilesUseCase();
-		files.open = () => openFake(board);
+		const boardFiles = new BoardFilesService();
+		boardFiles.open = () => openFake(board);
+		list = new ListBoardFilesUseCase(boardFiles);
+		read = new ReadBoardFileUseCase(boardFiles);
+		write = new WriteBoardFileUseCase(boardFiles);
+		remove = new DeleteBoardFileUseCase(boardFiles);
+		mkdir = new MakeBoardFolderUseCase(boardFiles);
+		rename = new RenameBoardFileUseCase(boardFiles);
 	});
 
 	afterEach(() => {
@@ -42,7 +59,7 @@ describe("BoardFilesUseCase", () => {
 		put("components/display/oled.mpy", Buffer.alloc(1200));
 		put("files/abc123.pbm", Buffer.alloc(10));
 
-		const out = await files.list("/dev/fake", ctx);
+		const out = await list.execute("/dev/fake", ctx);
 
 		expect(out.total).toBe(4096 * 256);
 		expect(out.free).toBe(4096 * 128);
@@ -62,10 +79,10 @@ describe("BoardFilesUseCase", () => {
 		put("hio/data.bin", bytes);
 		put("main.py", "import hio\nhio.start()\n");
 
-		expect(await files.read("/dev/fake", "/main.py", ctx)).toEqual({
+		expect(await read.execute("/dev/fake", "/main.py", ctx)).toEqual({
 			path: "/main.py", size: 23, data: Buffer.from("import hio\nhio.start()\n").toString("base64"), truncated: false,
 		});
-		const binary = await files.read("/dev/fake", "/hio/data.bin", ctx);
+		const binary = await read.execute("/dev/fake", "/hio/data.bin", ctx);
 		expect(Buffer.from(binary.data, "base64")).toEqual(bytes);
 	});
 
@@ -74,17 +91,17 @@ describe("BoardFilesUseCase", () => {
 	const names = (tree: { name: string }[]) => tree.map(e => e.name);
 
 	test("write: a new file in folders that don't exist yet, then over it — and the tree after", async () => {
-		const out = await files.write("/dev/fake", "/lib/util/math.py", new TextEncoder().encode("x = 1\n"), ctx);
+		const out = await write.execute("/dev/fake", "/lib/util/math.py", new TextEncoder().encode("x = 1\n"), ctx);
 		expect(contents("/lib/util/math.py")).toBe("x = 1\n");
 		expect(out.tree[0]).toMatchObject({ name: "lib", dir: true, children: [{ name: "util", dir: true }] });
 
-		await files.write("/dev/fake", "/lib/util/math.py", new TextEncoder().encode("x = 2\n"), ctx);
+		await write.execute("/dev/fake", "/lib/util/math.py", new TextEncoder().encode("x = 2\n"), ctx);
 		expect(contents("/lib/util/math.py")).toBe("x = 2\n");
 	});
 
 	test("write: never over a folder", async () => {
 		put("lib/a.py", "");
-		await expect(files.write("/dev/fake", "/lib", new Uint8Array([1]), ctx)).rejects.toThrow(/folder has that name/);
+		await expect(write.execute("/dev/fake", "/lib", new Uint8Array([1]), ctx)).rejects.toThrow(/folder has that name/);
 		expect(contents("/lib/a.py")).toBe("");
 	});
 
@@ -93,45 +110,45 @@ describe("BoardFilesUseCase", () => {
 		put("lib/a.py", "");
 		put("lib/deep/b.py", "");
 
-		expect(names((await files.remove("/dev/fake", "/main.py", ctx)).tree)).toEqual(["lib"]);
-		expect(names((await files.remove("/dev/fake", "/lib", ctx)).tree)).toEqual([]);
+		expect(names((await remove.execute("/dev/fake", "/main.py", ctx)).tree)).toEqual(["lib"]);
+		expect(names((await remove.execute("/dev/fake", "/lib", ctx)).tree)).toEqual([]);
 		expect(exists("/lib")).toBe(false);
 	});
 
 	test("mkdir: with its parents; an existing one is fine", async () => {
-		await files.mkdir("/dev/fake", "/data/logs", ctx);
+		await mkdir.execute("/dev/fake", "/data/logs", ctx);
 		expect(fs.statSync(path.join(board.sandbox, "data/logs")).isDirectory()).toBe(true);
-		await expect(files.mkdir("/dev/fake", "/data/logs", ctx)).resolves.toBeTruthy();
+		await expect(mkdir.execute("/dev/fake", "/data/logs", ctx)).resolves.toBeTruthy();
 	});
 
 	test("rename: in place, and as a move into another folder — never over something", async () => {
 		put("a.py", "A");
 		put("b.py", "B");
 
-		await files.rename("/dev/fake", "/a.py", "/c.py", ctx);
+		await rename.execute("/dev/fake", "/a.py", "/c.py", ctx);
 		expect(contents("/c.py")).toBe("A");
 		expect(exists("/a.py")).toBe(false);
 
-		await files.rename("/dev/fake", "/c.py", "/lib/c.py", ctx);
+		await rename.execute("/dev/fake", "/c.py", "/lib/c.py", ctx);
 		expect(contents("/lib/c.py")).toBe("A");
 
-		await expect(files.rename("/dev/fake", "/b.py", "/lib/c.py", ctx)).rejects.toThrow(/already exists/);
+		await expect(rename.execute("/dev/fake", "/b.py", "/lib/c.py", ctx)).rejects.toThrow(/already exists/);
 		expect(contents("/b.py")).toBe("B");
-		await expect(files.rename("/dev/fake", "/nope.py", "/x.py", ctx)).rejects.toThrow(/no such file/);
-		await expect(files.rename("/dev/fake", "/lib", "/lib/inner", ctx)).rejects.toThrow(/into itself/);
+		await expect(rename.execute("/dev/fake", "/nope.py", "/x.py", ctx)).rejects.toThrow(/no such file/);
+		await expect(rename.execute("/dev/fake", "/lib", "/lib/inner", ctx)).rejects.toThrow(/into itself/);
 	});
 
 	test("paths: only clean board paths, and never the root", async () => {
-		await expect(files.remove("/dev/fake", "/", ctx)).rejects.toThrow(/root/);
-		await expect(files.remove("/dev/fake", "/lib/../..", ctx)).rejects.toThrow(/Not a board path/);
-		await expect(files.write("/dev/fake", "main.py", new Uint8Array(), ctx)).rejects.toThrow(/Not a board path/);
+		await expect(remove.execute("/dev/fake", "/", ctx)).rejects.toThrow(/root/);
+		await expect(remove.execute("/dev/fake", "/lib/../..", ctx)).rejects.toThrow(/Not a board path/);
+		await expect(write.execute("/dev/fake", "main.py", new Uint8Array(), ctx)).rejects.toThrow(/Not a board path/);
 	});
 
 	test("read: a file past the cap comes back cut, marked truncated", async () => {
 		const big = Buffer.alloc(140 * 1024, 7);
 		put("big.bin", big);
 
-		const out = await files.read("/dev/fake", "/big.bin", ctx);
+		const out = await read.execute("/dev/fake", "/big.bin", ctx);
 
 		expect(out.size).toBe(big.length);
 		expect(out.truncated).toBe(true);

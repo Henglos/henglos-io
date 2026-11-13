@@ -3,8 +3,8 @@ import fs from "fs/promises";
 import path from "path";
 import { injectable } from "tsyringe";
 import type { BoardInstall } from "@henglosio/shared";
-import { MpyCompiler } from "./MpyCompiler.js";
-import { PackageService } from "./PackageService.js";
+import { MpyCompiler } from "./MpyCompiler.service.js";
+import { PackageService } from "./PackageService.service.js";
 
 // Puts on the board what a session needs, right before its first frame —
 // so a workflow's components never need a build or a flash:

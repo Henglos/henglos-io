@@ -1,4 +1,7 @@
 import { SocketIOClient } from "../../infrastructure/ws/SocketIOClient.impl.js";
+import { createLogger } from "../../infrastructure/logger/Logger.js";
+
+const log = createLogger("request");
 
 // Streaming handle for the plain request/response driver ops (sync / create /
 // delete / removePackage / listDevices). The long-running task ops use
@@ -10,7 +13,7 @@ export class CommandContext {
 	) {}
 
 	reply<T>(result: T): void {
-		console.log(result)
+		log.debug(this.requestId, result);
 		this.ws.socket?.emit("logs", {
 			id: this.requestId,
 			data: result,
@@ -18,7 +21,7 @@ export class CommandContext {
 	}
 
 	fail(error: string): void {
-		console.log(error)
+		log.warn(`${this.requestId} ${error}`);
 		this.ws.socket?.emit("logs", {
 			id: this.requestId,
 			error,

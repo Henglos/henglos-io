@@ -6,7 +6,7 @@ import { injectable } from "tsyringe";
 
 const PLATFORMS_DIR = path.join(os.homedir(), ".henglos", "io", "driver", "platforms");
 // The public npm registry. In development, point HENGLOS_REGISTRY at the
-// local Verdaccio (http://localhost:4873).
+// dev Gitea (http://localhost:3000/api/packages/henglosio/npm/).
 const DEFAULT_REGISTRY = "https://registry.npmjs.org/";
 
 function registryUrl(): string {

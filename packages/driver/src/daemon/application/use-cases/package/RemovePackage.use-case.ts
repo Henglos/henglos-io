@@ -1,6 +1,6 @@
 import type { DriverRemovePackageOutDTO } from "@henglosio/shared";
 import { injectable } from "tsyringe";
-import { PackageService } from "../../services/PackageService.js";
+import { PackageService } from "../../services/PackageService.service.js";
 import { CommandContext } from "../../../domain/entities/CommandContext.js";
 
 /** Removes a package version from the driver's cache. */

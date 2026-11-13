@@ -1,8 +1,8 @@
 import { DriverCreateWorkflowOutDTO, SyncPackage } from "@henglosio/shared";
-import { WorkflowService } from "../../services/WorkflowService.js";
-import type { WorkflowDependencies } from "../../services/WorkflowService.js";
+import { WorkflowService } from "../../services/WorkflowService.service.js";
+import type { WorkflowDependencies } from "../../services/WorkflowService.service.js";
 import { CommandContext } from "../../../domain/entities/CommandContext.js";
-import { CachedPackage, PackageService } from "../../services/PackageService.js";
+import { CachedPackage, PackageService } from "../../services/PackageService.service.js";
 import { injectable } from "tsyringe";
 
 /** A workflow created in the studio: installs the packages it needs and keeps it here. */

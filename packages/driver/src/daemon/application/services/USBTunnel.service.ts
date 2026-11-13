@@ -1,6 +1,9 @@
 import { SerialPort } from "serialport";
 import { injectable } from "tsyringe";
 import { RFC2217Server, RFC2217Parser } from "@henglosio/rfc2217";
+import { createLogger } from "../../infrastructure/logger/Logger.js";
+
+const log = createLogger("usb");
 
 function openPort(path: string, baudRate: number): Promise<SerialPort> {
 	return new Promise((resolve, reject) => {
@@ -10,7 +13,7 @@ function openPort(path: string, baudRate: number): Promise<SerialPort> {
 }
 
 // Awaited, never rejects, never hangs — same pattern as RecordWorkflowUseCase /
-// ExecuteWorkflowUseCase's closePort. Without this, disconnect() could resolve
+// ExecuteSessionsService's closePort. Without this, disconnect() could resolve
 // before the OS actually released the handle, and the next task on this port
 // (e.g. a record right after a flash) would open it while the previous session
 // is still tearing down — the reset pulse it sends can land on a port that
@@ -36,23 +39,23 @@ class SerialPortSession extends RFC2217Parser {
 	constructor(private readonly serial: SerialPort, private readonly tag: string) {
 		super();
 		this.serial.on("data", (chunk: Buffer) => {
-			console.error(`[USBTunnel:${tag}] serial→TCP ${chunk.length}B [${Buffer.from(chunk).toString("hex")}]`);
+			log.trace(`${tag} serial→TCP ${chunk.length}B [${Buffer.from(chunk).toString("hex")}]`);
 			this.sendData(new Uint8Array(chunk));
 		});
-		this.serial.on("error", (err) => console.error(`[USBTunnel:${tag}] serial error:`, err));
+		this.serial.on("error", (err) => log.error(`${tag} serial error:`, err));
 	}
 
 	onData(data: Uint8Array): void {
 		if (!this.suspended && this.serial.isOpen) {
-			console.error(`[USBTunnel:${this.tag}] TCP→serial ${data.length}B`);
+			log.trace(`${this.tag} TCP→serial ${data.length}B`);
 			this.serial.write(Buffer.from(data));
 		}
 	}
 
 	onBaudRate(baud: number): void {
-		console.error(`[USBTunnel:${this.tag}] SET_BAUDRATE ${baud}`);
+		log.debug(`${this.tag} baud rate ${baud}`);
 		if (this.serial.isOpen) this.serial.update({ baudRate: baud }, (err) => {
-			if (err) console.error(`[USBTunnel:${this.tag}] baudrate error:`, err);
+			if (err) log.error(`${this.tag} couldn't set the baud rate:`, err);
 		});
 	}
 

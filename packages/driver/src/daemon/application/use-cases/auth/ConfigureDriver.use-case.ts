@@ -1,5 +1,8 @@
 import { injectable } from "tsyringe";
-import { ConfigStore } from "../../services/ConfigStore.js";
+import { ConfigStore } from "../../services/ConfigStore.service.js";
+import { createLogger } from "../../../infrastructure/logger/Logger.js";
+
+const log = createLogger("config");
 
 /** `hio driver configure <server>`: sets the hosting the driver connects to. */
 @injectable()
@@ -15,7 +18,7 @@ export class ConfigureDriverUseCase {
 
 		await this.configStore.save({ baseUrl: normalizedBaseUrl });
 
-		console.log(`[config] HenglosIO server set to ${normalizedBaseUrl}.`);
+		log.success(`Henglos IO server set to ${normalizedBaseUrl}`);
 
 	}
 

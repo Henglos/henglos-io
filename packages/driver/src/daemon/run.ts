@@ -5,15 +5,15 @@ import { SocketIOClient } from "./infrastructure/ws/SocketIOClient.impl.js";
 import { DockerRuntimeImpl } from "./infrastructure/container-runtime/DockerRuntime.impl.js";
 
 // ── Application services ──────────────────────────────────────────────────────
-import { ConfigStore } from "./application/services/ConfigStore.js";
-import { WorkflowService } from "./application/services/WorkflowService.js";
-import { PackageService } from "./application/services/PackageService.js";
-import { USBTunnel } from "./application/services/USBTunnel.js";
-import { ContainerTunnel } from "./application/services/ContainerTunnel.js";
-import { DeviceWatcher } from "./application/services/DeviceWatcher.js";
-import { LockManager } from "./application/services/LockManager.js";
-import { TaskManager } from "./application/services/TaskManager.js";
-import { TaskCommandRegistry } from "./application/commands/TaskCommands.js";
+import { ConfigStore } from "./application/services/ConfigStore.service.js";
+import { WorkflowService } from "./application/services/WorkflowService.service.js";
+import { PackageService } from "./application/services/PackageService.service.js";
+import { USBTunnel } from "./application/services/USBTunnel.service.js";
+import { ContainerTunnel } from "./application/services/ContainerTunnel.service.js";
+import { DeviceWatcher } from "./application/services/DeviceWatcher.service.js";
+import { LockManager } from "./application/services/LockManager.service.js";
+import { TaskManager } from "./application/services/TaskManager.service.js";
+import { TaskCommandRegistry } from "./application/commands/TaskCommand.registry.js";
 
 // ── Use cases ─────────────────────────────────────────────────────────────────
 import { CheckDriverLoggedUseCase } from "./application/use-cases/auth/CheckDriverLogged.use-case.js";
@@ -29,9 +29,13 @@ import { SyncWorkflowUseCase } from "./application/use-cases/workflow/SyncWorkfl
 import { SyncWorkflowsUseCase } from "./application/use-cases/workflow/SyncWorkflows.use-case.js";
 import { ListDevicesUseCase } from "./application/use-cases/devices/ListDevices.use-case.js";
 import { FlashWorkflowUseCase } from "./application/use-cases/workflow/FlashWorkflow.use-case.js";
-import { ExecuteWorkflowUseCase } from "./application/use-cases/workflow/ExecuteWorkflow.use-case.js";
+import { ExecuteSessionsService } from "./application/services/ExecuteSessions.service.js";
+import { ReplTerminalsService } from "./application/services/ReplTerminals.service.js";
 import { RecordWorkflowUseCase } from "./application/use-cases/workflow/RecordWorkflow.use-case.js";
 import { RemovePackageUseCase } from "./application/use-cases/package/RemovePackage.use-case.js";
+import { createLogger } from "./infrastructure/logger/Logger.js";
+
+const log = createLogger("driver");
 
 // ── Factories (parâmetros primitivos) ─────────────────────────────────────────
 
@@ -64,7 +68,8 @@ container.registerSingleton(ConfigureDriverUseCase);
 
 container.registerSingleton(CompileWorkflowUseCase);
 container.registerSingleton(FlashWorkflowUseCase);
-container.registerSingleton(ExecuteWorkflowUseCase);
+container.registerSingleton(ExecuteSessionsService);
+container.registerSingleton(ReplTerminalsService);
 container.registerSingleton(RecordWorkflowUseCase);
 container.registerSingleton(CreateWorkflowUseCase);
 container.registerSingleton(DeleteWorkflowUseCase);
@@ -93,6 +98,10 @@ const isTokenExpired = (token: string): boolean => {
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 
 export const runDaemon = async (): Promise<void> => {
+
+	log.info(`Starting the driver (pid ${process.pid})`);
+	// What would otherwise end the process without a word.
+	process.on("unhandledRejection", reason => log.error("Unhandled rejection:", reason));
 	const configStore = container.resolve(ConfigStore);
 	const packageService = container.resolve(PackageService);
 	const workflowService = container.resolve(WorkflowService);
@@ -121,10 +130,10 @@ export const runDaemon = async (): Promise<void> => {
 		}
 
 		const wsHost = `${baseUrl.replace(/^http/, "ws")}/driver`;
-		console.log(wsHost)
 		await ws.connect(wsHost, token);
 	}
 
 	container.resolve(GatewayWS);
 	await container.resolve(DeviceWatcher).start();
+	log.ready("Driver ready — watching for boards");
 };

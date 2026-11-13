@@ -1,10 +1,10 @@
-import type { DriverCreateWorkflowInDTO, DriverDeleteWorkflowInDTO, DriverExecuteFinishInDTO, DriverExecuteFrameInDTO, DriverListDevicesInDTO, DriverPortStatusInDTO, DriverRemovePackageInDTO, DriverSyncWorkflowInDTO, DriverSyncWorkflowsInDTO, ReplData, TaskCancelInDTO, TaskStartInDTO } from "@henglosio/shared";
+import type { DriverTasksState, DriverCreateWorkflowInDTO, DriverDeleteWorkflowInDTO, DriverExecuteFinishInDTO, DriverExecuteFrameInDTO, DriverListDevicesInDTO, DriverPortStatusInDTO, DriverRemovePackageInDTO, DriverSyncWorkflowInDTO, DriverSyncWorkflowsInDTO, ReplData, TaskCancelInDTO, TaskStartInDTO } from "@henglosio/shared";
 import { injectable } from "tsyringe";
 
 import { SocketIOClient } from "../infrastructure/ws/SocketIOClient.impl.js";
 import { CommandContext } from "../domain/entities/CommandContext.js";
-import { TaskManager } from "../application/services/TaskManager.js";
-import { TaskCommandRegistry } from "../application/commands/TaskCommands.js";
+import { TaskManager } from "../application/services/TaskManager.service.js";
+import { TaskCommandRegistry } from "../application/commands/TaskCommand.registry.js";
 import { CreateWorkflowUseCase } from "../application/use-cases/workflow/CreateWorkflow.use-case.js";
 import { DeleteWorkflowUseCase } from "../application/use-cases/workflow/DeleteWorkflow.use-case.js";
 import { SyncWorkflowUseCase } from "../application/use-cases/workflow/SyncWorkflow.use-case.js";
@@ -12,6 +12,9 @@ import { SyncWorkflowsUseCase } from "../application/use-cases/workflow/SyncWork
 import { ListDevicesUseCase } from "../application/use-cases/devices/ListDevices.use-case.js";
 import { RemovePackageUseCase } from "../application/use-cases/package/RemovePackage.use-case.js";
 import { restartDriver } from "../process-manager.js";
+import { createLogger } from "../infrastructure/logger/Logger.js";
+
+const log = createLogger("gateway");
 
 /**
  * What the hosting sends the driver over its socket, routed to what handles it: tasks
@@ -71,8 +74,15 @@ export class GatewayWS {
 
 			const command = this.taskCommands.get(data.type);
 
+			if (!command) {
+				log.warn(`Unknown task type ${data.type} (task ${data.taskId})`);
+				this.taskManager.reject(data.taskId, `unknown_task_type: ${data.type}`);
+				return;
+			}
+
 			if (!command.isValidPayload(data.payload)) {
-				console.warn(`[task:start] invalid payload for ${data.type} (task ${data.taskId})`);
+				log.warn(`Invalid payload for ${data.type} (task ${data.taskId})`);
+				this.taskManager.reject(data.taskId, `invalid_payload: ${data.type}`);
 				return;
 			}
 
@@ -86,6 +96,16 @@ export class GatewayWS {
 
 		this.ws.socket?.on("task:cancel", (data: TaskCancelInDTO) => {
 			this.taskManager.cancel(data.taskId);
+		});
+
+		// What's running here — the hosting asks each time this driver connects.
+		this.ws.socket?.on("tasks:state", (ack: (state: DriverTasksState) => void) => {
+			ack(this.taskManager.state());
+		});
+
+		// Frees a board, whatever is holding it.
+		this.ws.socket?.on("port:release", (data: DriverPortStatusInDTO) => {
+			this.ws.socket?.emit("port:release:result", { id: data.id, type: "done", data: { tasks: this.taskManager.releasePort(data.port) } });
 		});
 
 		// What has a board busy — so the studio can show it, and pick it up.
@@ -186,7 +206,7 @@ export class GatewayWS {
 			const result = await this.syncWorkflowUseCase.execute(data.workflowId, data.packages, context)
 			.catch((error) => {
 
-				console.log(error)
+				log.error(`Syncing workflow ${data.workflowId} failed:`, error);
 
 				this.ws.socket?.emit("workflow:sync:result", {
 					id: data.id,

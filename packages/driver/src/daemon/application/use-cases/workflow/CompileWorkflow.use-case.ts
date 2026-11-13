@@ -1,34 +1,35 @@
 
 import { inject, injectable } from "tsyringe";
+import { createHash } from "crypto";
 import fs from "fs/promises";
 
 import { PackageService as PackageValidator, WorkflowCompileResponse } from "@henglosio/shared";
 
-import { ContainerTunnel } from "../../services/ContainerTunnel.js";
+import { ContainerTunnel } from "../../services/ContainerTunnel.service.js";
 import { TaskContext } from "../../../domain/entities/TaskContext.js";
 import { IContainerRuntime, VolumeBind } from "../../../domain/interfaces/IContainerRuntime.interface.js";
-import { PackageService } from "../../services/PackageService.js";
-import { WorkflowService } from "../../services/WorkflowService.js";
+import { PackageService } from "../../services/PackageService.service.js";
+import { WorkflowService } from "../../services/WorkflowService.service.js";
 
-// Builds the board's runtime in the platform's container (see the platform's
-// Runner.build): frozen into a MicroPython firmware for a board that says how
-// to build one (firmware.build), else compiled to .mpy for the board's
-// firmware version. The result lands on the host in WorkflowService.buildPath,
+// Builds the board's runtime in the board's image (see the platform's
+// Runner.build): frozen into a MicroPython firmware when the board's script
+// builds one, else compiled to .mpy for the board's firmware version. The result lands on the host in WorkflowService.buildPath,
 // where FlashWorkflowUseCase installs it from. Components aren't built here: each
 // session (Play, Run, Debug, Record) installs the ones it uses — see
 // BoardInstaller — so changing them needs no compile.
-// One cache for every workflow's container: what a platform fetches and builds
-// once — mpy-cross per MicroPython version, and for a board whose firmware the
-// platform builds (the runtime frozen in), MicroPython's source, ESP-IDF and
-// its toolchain (a few GB), the build folders and the finished images.
-const BUILD_CACHE_VOLUME = "henglosio-build-cache";
+// One cache per image, shared by the containers that run it: what a build fetches
+// once — mpy-cross per MicroPython version and, for a board whose script builds
+// its firmware, MicroPython's source, its toolchain (a few GB), the build folders
+// and the finished images. Per image: any image can write to it, and what one
+// leaves there must not end up in another's firmware.
+const buildCacheVolume = (image: string) => `henglosio-build-cache-${createHash("sha256").update(image).digest("hex").slice(0, 16)}`;
 const BUILD_CACHE_PATH = "/root/.cache/hio";
 
 // Bumped when the containers' mounts change: an older one is recreated.
-const CONTAINER_LAYOUT = "2";
+const CONTAINER_LAYOUT = "3";
 
 /**
- * Compiles a workflow: in its build container (the platform's image, made once per workflow and
+ * Compiles a workflow: in its build container (the board's image, made once per workflow and
  * kept), `hio build` runs the platform's Runner with the workflow's board, platform and
  * components mounted; the output is kept for the board.
  */
@@ -46,8 +47,10 @@ export class CompileWorkflowUseCase {
 
 	// `settings`: the workflow's platform setting overrides, handed to the
 	// platform's build through runner.map.json — they change the compiled
-	// runtime, not the container (no new packages hash).
-	async execute(workflowId: string, ctx: TaskContext, settings: Record<string, number> = {}): Promise<WorkflowCompileResponse> {
+	// runtime, not the container (no new packages hash). `options`: what the
+	// workflow picked for its board's options, for the board's firmware script —
+	// runner.map.json stays in the container, so the flash gets them too.
+	async execute(workflowId: string, ctx: TaskContext, settings: Record<string, number> = {}, options: Record<string, string | number | boolean> = {}): Promise<WorkflowCompileResponse> {
 
 		if (!await this.workflowService.exists(workflowId)) {
 			throw new Error("Workflow not found.");
@@ -55,7 +58,10 @@ export class CompileWorkflowUseCase {
 
 		const workflowMetadata = await this.workflowService.getMetadata(workflowId);
 		if (!workflowMetadata.board || !workflowMetadata.platform) {
-			throw new Error("No package found.");
+			const missing = !workflowMetadata.board ? "board" : "platform";
+			throw new Error(workflowMetadata.syncError
+				? `This workflow's ${missing} package isn't installed on this driver: ${workflowMetadata.syncError}`
+				: `This workflow's ${missing} package isn't installed on this driver — restart it to sync again.`);
 		}
 
 		const cachedBoard = await this.packageService.getPackage(workflowMetadata.board.name, workflowMetadata.board.version);
@@ -64,9 +70,10 @@ export class CompileWorkflowUseCase {
 		const cachedPlatform = await this.packageService.getPackage(workflowMetadata.platform.name, workflowMetadata.platform.version);
 		if (!cachedPlatform) throw new Error("Platform package not found.");
 
-		if (!await this.packageValidator.validateBoard(cachedBoard.path)) throw new Error("Invalid board package.");
+		const board = await this.packageValidator.validateBoard(cachedBoard.path);
+		if (!board) throw new Error("Invalid board package.");
 
-		// The platform builds itself: its container, its output folder.
+		// The platform builds itself, in the board's image: its output folder.
 		const platform = await this.packageValidator.validatePlatform(cachedPlatform.path);
 		if (!platform) throw new Error("Invalid platform package.");
 
@@ -82,24 +89,25 @@ export class CompileWorkflowUseCase {
 		if (await this.containerService.containerExists(containerName)) {
 			const existingHash = await this.containerService.getContainerLabel(containerName, "henglosio.packages-hash");
 			const existingLayout = await this.containerService.getContainerLabel(containerName, "henglosio.layout");
-			if (existingHash !== packagesHash || existingLayout !== CONTAINER_LAYOUT) {
+			const existingImage = await this.containerService.getContainerLabel(containerName, "henglosio.image");
+			if (existingHash !== packagesHash || existingLayout !== CONTAINER_LAYOUT || existingImage !== board.firmware.image) {
 				await this.containerService.removeContainer(containerName);
 			}
 		}
 
 		if (!await this.containerService.containerExists(containerName)) {
 
-			const image = platform.build.image;
-			const auth = { registry: image.registry, username: image.username, password: image.password };
-			if (!await this.containerService.imageExists(image.name, auth)) {
-				await this.containerService.pullImage(image.name, auth, (msg) => ctx.info(msg));
+			const image = { name: board.firmware.image };
+			ctx.info(`Building in ${image.name}, with ${board.name}'s ${board.firmware.script}.`);
+			if (!await this.containerService.imageExists(image.name, {})) {
+				await this.containerService.pullImage(image.name, {}, (msg) => ctx.info(msg));
 			}
 
 			const volumes: VolumeBind[] = [
 				{ hostPath: cachedBoard.path,    containerPath: "/workspace/packages/board",    readOnly: true },
 				{ hostPath: cachedPlatform.path, containerPath: "/workspace/packages/platform", readOnly: true },
 				{ hostPath: buildPath,           containerPath: platform.build.output },
-				{ volume: BUILD_CACHE_VOLUME,    containerPath: BUILD_CACHE_PATH },
+				{ volume: buildCacheVolume(image.name), containerPath: BUILD_CACHE_PATH },
 			];
 
 			await this.containerService.createContainer({
@@ -107,7 +115,7 @@ export class CompileWorkflowUseCase {
 				image,
 				cmd: ["sleep", "infinity"],
 				volumes,
-				labels: { "henglosio.packages-hash": packagesHash, "henglosio.layout": CONTAINER_LAYOUT },
+				labels: { "henglosio.packages-hash": packagesHash, "henglosio.layout": CONTAINER_LAYOUT, "henglosio.image": image.name },
 				network:    { mode: "bridge" },
 				extraHosts: ["host.docker.internal:host-gateway"],
 			});
@@ -121,6 +129,7 @@ export class CompileWorkflowUseCase {
 			// The runtime only — sessions install the components (BoardInstaller).
 			components: [],
 			settings,
+			options,
 		};
 
 		await this.containerService.copyToContainer(

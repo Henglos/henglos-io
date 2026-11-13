@@ -1,8 +1,9 @@
 # The MicroPython side of a raw REPL, for ReplSession's tests: runs each code
 # block it's sent (one JSON line in: {"code": ...}; one out: {"out", "err"})
 # in one persistent namespace — so hio.tools.repl keeps its runtime between
-# blocks, as on a board. The runtime is the real one (packages/platform),
-# under CPython with the MicroPython stubs from its tests.
+# blocks, as on a board. The runtime is the real one (packages/hio-system, with
+# hio.sdk from packages/hio-sdk — `hio` is a namespace across the two), under
+# CPython with the MicroPython stubs from its tests.
 #
 # Every absolute path ("/hio/...") is redirected into argv[1], so uploads and
 # the stored program never touch the real filesystem.
@@ -10,8 +11,10 @@
 import builtins, contextlib, io, json, os, sys, traceback
 
 SANDBOX = sys.argv[1]
-PLATFORM = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "packages", "platform")
-sys.path[:0] = [os.path.abspath(PLATFORM), os.path.abspath(os.path.join(PLATFORM, "test"))]
+PACKAGES = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "packages")
+PLATFORM = os.path.join(PACKAGES, "hio-system")
+SDK = os.path.join(PACKAGES, "hio-sdk", "src")
+sys.path[:0] = [os.path.abspath(PLATFORM), os.path.abspath(SDK), os.path.abspath(os.path.join(PLATFORM, "test"))]
 
 import conftest  # noqa: F401 — micropython/machine stubs
 
