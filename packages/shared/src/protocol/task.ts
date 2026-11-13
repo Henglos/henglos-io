@@ -96,6 +96,9 @@ export const TaskCompilePayloadSchema = zod.object({
 	// The workflow's platform setting overrides (SystemConfig key → value),
 	// applied by the platform's build — see PlatformManifestSchema.settings.
 	settings: zod.record(zod.string(), zod.number()).optional(),
+	// What the workflow picked for its board's options (the board's `options`, by
+	// key), handed to the board's firmware script.
+	options: zod.record(zod.string(), zod.union([zod.string(), zod.number(), zod.boolean()])).optional(),
 });
 
 // Installs the compiled runtime on the board: flashes the MicroPython
@@ -233,6 +236,25 @@ export const ReplDataSchema = zod.object({
 	data: zod.instanceof(Uint8Array),
 });
 
+// What the driver has, answered when the hosting asks (`tasks:state`) each time
+// it connects: the driver is the source of truth for what runs on it, the
+// hosting's task list is rebuilt from this. `finished` is how its latest tasks
+// ended, for a hosting that missed the end of one.
+export const DriverTasksStateSchema = zod.object({
+	running: zod.array(zod.object({
+		taskId: zod.string(),
+		type: TaskTypeSchema,
+		workflowId: zod.string().optional(),
+		port: zod.string().optional(),
+		startedAt: zod.number(),
+	})),
+	finished: zod.array(zod.object({
+		taskId: zod.string(),
+		ok: zod.boolean(),
+		error: zod.string().optional(),
+	})),
+});
+
 /** Hosting -> driver (`task:cancel`): stop a task. */
 export const TaskCancelInDTOSchema = zod.object({
 	taskId: zod.string(),
@@ -310,6 +332,8 @@ export type BoardInstall = zod.infer<typeof BoardInstallSchema>;
 export type TaskStartInDTO = zod.infer<typeof TaskStartInDTOSchema>;
 /** Hosting -> driver (`task:cancel`): stop a task. */
 export type TaskCancelInDTO = zod.infer<typeof TaskCancelInDTOSchema>;
+/** What the driver has running, and how its latest tasks ended. */
+export type DriverTasksState = zod.infer<typeof DriverTasksStateSchema>;
 // ── web <-> hosting ──────────────────────────────────────────────────────────
 export type TaskSubscribeInDTO = zod.infer<typeof TaskSubscribeInDTOSchema>;
 // POST /drivers/:driverId/workflows/:workflowId/repl — opens the terminal.

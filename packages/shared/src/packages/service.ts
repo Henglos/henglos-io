@@ -5,18 +5,16 @@ import type { BoardPackage, ComponentPackage, PlatformPackage } from "../manifes
 
 const manifests = new ManifestService();
 
-// Where a package keeps its manifest.yaml: at its root, or under workspace/
-// (the older layout, still used by board packages). The folder it's in is the
-// package's own `path` — every relative path in the manifest (a component
-// action's `script`, a board's `build.script`) resolves against it.
-const MANIFEST_LOCATIONS = ["manifest.yaml", path.join("workspace", "manifest.yaml")];
-
-/** A package's manifest.yaml — at its root, or in workspace/. Null when it has none. */
+/**
+ * A package's manifest.yaml, at its root or under workspace/. Null when it has none. Every relative
+ * path in it (a component action's `script`, a board's `firmware.script` and
+ * `ui.schema`) resolves against that folder, and can be in any folder under it.
+ */
 export async function locateManifest(packagePath: string): Promise<string | null> {
-	for (const relative of MANIFEST_LOCATIONS) {
-		const candidate = path.join(packagePath, relative);
-		if (await fs.stat(candidate).then(s => s.isFile(), () => false)) return candidate;
-	}
+	const candidate = path.join(packagePath, "manifest.yaml");
+	if (await fs.stat(candidate).then(s => s.isFile(), () => false)) return candidate;
+	const workspaceCandidate = path.join(packagePath, "workspace", "manifest.yaml");
+	if (await fs.stat(workspaceCandidate).then(s => s.isFile(), () => false)) return workspaceCandidate;
 	return null;
 }
 
@@ -36,13 +34,16 @@ export class PackageService {
 		}
 	}
 
-	// A board package: its manifest (hardware only — pins and firmware).
+	// A board package: its manifest (pins and firmware) plus the script that
+	// builds and writes its firmware.
 	async validateBoard(packagePath: string): Promise<BoardPackage | null> {
 		try {
 			const manifestPath = await locateManifest(packagePath);
 			if (!manifestPath) return null;
 			const manifest = await manifests.loadAs(manifestPath, "board");
-			return { ...manifest, path: path.dirname(manifestPath) };
+			const root = path.dirname(manifestPath);
+			await fs.access(path.join(root, manifest.firmware.script));
+			return { ...manifest, path: root };
 		} catch {
 			return null;
 		}
@@ -61,8 +62,7 @@ export class PackageService {
 		}
 	}
 
-	// The platform package: the runtime (hio/ next to its manifest) plus the
-	// Runner script that builds it.
+	// The platform package: its manifest plus the build script that compiles it.
 	async validatePlatform(packagePath: string): Promise<PlatformPackage | null> {
 		try {
 			const manifestPath = await locateManifest(packagePath);
@@ -75,4 +75,5 @@ export class PackageService {
 			return null;
 		}
 	}
+
 }

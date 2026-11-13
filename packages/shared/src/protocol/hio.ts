@@ -44,7 +44,7 @@ export const HioManifestSchema = zod.object({
 	exportedAt: zod.string(),
 	name: zod.string(),
 	description: zod.string(),
-	/** The @henglosio/platform version it builds against. */
+	/** The @henglosio/hio-system version it builds against. */
 	platform: zod.string().min(1),
 	packages: zod.array(HioPackageRefSchema),
 });

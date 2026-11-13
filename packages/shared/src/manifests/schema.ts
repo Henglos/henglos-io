@@ -1,16 +1,5 @@
 import zod from "zod";
-
-// ── Build image ─────────────────────────────────────────────────────────────────
-
-/** A container image — the platform's build image — and the registry credentials to pull it. */
-export const ImageRefSchema = zod.object({
-
-	name: zod.string(),
-	registry: zod.string().optional(),
-	username: zod.string().optional(),
-	password: zod.string().optional()
-
-})
+import { BoardOptionSchema } from "@henglosio/workflow";
 
 // ── Platform manifest ─────────────────────────────────────────────────────────
 
@@ -94,7 +83,7 @@ export const platformSettingError = (setting: PlatformSetting, value: unknown): 
 };
 
 // The platform is the runtime (hio/**/*.py) and knows how to build itself:
-// `build` is its container (`image`) and Runner (`script`) — build compiles
+// `build` is its Runner (`script`), run in the board's image — build compiles
 // the runtime and the workflow's components for the board's firmware version
 // into `output` (which the driver uploads); flash writes the board's firmware.
 export const PlatformManifestSchema = zod.object({
@@ -103,7 +92,6 @@ export const PlatformManifestSchema = zod.object({
 	schemaVersion: zod.number().int().positive(),
 	version: zod.string(),
 	build: zod.object({
-		image: ImageRefSchema,
 		script: zod.string(),
 		output: zod.string(),
 	}),
@@ -137,36 +125,18 @@ export const ComponentManifestSchema = zod.object({
 
 // ── Board manifest ────────────────────────────────────────────────────────────
 
-// A board is hardware only, no code: its pins (`ui.schema`) and the
-// MicroPython firmware it runs — the port's official image, and how to write
-// it. `firmware.micropython` is also what the platform's build compiles for
-// (a .mpy only imports on the MicroPython version it was compiled for).
-//
-// No `limits`: frame/config ceilings are the runtime's, fixed in PacketCodec.py
-// and mirrored by @henglosio/shared's packet.ts — not per board anymore.
+// A board is its pins (`ui.schema`) and how to get MicroPython onto it — see
+// BoardFirmware (@henglosio/runner), the script's contract.
 export const BoardFirmwareSchema = zod.object({
-	// MicroPython version of `image`, e.g. "1.29.0".
+	// The MicroPython version the board runs: what the runtime and the
+	// components compile for (a .mpy only imports on that version).
 	micropython: zod.string(),
-	// The port's firmware image (URL), e.g. ESP32_GENERIC-...-v1.29.0.bin.
-	image: zod.string(),
-	flash: zod.object({
-		// esptool's --chip.
-		chip: zod.string(),
-		// Where `image` is written, e.g. "0x1000" (ESP32) or "0x0" (ESP32-S3).
-		offset: zod.string(),
-	}),
-	// How to build the board's MicroPython from source — the platform freezes
-	// its runtime into it, so the code runs from flash instead of RAM. Without
-	// it, the board runs `image` and the runtime goes on its filesystem as .mpy.
-	build: zod.object({
-		// MicroPython's port (ports/<port>), e.g. "esp32".
-		port: zod.string(),
-		// Its board (ports/<port>/boards/<board>), e.g. "ESP32_GENERIC".
-		board: zod.string(),
-		// The ESP-IDF to build with, e.g. "v5.4.2" — by default, the one
-		// MicroPython's CI builds that version with.
-		idf: zod.string().optional(),
-	}).optional(),
+	// The Docker image the build and the flash run in. Any image with Node 24+,
+	// `hio` and Python 3 with pip — the official ones are henglosio/workbench-*.
+	image: zod.string().min(1),
+	// The TypeScript file that builds and writes the firmware, in any folder of
+	// the package (relative to this manifest).
+	script: zod.string().regex(/\.ts$/, "must be a .ts file").refine(script => !script.split(/[\\/]/).includes(".."), "must be inside the package"),
 });
 
 /** A board package's manifest.yaml. */
@@ -181,6 +151,9 @@ export const BoardManifestSchema = zod.object({
 		schema: zod.string(),
 	}),
 	firmware: BoardFirmwareSchema,
+	// The parameters of its firmware: the studio shows a form, and the firmware
+	// script gets the values picked. Not for secrets.
+	options: zod.array(BoardOptionSchema).optional(),
 	// What it offers besides its pins — wifi, bluetooth… Absent: not said
 	// (nothing is checked against it).
 	capabilities: zod.array(zod.string()).optional(),

@@ -10,6 +10,68 @@ type BaseContext = {
 
 }
 
+/** What both of a board's firmware actions get. */
+type FirmwareContext = {
+
+	/** The MicroPython version the board's manifest says it runs. */
+	micropython: string;
+	/** A folder kept between builds, for this board's image: sources, toolchains, build folders. */
+	cache: string;
+	/** The board's options (its manifest's `options`): the workflow's values, or the defaults. */
+	options: Record<string, string>;
+	/** Reports output to the studio. */
+	log: (data: string) => Promise<void>;
+	/**
+	 * Runs a command of the image, its output going to the log. No shell is
+	 * involved, so an argument is never read as a command. Rejects when it fails.
+	 */
+	run: (command: string, args?: string[]) => Promise<void>;
+
+}
+
+/** What a board's firmware `build` gets. */
+export type FirmwareBuildContext = FirmwareContext & {
+
+	/** MicroPython's FROZEN_MANIFEST: the runtime, with the workflow's settings written in. */
+	freezeManifest: string;
+	/**
+	 * Where to leave a firmware with that manifest frozen in. Left empty, the
+	 * runtime goes on the board's filesystem as .mpy files instead.
+	 */
+	firmwareOutput: string;
+
+}
+
+/** What a board's firmware `flash` gets. */
+export type FirmwareFlashContext = FirmwareContext & {
+
+	/** The image `build` made. Absent: write the board's stock MicroPython. */
+	firmware?: string;
+	/** The board's serial port, as a URL the image's tools can open (rfc2217://…). */
+	serialUrl: string;
+	baudrate: number;
+	/** Whether to erase the flash first. False: the board's filesystem must survive. */
+	erase: boolean;
+
+}
+
+/**
+ * A board's firmware script: the default export of its manifest's
+ * `firmware.script`, run in its `firmware.image`.
+ *
+ * Written in TypeScript and run by Node as it is, so it needs no build step: use
+ * `import type` and no syntax Node would have to transform (no `enum`).
+ *
+ * The firmware must keep MicroPython's REPL on the serial port, which is how the
+ * driver installs the runtime, and match the manifest's `firmware.micropython`.
+ */
+export type BoardFirmware = {
+
+	build: (context: FirmwareBuildContext) => Promise<void> | void;
+	flash: (context: FirmwareFlashContext) => Promise<void> | void;
+
+}
+
 /**
  * What Runner.build gets. The platform's Runner builds itself for `board`
  * (its firmware version) along with the workflow's components, into
@@ -25,17 +87,27 @@ export type BuildContext =  BaseContext & {
 	// `settings`, by key) — the build checks them against those declarations.
 	settings: Record<string, number>;
 
+	/** The board's firmware script. */
+	boardFirmware: BoardFirmware;
+	/** The board's options, by key — see FirmwareContext. */
+	options: Record<string, string>;
+
 }
 
-/** What Runner.flash gets. The platform's Runner writes `board`'s firmware (board.firmware) to `port`. */
+/** What Runner.flash gets. The platform's Runner has the board's script write its firmware to `port`. */
 export type FlashContext = BaseContext & {
 
 	board: BoardPackage;
 	/** The board's serial port — in a container, the driver's RFC 2217 tunnel to it. */
 	port: string;
 	baudrate: number;
-	// A local firmware image to write instead of board.firmware.image.
+	// A firmware image to write instead of the board's stock one.
 	firmware?: string;
+
+	/** The board's firmware script. */
+	boardFirmware: BoardFirmware;
+	/** The board's options, by key — see FirmwareContext. */
+	options: Record<string, string>;
 
 	advanced: Record<string, unknown>;
 

@@ -20,7 +20,7 @@ export const WorkflowSchema = zod.object({
 
 /** A workflow with its data — everything the studio opens it with. */
 export const FullWorkflowSchema = WorkflowSchema.extend({
-	// @henglosio/platform version the workflow builds against (see change:platform).
+	// @henglosio/hio-system version the workflow builds against (see change:platform).
 	platform: zod.string(),
 	data: zod.unknown(),
 	// Its board's version was removed with no other to move it to: it has no
@@ -49,7 +49,7 @@ export const ChangeBoardOperationSchema = OperationSchema.extend({
 	packageId: zod.string(),
 });
 
-// The workflow's @henglosio/platform version (Workflow.platform — not part of
+// The workflow's @henglosio/hio-system version (Workflow.platform — not part of
 // `data`): server-side only, checked against what the board and every
 // component accept, and followed by a driver sync.
 export const ChangePlatformOperationSchema = OperationSchema.extend({
@@ -63,6 +63,14 @@ export const SetPlatformSettingOperationSchema = OperationSchema.extend({
 	op: zod.literal("update:platform-setting"),
 	key: zod.string().regex(/^[A-Z][A-Z0-9_]*$/),
 	value: zod.number().int().nullable(),
+});
+
+// What the workflow picked for one of its board's options
+// (workflow.data.boardOptions); `value` null drops it, back to the default.
+export const SetBoardOptionOperationSchema = OperationSchema.extend({
+	op: zod.literal("update:board-option"),
+	key: zod.string().regex(/^[A-Z][A-Z0-9_]*$/),
+	value: zod.union([zod.string(), zod.number(), zod.boolean()]).nullable(),
 });
 
 /** Removes a component — and its actions — from the workflow. */
@@ -154,7 +162,7 @@ export const RemoveSwitchCaseOperationSchema = OperationSchema.extend({
 	case: zod.number().int().positive().optional(),
 });
 
-// Workflow variables — see @henglosio/workflow's Variables.use-case.ts.
+// Workflow variables — see @henglosio/workflow's WorkflowVariables.ts.
 export const AddVariableOperationSchema = OperationSchema.extend({
 	op: zod.literal("add:variable"),
 	variable: VariableRuntime,
@@ -217,6 +225,7 @@ export const WorkflowPatchSchema = zod.discriminatedUnion("op", [
 	ChangeBoardOperationSchema,
 	ChangePlatformOperationSchema,
 	SetPlatformSettingOperationSchema,
+	SetBoardOptionOperationSchema,
 	AddComponentOperationSchema,
 	RemoveComponentOperationSchema,
 	AddActionOperationSchema,

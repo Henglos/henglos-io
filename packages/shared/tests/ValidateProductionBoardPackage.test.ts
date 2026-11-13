@@ -6,14 +6,15 @@ import path from "path";
 import { rm } from "fs/promises";
 
 // A board is hardware only: pins and the MicroPython firmware it runs.
-const BOARD_MANIFEST = "kind: board\nname: Test Board\nschemaVersion: 1\ndependences:\n  platform: ^2.0.0\nui:\n  schema: ./board.schema.yaml\nfirmware:\n  micropython: 1.29.0\n  image: https://example.com/fw.bin\n  flash:\n    chip: esp32\n    offset: \"0x1000\"\n";
+const BOARD_MANIFEST = "kind: board\nname: Test Board\nschemaVersion: 1\ndependences:\n  platform: ^2.0.0\nui:\n  schema: ./board.schema.yaml\nfirmware:\n  micropython: 1.29.0\n  image: test/workbench:1\n  script: ./firmware.ts\n";
 
 // The platform carries the build.
-const PLATFORM_MANIFEST = "kind: platform\nname: HenglosIO\nschemaVersion: 1\nversion: 2.1.0\nbuild:\n  image:\n    name: test/workbench:1\n  script: ./build/build.js\n  output: /workspace/build\n";
+const PLATFORM_MANIFEST = "kind: platform\nname: HenglosIO\nschemaVersion: 1\nversion: 2.1.0\nbuild:\n  script: ./build/build.js\n  output: /workspace/build\n";
 
 const BOARD_STRUCTURE = {
 	"manifest.yaml": { type: "file", content: BOARD_MANIFEST },
 	"board.schema.yaml": { type: "file", content: "name: Test\ndescription: Test\n" },
+	"firmware.ts": { type: "file", content: "export default {};\n" },
 } as const satisfies GenerateSchema;
 
 const PLATFORM_STRUCTURE = {
@@ -46,7 +47,12 @@ describe("Validate packages", () => {
 	test("a board package resolves to its manifest's folder, with its firmware", async () => {
 		const result = await new PackageService().validateBoard(path.join(root, "board"));
 		expect(result?.path).toBe(path.join(root, "board"));
-		expect(result?.firmware).toEqual({ micropython: "1.29.0", image: "https://example.com/fw.bin", flash: { chip: "esp32", offset: "0x1000" } });
+		expect(result?.firmware).toEqual({ micropython: "1.29.0", image: "test/workbench:1", script: "./firmware.ts" });
+	});
+
+	test("a board whose firmware script is missing is invalid", async () => {
+		await rm(path.join(root, "board", "firmware.ts"));
+		expect(await new PackageService().validateBoard(path.join(root, "board"))).toBeNull();
 	});
 
 	test("a platform package carries its build", async () => {

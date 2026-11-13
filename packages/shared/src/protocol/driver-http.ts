@@ -103,13 +103,14 @@ export type DebugStartIn = zod.infer<typeof DebugStartInSchema>;
 // The debugger's value edits — what an action published, overwritten on the board (CONTEXT_SET).
 export const DebugValuesInSchema = zod.object({
 	values: zod.array(zod.discriminatedUnion("kind", [
-		zod.object({ name: zod.string().min(1), kind: zod.literal("int"), value: zod.number().int() }),
+		zod.object({ name: zod.string().min(1), kind: zod.literal("integer"), value: zod.number().int() }),
 		zod.object({ name: zod.string().min(1), kind: zod.literal("float"), value: zod.number() }),
 		zod.object({ name: zod.string().min(1), kind: zod.literal("bool"), value: zod.boolean() }),
-		zod.object({ name: zod.string().min(1), kind: zod.literal("text"), value: zod.string() }),
+		zod.object({ name: zod.string().min(1), kind: zod.literal("string"), value: zod.string() }),
 		zod.object({ name: zod.string().min(1), kind: zod.literal("bytes"), value: zod.array(zod.number().int().min(0).max(255)) }),
-		// A list or an object — sent as its JSON (DataType JSON).
-		zod.object({ name: zod.string().min(1), kind: zod.literal("json"), value: zod.union([zod.array(zod.unknown()), zod.record(zod.string(), zod.unknown())]) }),
+		// A list or an object — sent as its JSON (DataType LIST / OBJECT).
+		zod.object({ name: zod.string().min(1), kind: zod.literal("list"), value: zod.array(zod.unknown()) }),
+		zod.object({ name: zod.string().min(1), kind: zod.literal("object"), value: zod.record(zod.string(), zod.unknown()) }),
 	])).min(1),
 });
 

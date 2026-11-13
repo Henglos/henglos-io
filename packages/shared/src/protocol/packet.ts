@@ -1,5 +1,5 @@
 // Wire-level frame protocol used to talk to HIO firmware.
-// Mirrors packages/platform/hio/system/core/services/PacketCodec.py (the
+// Mirrors packages/hio-system/hio/system/core/services/PacketCodec.py (the
 // MicroPython runtime) — keep in sync; its header documents every layout below.
 //
 // Base Frame:
