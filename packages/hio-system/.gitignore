@@ -1,0 +1,5 @@
+# scripts/build.py output
+build/
+
+# put here by scripts/bundle-sdk.mjs while packing — the sdk lives in packages/hio-sdk
+hio/sdk/

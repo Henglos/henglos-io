@@ -1,0 +1,765 @@
+kind: component
+name: Display
+schemaVersion: 1
+
+dependences:
+  platform: ^1.0.0
+
+schema:
+
+  displayName: Display
+  description: >
+    A monochrome I2C OLED — SSD1306 (0.96", 128x64 or 128x32) or SH1106
+    (1.3", 128x64), 4 pins. Print text in 3 fonts and 4 sizes, Scroll it,
+    Draw shapes (any shape from its vertices), show an Image (built-in
+    icons or your own bitmap), and readings as a Bar, a Gauge or a Chart
+    over time. Actions draw into a buffer and Update Screen sends it — turn
+    it off on all but the last to build a screen without flicker.
+
+  # Wire ids come from the lowercased displayNames (computeWireActionId /
+  # computeWireConfigId in @henglosio/workflow) — each script's @action and
+  # context.get() names must match: "display/<action>", "<action>/<config>".
+  #
+  # The wiring configs (and Update Screen) are the same on every action —
+  # written once (YAML anchors). Every typed number has its range as
+  # patterns (Min/Max); bound values are clamped by the scripts. Configs a
+  # choice hides (Draw's other shapes) aren't sent.
+  #
+  # SDA/SCL: any GPIO works (software I2C). The defaults are the ESP32's
+  # usual pair, GPIO21 / GPIO22.
+
+  actions:
+
+    - displayName: Print
+      description: Writes text — or a bound value, like a sensor's reading — on a line of the screen, in one of 4 sizes.
+      script: src/print.py
+      configurations:
+        - &sda
+          displayName: SDA Pin
+          description: Board pin wired to the display's SDA.
+          type: pin
+          from: board
+          filterBy: [digital_out]
+          required: true
+          defaultValue: { gpio: 21, type: [digital_in, digital_out], displayName: GPIO21 }
+        - &scl
+          displayName: SCL Pin
+          description: Board pin wired to the display's SCL (sometimes labeled SCK).
+          type: pin
+          from: board
+          filterBy: [digital_out]
+          required: true
+          defaultValue: { gpio: 22, type: [digital_in, digital_out], displayName: GPIO22 }
+        - &model
+          displayName: Model
+          description: >
+            The display's controller and size — 0.96" modules are usually
+            SSD1306, 1.3" ones SH1106 (picking SSD1306 for one shows a
+            shifted, noisy image).
+          type: options
+          defaultValue: ssd1306_128x64
+          options:
+            - displayName: SSD1306 · 128x64 (0.96")
+              value: ssd1306_128x64
+            - displayName: SSD1306 · 128x32 (0.91")
+              value: ssd1306_128x32
+            - displayName: SH1106 · 128x64 (1.3")
+              value: sh1106_128x64
+        - displayName: Text
+          description: >
+            What to show — type it, or bind an output or a variable (numbers are
+            formatted, see Decimals). A typed \n goes on to the next line.
+            Accents show as their plain letter.
+          type: string
+          defaultValue: Hello!
+          placeholder: e.g. Hello!
+        - displayName: Line
+          description: >
+            Which line to write on, from 1 at the top — lines are 8 px: 1 to 8
+            on a 64-px screen, 1 to 4 on a 32-px one. A bigger Text Size takes
+            more lines from there down.
+          type: integer
+          defaultValue: "1"
+          placeholder: 1–8
+          patterns:
+            - { name: Min, value: 1 }
+            - { name: Max, value: 8 }
+        - &font
+          displayName: Font
+          description: >
+            The typeface — Standard (8 px a character, 16 a line), Small (a
+            finer 5x7, 6 px a character: 21 a line, with descenders) or Bold
+            (Standard 1 px thicker, 9 px a character: 14 a line).
+          type: options
+          defaultValue: standard
+          options:
+            - displayName: Standard · 8x8
+              value: standard
+            - displayName: Small · 5x7
+              value: small
+            - displayName: Bold · 8x8
+              value: bold
+        - &textSize
+          displayName: Text Size
+          description: How big the text is — 1x to 4x the font (8, 16, 24 or 32 px tall), taking that many 8-px lines from Line down.
+          type: options
+          defaultValue: "1"
+          options:
+            - displayName: 1x · 8 px
+              value: "1"
+            - displayName: 2x · 16 px
+              value: "2"
+            - displayName: 3x · 24 px
+              value: "3"
+            - displayName: 4x · 32 px
+              value: "4"
+        - displayName: Align
+          description: Where on the line the text goes.
+          type: options
+          defaultValue: left
+          options:
+            - displayName: Left
+              value: left
+            - displayName: Center
+              value: center
+            - displayName: Right
+              value: right
+        - displayName: Column
+          advanced: true
+          description: Which character the text starts at, from 1 — up to 16 in Standard at 1x, 21 in Small (fewer at bigger sizes).
+          type: integer
+          defaultValue: "1"
+          placeholder: 1–21
+          displayOptions: { show: { Align: [left] } }
+          patterns:
+            - { name: Min, value: 1 }
+            - { name: Max, value: 21 }
+        - &format
+          displayName: Format
+          advanced: true
+          description: 'Text around Text — {} stands for it: "Temp: {} C". Without {}, it goes before it.'
+          type: string
+          placeholder: "Temp: {} C"
+          patterns:
+            - { name: MaxLength, value: 32 }
+        - displayName: Decimals
+          advanced: true
+          description: Decimal places of a bound number that isn't whole, from 0 to 6.
+          type: integer
+          defaultValue: "2"
+          placeholder: 0–6
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 6 }
+        - displayName: Clear Line
+          advanced: true
+          description: Blank the line (all of its height) before writing, so a shorter text doesn't leave the end of the last one behind.
+          type: toggle
+          label: Blank first
+          defaultValue: true
+        - &update
+          displayName: Update Screen
+          advanced: true
+          description: >
+            Send the drawing to the screen now. Turn it off to keep drawing with
+            the next actions and show it all at once with the last one (no flicker).
+          type: toggle
+          label: Show now
+          defaultValue: true
+        - &address
+          displayName: Address
+          advanced: true
+          description: The display's I2C address, in hex — 0x3C on most modules, 0x3D on some (set by a jumper on the back).
+          type: string
+          defaultValue: "0x3C"
+          placeholder: "0x3C"
+          patterns: [I2CAddress7Bit]
+
+    - displayName: Scroll
+      description: >
+        Runs text across a line, marquee-style — in from one side, out the
+        other — for a message longer than the line. The flow waits while it
+        scrolls, like a Delay.
+      script: src/scroll.py
+      configurations:
+        - *sda
+        - *scl
+        - *model
+        - displayName: Text
+          description: What to scroll — type it, or bind an output or a variable. Accents show as their plain letter.
+          type: string
+          defaultValue: Hello from Henglos IO!
+          placeholder: e.g. Hello!
+        - *format
+        - displayName: Line
+          description: Which 8-px line it runs on, from 1 at the top (1 to 8; 1 to 4 on a 32-px screen).
+          type: integer
+          defaultValue: "1"
+          placeholder: 1–8
+          patterns:
+            - { name: Min, value: 1 }
+            - { name: Max, value: 8 }
+        - *font
+        - *textSize
+        - displayName: Direction
+          description: Where the text moves to.
+          type: options
+          defaultValue: left
+          options:
+            - displayName: Left (reads naturally)
+              value: left
+            - displayName: Right
+              value: right
+        - displayName: Speed
+          description: How fast it moves, in px a second — from 10 (slow) to 400. 60 reads comfortably.
+          type: integer
+          defaultValue: "60"
+          placeholder: 10–400 px/s
+          patterns:
+            - { name: Min, value: 10 }
+            - { name: Max, value: 400 }
+        - displayName: Passes
+          description: How many times it crosses the screen before the flow goes on — 1 to 20. The line is left blank after.
+          type: integer
+          defaultValue: "1"
+          placeholder: 1–20
+          patterns:
+            - { name: Min, value: 1 }
+            - { name: Max, value: 20 }
+        - *address
+
+    - displayName: Draw
+      description: Draws a shape — a pixel, a line, a rectangle, a circle, or any shape from its vertices — lit, or erasing.
+      script: src/draw.py
+      configurations:
+        - *sda
+        - *scl
+        - *model
+        - displayName: Shape
+          description: What to draw. Its own settings show below.
+          type: options
+          defaultValue: rectangle
+          options:
+            - displayName: Pixel
+              value: pixel
+            - displayName: Line
+              value: line
+            - displayName: Rectangle
+              value: rectangle
+            - displayName: Circle
+              value: circle
+            - displayName: Polygon (custom shape)
+              value: polygon
+        - displayName: X
+          description: Horizontal position, in px from the left — 0 to 127. A circle's center, a rectangle's left edge, a line's start, where a polygon's 0,0 is.
+          type: integer
+          defaultValue: "0"
+          placeholder: 0–127
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 127 }
+        - displayName: "Y"
+          description: Vertical position, in px from the top — 0 to 63. A circle's center, a rectangle's top edge, a line's start, where a polygon's 0,0 is.
+          type: integer
+          defaultValue: "0"
+          placeholder: 0–63
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 63 }
+        - displayName: X2
+          description: Where the line ends, horizontally — 0 to 127 px.
+          type: integer
+          defaultValue: "127"
+          placeholder: 0–127
+          displayOptions: { show: { Shape: [line] } }
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 127 }
+        - displayName: Y2
+          description: Where the line ends, vertically — 0 to 63 px.
+          type: integer
+          defaultValue: "63"
+          placeholder: 0–63
+          displayOptions: { show: { Shape: [line] } }
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 63 }
+        - displayName: Width
+          description: The rectangle's width, in px — 1 to 128.
+          type: integer
+          defaultValue: "32"
+          placeholder: 1–128
+          displayOptions: { show: { Shape: [rectangle] } }
+          patterns:
+            - { name: Min, value: 1 }
+            - { name: Max, value: 128 }
+        - displayName: Height
+          description: The rectangle's height, in px — 1 to 64.
+          type: integer
+          defaultValue: "16"
+          placeholder: 1–64
+          displayOptions: { show: { Shape: [rectangle] } }
+          patterns:
+            - { name: Min, value: 1 }
+            - { name: Max, value: 64 }
+        - displayName: Radius
+          description: The circle's radius, in px — 1 to 64.
+          type: integer
+          defaultValue: "10"
+          placeholder: 1–64
+          displayOptions: { show: { Shape: [circle] } }
+          patterns:
+            - { name: Min, value: 1 }
+            - { name: Max, value: 64 }
+        - displayName: Vertices
+          description: >
+            The shape's corners, in order, as x,y pairs from X/Y — separated by
+            spaces or ";" (at least 3; it closes back to the first). A triangle:
+            "10,0 20,20 0,20". Negative values reach left of / above X/Y.
+          type: string
+          defaultValue: "10,0 20,20 0,20"
+          placeholder: "10,0 20,20 0,20"
+          displayOptions: { show: { Shape: [polygon] } }
+          patterns:
+            - regex: '^\s*-?\d{1,3}\s*,\s*-?\d{1,3}(\s*[;\s]\s*-?\d{1,3}\s*,\s*-?\d{1,3}){2,}\s*$'
+              message: 'At least 3 x,y pairs, separated by spaces or ";" — e.g. 10,0 20,20 0,20.'
+            - { name: MaxLength, value: 64 }
+        - displayName: Fill
+          description: Fill the shape in, rather than drawing only its outline.
+          type: toggle
+          label: Filled
+          defaultValue: false
+          displayOptions: { show: { Shape: [rectangle, circle, polygon] } }
+        - displayName: Color
+          description: Lit pixels, or Off to erase — draw in Off over something to cut it out.
+          type: options
+          defaultValue: "on"
+          options:
+            - displayName: "On (lit)"
+              value: "on"
+            - displayName: "Off (erase)"
+              value: "off"
+        - *update
+        - *address
+
+    - displayName: Image
+      description: Draws a bitmap — one of the built-in 16x16 icons, an image you attach, or bytes from image2cpp — 1x to 4x.
+      script: src/image.py
+      configurations:
+        - *sda
+        - *scl
+        - *model
+        - displayName: Source
+          description: A built-in icon, an image file you attach (any size — it's fitted to the screen), or bitmap bytes you type in.
+          type: options
+          defaultValue: icon
+          options:
+            - displayName: Built-in icon
+              value: icon
+            - displayName: Image file
+              value: file
+            - displayName: Custom bytes
+              value: custom
+        - displayName: Bitmap
+          description: >
+            An image (PNG, JPG, BMP… or a .pbm) — the studio turns it into the
+            screen's black and white, fitted in 128x64, and previews it. It
+            reaches the board with the workflow when it runs.
+          type: file
+          accept: [image/*, .pbm]
+          image: { format: pbm, maxWidth: 128, maxHeight: 64 }
+          displayOptions: { show: { Source: [file] } }
+        - displayName: Icon
+          description: Which icon — 16x16 px (32 to 64 px with Scale).
+          type: options
+          defaultValue: heart
+          displayOptions: { show: { Source: [icon] } }
+          options:
+            - categoryName: Status
+              options:
+                - { displayName: Check, value: check }
+                - { displayName: Cross, value: cross }
+                - { displayName: Warning, value: warning }
+                - { displayName: Bell, value: bell }
+                - { displayName: Lock, value: lock }
+                - { displayName: Power, value: power }
+                - { displayName: Clock, value: clock }
+                - { displayName: Home, value: home }
+                - { displayName: Heart, value: heart }
+            - categoryName: Connection & battery
+              options:
+                - { displayName: Wi-Fi, value: wifi }
+                - { displayName: Battery full, value: battery_full }
+                - { displayName: Battery half, value: battery_half }
+                - { displayName: Battery low, value: battery_low }
+            - categoryName: Weather
+              options:
+                - { displayName: Thermometer, value: thermometer }
+                - { displayName: Drop (humidity), value: drop }
+                - { displayName: Sun, value: sun }
+                - { displayName: Cloud, value: cloud }
+            - categoryName: Arrows
+              options:
+                - { displayName: Arrow up, value: arrow_up }
+                - { displayName: Arrow down, value: arrow_down }
+                - { displayName: Arrow left, value: arrow_left }
+                - { displayName: Arrow right, value: arrow_right }
+        - displayName: Data
+          description: >
+            Your bitmap, in Encoding — from image2cpp ("Horizontal - 1 bit per
+            pixel"): rows of Width / 8 bytes, the leftmost pixel in the top bit.
+            It fits one setting: 64 bytes by default (16x16 in hex, 24x16 in
+            base64) — raise Data size in Platform settings for more.
+          type: string
+          placeholder: "e.g. 0x18, 0x3C, … or GDw…"
+          displayOptions: { show: { Source: [custom] } }
+          patternMatch: any
+          patterns:
+            - regex: '^\s*(0x)?[0-9a-fA-F]{2}(\s*,?\s*(0x)?[0-9a-fA-F]{2})*\s*,?\s*$'
+              message: Hex bytes (00ff… or 0x00, 0xFF…).
+            - regex: '^\s*(?=\S)([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?\s*$'
+              message: Base64 (a multiple of 4 characters).
+        - displayName: Encoding
+          description: How Data is written — Hex (what image2cpp's "Arduino code" shows) or Base64 (shorter, fits a bigger image).
+          type: options
+          defaultValue: hex
+          displayOptions: { show: { Source: [custom] } }
+          options:
+            - displayName: Hex
+              value: hex
+            - displayName: Base64
+              value: base64
+        - displayName: Width
+          description: The bitmap's width, in px — 1 to 128. Its height follows from the data.
+          type: integer
+          defaultValue: "16"
+          placeholder: 1–128
+          displayOptions: { show: { Source: [custom] } }
+          patterns:
+            - { name: Min, value: 1 }
+            - { name: Max, value: 128 }
+        - displayName: X
+          description: The image's left edge, in px from the left — 0 to 127.
+          type: integer
+          defaultValue: "0"
+          placeholder: 0–127
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 127 }
+        - displayName: "Y"
+          description: The image's top edge, in px from the top — 0 to 63. Line n starts at (n − 1) × 8.
+          type: integer
+          defaultValue: "0"
+          placeholder: 0–63
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 63 }
+        - displayName: Scale
+          description: How many screen pixels each image pixel takes — a 16x16 icon at 2x is 32x32.
+          type: options
+          defaultValue: "1"
+          options:
+            - { displayName: 1x, value: "1" }
+            - { displayName: 2x, value: "2" }
+            - { displayName: 3x, value: "3" }
+            - { displayName: 4x, value: "4" }
+        - displayName: Color
+          description: Draw the image lit (On), or Off to cut it out of something lit.
+          type: options
+          defaultValue: "on"
+          options:
+            - displayName: "On (lit)"
+              value: "on"
+            - displayName: "Off (erase)"
+              value: "off"
+        - displayName: Transparent
+          advanced: true
+          description: Leave what's under the image's empty pixels as it is. Off — they're drawn too, in the opposite color (a solid block).
+          type: toggle
+          label: Keep background
+          defaultValue: true
+        - *update
+        - *address
+      outputSchema:
+        - name: width
+          type: integer
+          description: The image's width on screen, in px (after Scale).
+        - name: height
+          type: integer
+          description: The image's height on screen, in px (after Scale).
+
+    - displayName: Bar
+      description: A horizontal bar filled by a value between Min and Max — a sensor reading, a level, a progress.
+      script: src/bar.py
+      configurations:
+        - *sda
+        - *scl
+        - *model
+        - displayName: Value
+          description: What fills the bar — usually bound to an output or a variable. Below Min it's empty, above Max full.
+          type: float
+          required: true
+          placeholder: bind a value
+        - displayName: Min
+          description: The value of an empty bar.
+          type: float
+          defaultValue: "0"
+          placeholder: e.g. 0
+        - displayName: Max
+          description: The value of a full bar — must be above Min.
+          type: float
+          defaultValue: "100"
+          placeholder: e.g. 100
+        - displayName: X
+          description: The bar's left edge, in px from the left — 0 to 127.
+          type: integer
+          defaultValue: "0"
+          placeholder: 0–127
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 127 }
+        - displayName: "Y"
+          description: The bar's top edge, in px from the top — 0 to 63. Line n starts at (n − 1) × 8.
+          type: integer
+          defaultValue: "56"
+          placeholder: 0–63
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 63 }
+        - displayName: Width
+          description: The bar's width, in px — 3 to 128.
+          type: integer
+          defaultValue: "128"
+          placeholder: 3–128
+          patterns:
+            - { name: Min, value: 3 }
+            - { name: Max, value: 128 }
+        - displayName: Height
+          description: The bar's height, in px — 3 to 64.
+          type: integer
+          defaultValue: "8"
+          placeholder: 3–64
+          patterns:
+            - { name: Min, value: 3 }
+            - { name: Max, value: 64 }
+        - displayName: Border
+          description: Draw an outline around the bar, so an empty one still shows where it is.
+          type: toggle
+          label: Outline
+          defaultValue: true
+        - *update
+        - *address
+      outputSchema:
+        - name: percent
+          type: float
+          description: How full the bar is, 0–100.
+
+    - displayName: Gauge
+      description: A dial — a half circle with ticks and a needle pointing at a value between Min and Max, with the value under it.
+      script: src/gauge.py
+      configurations:
+        - *sda
+        - *scl
+        - *model
+        - displayName: Value
+          description: Where the needle points — usually bound to an output or a variable. Past Min/Max it stops at the end.
+          type: float
+          required: true
+          placeholder: bind a value
+        - displayName: Min
+          description: The value at the dial's left end.
+          type: float
+          defaultValue: "0"
+          placeholder: e.g. 0
+        - displayName: Max
+          description: The value at the dial's right end — must be above Min.
+          type: float
+          defaultValue: "100"
+          placeholder: e.g. 100
+        - displayName: X
+          description: The needle's pivot (the bottom middle of the dial), in px from the left — 0 to 127.
+          type: integer
+          defaultValue: "64"
+          placeholder: 0–127
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 127 }
+        - displayName: "Y"
+          description: The needle's pivot, in px from the top — 0 to 63. The dial rises Radius px above it; the value is written under it.
+          type: integer
+          defaultValue: "50"
+          placeholder: 0–63
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 63 }
+        - displayName: Radius
+          description: The dial's size, in px — 8 to 64.
+          type: integer
+          defaultValue: "40"
+          placeholder: 8–64
+          patterns:
+            - { name: Min, value: 8 }
+            - { name: Max, value: 64 }
+        - displayName: Show Value
+          description: Write the value under the needle's pivot.
+          type: toggle
+          label: Number
+          defaultValue: true
+        - displayName: Decimals
+          advanced: true
+          description: Decimal places of the value shown under the dial (with Show Value on), from 0 to 6.
+          type: integer
+          defaultValue: "0"
+          placeholder: 0–6
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 6 }
+        - *update
+        - *address
+      outputSchema:
+        - name: percent
+          type: float
+          description: Where the needle points, 0–100.
+
+    - displayName: Chart
+      description: >
+        A value's history as a graph — each run adds the value on the right
+        and scrolls the older ones left: a reading over time.
+      script: src/chart.py
+      configurations:
+        - *sda
+        - *scl
+        - *model
+        - displayName: Value
+          description: The value to add — usually bound to an output or a variable. One per run.
+          type: float
+          required: true
+          placeholder: bind a value
+        - displayName: Min
+          description: The value at the chart's bottom. Empty — fit the history (the lowest value shown).
+          type: float
+          placeholder: auto
+        - displayName: Max
+          description: The value at the chart's top. Empty — fit the history (the highest value shown).
+          type: float
+          placeholder: auto
+        - displayName: X
+          description: The chart's left edge, in px from the left — 0 to 127.
+          type: integer
+          defaultValue: "0"
+          placeholder: 0–127
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 127 }
+        - displayName: "Y"
+          description: The chart's top edge, in px from the top — 0 to 63.
+          type: integer
+          defaultValue: "16"
+          placeholder: 0–63
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 63 }
+        - displayName: Width
+          description: The chart's width, in px — 4 to 128. One sample a pixel column, so also how much history it shows.
+          type: integer
+          defaultValue: "128"
+          placeholder: 4–128
+          patterns:
+            - { name: Min, value: 4 }
+            - { name: Max, value: 128 }
+        - displayName: Height
+          description: The chart's height, in px — 4 to 64.
+          type: integer
+          defaultValue: "48"
+          placeholder: 4–64
+          patterns:
+            - { name: Min, value: 4 }
+            - { name: Max, value: 64 }
+        - displayName: Style
+          description: How the samples are drawn.
+          type: options
+          defaultValue: line
+          options:
+            - displayName: Line
+              value: line
+            - displayName: Bars
+              value: bars
+            - displayName: Dots
+              value: dots
+        - displayName: Border
+          description: Draw an outline around the chart.
+          type: toggle
+          label: Outline
+          defaultValue: true
+        - *update
+        - *address
+      outputSchema:
+        - name: minimum
+          type: float
+          description: The lowest value of the history shown.
+        - name: maximum
+          type: float
+          description: The highest value of the history shown.
+        - name: average
+          type: float
+          description: The average of the history shown.
+
+    - displayName: Clear
+      description: Blanks the whole screen, or one line of it.
+      script: src/clear.py
+      configurations:
+        - *sda
+        - *scl
+        - *model
+        - displayName: Area
+          description: What to blank.
+          type: options
+          defaultValue: all
+          options:
+            - displayName: Whole screen
+              value: all
+            - displayName: One line
+              value: line
+        - displayName: Line
+          description: Which 8-px line to blank, from 1 at the top — 1 to 8 (1 to 4 on a 32-px screen).
+          type: integer
+          defaultValue: "1"
+          placeholder: 1–8
+          displayOptions: { show: { Area: [line] } }
+          patterns:
+            - { name: Min, value: 1 }
+            - { name: Max, value: 8 }
+        - *update
+        - *address
+
+    - displayName: Settings
+      description: Brightness, rotation, colors and power — what's drawn stays.
+      script: src/settings.py
+      configurations:
+        - *sda
+        - *scl
+        - *model
+        - displayName: Contrast
+          description: Brightness, from 0 (dimmest — still visible) to 255. Lower it to save power and the screen's life.
+          type: integer
+          defaultValue: "207"
+          placeholder: 0–255
+          patterns:
+            - { name: Min, value: 0 }
+            - { name: Max, value: 255 }
+        - displayName: Rotate 180
+          description: Turn the picture upside down — for a display mounted the other way round.
+          type: toggle
+          label: Upside down
+          defaultValue: false
+        - displayName: Invert Colors
+          description: Dark pixels on a lit background.
+          type: toggle
+          label: Inverted
+          defaultValue: false
+        - displayName: Screen On
+          description: Off blanks the screen without losing what's drawn — On brings it back.
+          type: toggle
+          label: "On"
+          defaultValue: true
+        - *address

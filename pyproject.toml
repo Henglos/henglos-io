@@ -1,0 +1,20 @@
+[project]
+name = "henglos-io-python-root"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.uv.workspace]
+members = [
+    "packages/hio-sdk",
+    "packages/hio-system",
+]
+
+# The dev registry (docker-compose.dev.yaml's Gitea). `explicit`: nothing is
+# resolved from it unless asked — it's only where `uv publish --index gitea`
+# sends hio-sdk (username: your Gitea user, password: a write:package token).
+[[tool.uv.index]]
+name = "gitea"
+url = "http://localhost:3000/api/packages/henglosio/pypi/simple"
+publish-url = "http://localhost:3000/api/packages/henglosio/pypi"
+explicit = true

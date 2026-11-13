@@ -1,0 +1,223 @@
+kind: component
+name: Filesystem
+schemaVersion: 1
+
+dependences:
+  platform: ^1.0.0
+
+schema:
+
+  displayName: Filesystem
+  description: >
+    The board's own files — Read one (whole, or a slice at a time), Write or
+    add to one, Copy, Move, Delete, check a path (Info) and List a folder.
+    What a Request saved, data to keep between runs, a log.
+
+  # Wire ids come from the lowercased displayNames (computeWireActionId /
+  # computeWireConfigId in @henglosio/workflow) — each script's @action and
+  # context.get() names must match: "filesystem/<action>", "<action>/<config>".
+  #
+  # What the board relies on can't be written, moved or deleted — the runtime
+  # (/hio), main.py, boot.py, the stored program, /components — and
+  # /secrets (credentials) can't even be read: see src/fs.py.
+
+  actions:
+
+    - displayName: Read
+      description: >
+        A file's text — all of it when it fits a value (384 bytes), else a slice:
+        Offset and Length pick which, `end` says whether it's the last. Fallback
+        when it isn't there or is a folder.
+      script: src/read.py
+      configurations:
+        - displayName: File
+          description: The file's path — /data/log.txt; bind a Request's `file` to read its answer.
+          type: string
+          required: true
+          defaultValue: ""
+          placeholder: /data/log.txt
+        - displayName: Offset
+          advanced: true
+          description: Where to start, in bytes — 0 is the beginning. The next slice starts at Offset + `read`.
+          type: integer
+          defaultValue: "0"
+          placeholder: "0"
+          patterns:
+            - { name: Min, value: 0 }
+        - displayName: Length
+          advanced: true
+          description: How many bytes to read — 0 (or more than fits) reads as much as fits a value, 384.
+          type: integer
+          defaultValue: "0"
+          placeholder: 0 = as much as fits
+          patterns:
+            - { name: Min, value: 0 }
+      outputSchema:
+        - name: content
+          type: string
+          description: The text read — a character cut at the slice's end is left for the next one.
+        - name: size
+          type: integer
+          description: The whole file's size, in bytes.
+        - name: read
+          type: integer
+          description: How many bytes this read took — the next Offset is Offset + read.
+        - name: end
+          type: bool
+          description: Whether this slice reached the end of the file.
+        - &error
+          name: error
+          type: string
+          description: "Why it's Fallback — no_file, is_folder, denied, no_path, failed: …; empty otherwise."
+
+    - displayName: Write
+      description: >
+        Puts Content in a file — over what was there, or added at its end
+        (Mode). Its folders are made. Fallback for a path the board relies on.
+      script: src/write.py
+      configurations:
+        - displayName: File
+          description: The file to write — /data/log.txt; its folders are made.
+          type: string
+          required: true
+          defaultValue: ""
+          placeholder: /data/log.txt
+        - displayName: Content
+          description: What to write — text, or bind an output (a Code binding can build it).
+          type: string
+          defaultValue: ""
+          placeholder: "temperature: 21.5"
+        - displayName: Mode
+          description: Overwrite replaces what the file had; Append adds at its end (a log).
+          type: options
+          defaultValue: overwrite
+          options:
+            - { displayName: Overwrite, value: overwrite }
+            - { displayName: Append, value: append }
+      outputSchema:
+        - name: file
+          type: string
+          description: The file's path.
+        - name: size
+          type: integer
+          description: The file's size after writing, in bytes.
+        - *error
+
+    - displayName: Copy
+      description: >
+        A file to another path — its folders made, over what was there. Keeps
+        a Request's temporary answer for good. Fallback when the source isn't a file.
+      script: src/copy.py
+      configurations:
+        - displayName: From
+          description: The file to copy — bind a Request's `file`, or a path.
+          type: string
+          required: true
+          defaultValue: ""
+          placeholder: /data/in.json
+        - displayName: To
+          description: Where it goes — its folders are made.
+          type: string
+          required: true
+          defaultValue: ""
+          placeholder: /data/kept.json
+      outputSchema:
+        - name: file
+          type: string
+          description: The copy's path.
+        - name: size
+          type: integer
+          description: The copy's size, in bytes.
+        - *error
+
+    - displayName: Move
+      description: >
+        Renames a file or folder, or moves it elsewhere (the destination's
+        folders are made). Fallback when there's nothing to move or something's
+        already at To.
+      script: src/move.py
+      configurations:
+        - displayName: From
+          description: The file or folder to move.
+          type: string
+          required: true
+          defaultValue: ""
+          placeholder: /data/old.txt
+        - displayName: To
+          description: Its new path — nothing may be there yet; its folders are made.
+          type: string
+          required: true
+          defaultValue: ""
+          placeholder: /data/new.txt
+      outputSchema:
+        - name: file
+          type: string
+          description: The new path.
+        - *error
+
+    - displayName: Delete
+      description: >
+        Removes a file, or a folder — an empty one, or everything in it with
+        Recursive. Fallback when nothing's there or the folder isn't empty.
+      script: src/delete.py
+      configurations:
+        - displayName: Path
+          description: The file or folder to remove.
+          type: string
+          required: true
+          defaultValue: ""
+          placeholder: /data/log.txt
+        - displayName: Recursive
+          advanced: true
+          description: A folder goes with everything in it — off, only an empty one.
+          type: toggle
+          label: With contents
+          defaultValue: false
+      outputSchema:
+        - *error
+
+    - displayName: Info
+      description: Branches on whether a path is there — Exists or Missing — with whether it's a folder and its size.
+      script: src/info.py
+      configurations:
+        - displayName: Path
+          description: The file or folder to check.
+          type: string
+          required: true
+          defaultValue: ""
+          placeholder: /data/log.txt
+      outputs:
+        - { id: exists, name: Exists }
+        - { id: missing, name: Missing }
+      outputSchema:
+        - name: exists
+          type: bool
+          description: Whether something's there.
+        - name: folder
+          type: bool
+          description: Whether it's a folder.
+        - name: size
+          type: integer
+          description: A file's size, in bytes — 0 for a folder or nothing.
+
+    - displayName: List
+      description: >
+        What's in a folder — each entry's name, size and whether it's a folder,
+        sorted by name, as many as fit a value (`count` says how many there are).
+      script: src/list.py
+      configurations:
+        - displayName: Folder
+          description: The folder to list — / is the board's root.
+          type: string
+          defaultValue: /
+          placeholder: /data
+      outputSchema:
+        - name: entries
+          type: { list: { object: { name: string, size: integer, folder: bool } } }
+          description: The entries, sorted by name — bind it to a List variable.
+        - name: count
+          type: integer
+          description: How many entries the folder has — more than `entries` when they don't all fit.
+        - name: error
+          type: string
+          description: "Why it's Fallback — no_folder, denied, failed: …; empty otherwise."

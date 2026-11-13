@@ -1,0 +1,21 @@
+kind: board
+name: ESP32 Generic
+schemaVersion: 1
+
+dependences:
+  platform: ^1.0.0
+
+ui:
+  schema: ./src/board.schema.yaml
+
+# What the chip offers besides its pins — components that need one of these
+# (their dependences.capabilities) only run on boards that list it.
+capabilities: [wifi, bluetooth]
+
+# How MicroPython gets onto it: src/firmware.ts, in the official image for the ESP32.
+# `micropython` is also what the platform's build compiles the runtime and the
+# components for — bump it together with the version in src/firmware.ts.
+firmware:
+  micropython: 1.29.0
+  image: henglosio/workbench-esp32:1.0.0
+  script: ./src/firmware.ts

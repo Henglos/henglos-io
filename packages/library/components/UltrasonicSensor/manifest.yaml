@@ -1,0 +1,117 @@
+kind: component
+name: Ultrasonic Sensor
+schemaVersion: 1
+
+dependences:
+  platform: ^1.0.0
+
+schema:
+
+  displayName: Ultrasonic Sensor
+  description: >
+    Measures distance with an HC-SR04-style ultrasonic sensor (also JSN-SR04T
+    and other 4-pin modules) — Measure publishes how far the nearest object
+    is, Detect branches on whether something is closer than a threshold.
+    The HC-SR04's Echo is 5 V: on a 3.3 V board (ESP32) wire it through a
+    voltage divider (e.g. 1 kΩ / 2 kΩ), or use a 3.3 V module.
+
+  # Wire ids come from the lowercased displayNames (computeWireActionId /
+  # computeWireConfigId in @henglosio/workflow) — each script's @action and
+  # context.get() names must match: "ultrasonic sensor/<action>", "<action>/<config>".
+
+  actions:
+
+    - displayName: Measure
+      description: Pings and publishes the distance to the nearest object. No echo (nothing in range) goes out Fallback.
+      script: src/measure.py
+      configurations:
+        - displayName: Trigger Pin
+          description: Board pin wired to the sensor's Trig.
+          type: pin
+          from: board
+          filterBy: [digital_out]
+        - displayName: Echo Pin
+          description: Board pin wired to the sensor's Echo (through a divider on a 3.3 V board).
+          type: pin
+          from: board
+          filterBy: [digital_in]
+        - displayName: Unit
+          description: Unit of the distance it publishes.
+          type: options
+          defaultValue: cm
+          options:
+            - displayName: Centimeters
+              value: cm
+            - displayName: Millimeters
+              value: mm
+            - displayName: Inches
+              value: in
+        - displayName: Timeout
+          advanced: true
+          description: How long to wait for the echo, in milliseconds. 30 covers ~5 m; lower it to give up sooner on far objects.
+          type: integer
+          defaultValue: "30"
+        - displayName: Temperature
+          advanced: true
+          description: Air temperature, in °C — sound travels faster in warm air. 20 is fine indoors.
+          type: float
+          defaultValue: "20"
+      outputSchema:
+        - name: distance
+          type: float
+          description: Distance to the nearest object, in Unit.
+        - name: echo
+          type: integer
+          description: How long the echo took to come back, in microseconds.
+
+    - displayName: Detect
+      description: Pings and goes out Near when something is closer than Threshold, Far otherwise (nothing in range counts as Far).
+      script: src/detect.py
+      configurations:
+        - displayName: Trigger Pin
+          description: Board pin wired to the sensor's Trig.
+          type: pin
+          from: board
+          filterBy: [digital_out]
+        - displayName: Echo Pin
+          description: Board pin wired to the sensor's Echo (through a divider on a 3.3 V board).
+          type: pin
+          from: board
+          filterBy: [digital_in]
+        - displayName: Threshold
+          description: Closer than this (in Unit) goes out Near.
+          type: float
+          defaultValue: "20"
+        - displayName: Unit
+          description: Unit of Threshold and of the distance it publishes.
+          type: options
+          defaultValue: cm
+          options:
+            - displayName: Centimeters
+              value: cm
+            - displayName: Millimeters
+              value: mm
+            - displayName: Inches
+              value: in
+        - displayName: Timeout
+          advanced: true
+          description: How long to wait for the echo, in milliseconds. 30 covers ~5 m.
+          type: integer
+          defaultValue: "30"
+        - displayName: Temperature
+          advanced: true
+          description: Air temperature, in °C — sound travels faster in warm air. 20 is fine indoors.
+          type: float
+          defaultValue: "20"
+      outputs:
+        - id: near
+          name: Near
+        - id: far
+          name: Far
+      outputSchema:
+        - name: distance
+          type: float
+          description: Distance to the nearest object, in Unit — only when an echo came back.
+        - name: near
+          type: bool
+          description: Whether something was closer than Threshold.

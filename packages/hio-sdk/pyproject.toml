@@ -1,0 +1,24 @@
+[project]
+name = "hio-sdk"
+version = "1.0.0"
+description = "SDK for writing HenglosIO component actions and triggers in MicroPython."
+readme = "README.md"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Henglos" }
+]
+requires-python = ">=3.10"
+dependencies = []
+keywords = ["henglosio", "micropython", "iot", "sdk"]
+
+[build-system]
+requires = ["uv_build>=0.13.8,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+# `hio` is a namespace: the sdk ships hio/sdk, the board's runtime (hio-system)
+# adds hio/system next to it.
+module-name = "hio.sdk"
+
+[dependency-groups]
+dev = ["pytest>=8"]

@@ -1,0 +1,18 @@
+# Dev only — never published to PyPI (the runtime ships as @henglosio/hio-system
+# on npm). Gives the tests and the editor `hio.sdk` from the workspace: uv
+# installs packages/hio-sdk editable, and `hio` (no __init__.py on either side)
+# is one namespace with this package's hio/system and hio/tools.
+[project]
+name = "hio-system"
+version = "1.1.0"
+requires-python = ">=3.10"
+dependencies = ["hio-sdk"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+hio-sdk = { workspace = true }
+
+[dependency-groups]
+dev = ["pytest>=8"]

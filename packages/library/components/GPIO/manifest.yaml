@@ -1,0 +1,93 @@
+kind: component
+name: GPIO
+schemaVersion: 1
+
+dependences:
+  platform: ^1.0.0
+
+schema:
+
+  displayName: GPIO
+  description: > 
+    Directly reads or drives a single digital pin on the board. 
+    Use this when no more specific component (Servo, etc) fits what you're wiring up.
+
+  actions:
+    - displayName: Write
+      description: Sets the pin as output and drives it to the given digital value.
+      script: src/write.py
+      configurations:
+        - displayName: Pin
+          description: Board pin this GPIO instance controls.
+          type: pin
+          from: board
+          filterBy: [digital_out]
+        # type is "toggle" (not "options" with string "1"/"0" values): the firmware
+        # reads this byte as `data[0] != 0`, and the ASCII byte for "0" is 0x30
+        # (non-zero) — a string-encoded "0" would read back as HIGH.
+        - displayName: Value
+          description: Value of GPIO send.
+          type: toggle
+          label: HIGH
+          defaultValue: false
+
+      outputSchema:
+        - name: value
+          type: bool
+          description: The digital value that was written (0 = LOW, 1 = HIGH).
+
+    - displayName: Read
+      description: Sets the pin as input and reads its current digital value.
+      script: src/read.py
+      configurations:
+        - displayName: Pin
+          description: Board pin this GPIO instance controls.
+          type: pin
+          from: board
+          filterBy: [digital_in]
+      outputSchema:
+        - name: value
+          type: bool
+          description: The digital value read from the pin (0 = LOW, 1 = HIGH).
+
+  # What starts a branch of the flow on its own — no input, only Out.
+  triggers:
+
+    - displayName: Pin Trigger
+      icon: toggle-right
+      description: Runs its branch when a pin changes — a button pressed, a sensor going high.
+      script: src/pin_trigger.py
+      configurations:
+        - displayName: Pin
+          description: The pin to watch.
+          type: pin
+          from: board
+          filterBy: [digital_in]
+          required: true
+        - displayName: Edge
+          description: Which change fires it.
+          type: options
+          defaultValue: rising
+          options:
+            - { displayName: Rising (low → high), value: rising }
+            - { displayName: Falling (high → low), value: falling }
+            - { displayName: Both, value: both }
+        - displayName: Pull
+          description: The board's internal resistor — Up for a button wired to ground.
+          type: options
+          defaultValue: none
+          options:
+            - { displayName: None, value: none }
+            - { displayName: Up, value: up }
+            - { displayName: Down, value: down }
+        - displayName: Debounce
+          description: Changes closer than this to the last one are ignored (a button bounces), in ms.
+          type: integer
+          defaultValue: "50"
+      outputSchema:
+        - name: level
+          type: bool
+          description: The pin right after the change.
+        - name: at
+          type: integer
+          description: When it changed — the board's clock, in ms.
