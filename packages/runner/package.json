@@ -1,5 +1,6 @@
 {
   "name": "@henglosio/runner",
+  "private": true,
   "version": "1.0.0",
   "description": "Build orchestrator that compiles and flashes a workflow inside the driver's containers.",
   "author": "Henglos",

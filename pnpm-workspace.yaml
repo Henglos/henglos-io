@@ -1,6 +1,8 @@
 packages:
-  - 'apps/**'
+  - 'apps/*'
   - 'packages/*'
+  - 'packages/library/boards/*'
+  - 'packages/library/components/*'
 allowBuilds:
   '@prisma/engines': true
   '@serialport/bindings-cpp': true

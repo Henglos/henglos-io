@@ -1,5 +1,6 @@
 {
 	"name": "@henglosio/shared",
+	"private": true,
 	"version": "1.0.0",
 	"description": "Types, schemas and utilities shared across HenglosIO.",
 	"author": "Henglos",
