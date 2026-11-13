@@ -73,7 +73,7 @@ export const registerCreateCommand = (cli: Command) => {
 		console.log(`
 Next:
   cd ${path.relative(process.cwd(), dir) || "."}
-  # edit ${kind === "board" ? "workspace/manifest.yaml and workspace/board.schema.yaml" : "manifest.yaml and src/"}
+  # edit manifest.yaml and src/
   hio lint
   npm publish`);
 

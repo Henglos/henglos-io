@@ -2,13 +2,13 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import pacote from "pacote";
-import { PackageService } from "@henglosio/shared";
+import { PackageService, PLATFORM_PACKAGE } from "@henglosio/shared";
 import type { PlatformPackage } from "@henglosio/shared";
 
-const PACKAGE_NAME = "@henglosio/platform";
+const PACKAGE_NAME = PLATFORM_PACKAGE;
 /** Where downloaded platforms are kept: one folder per requested version. */
 const CACHE_DIR = path.join(os.homedir(), ".henglos", "io", "platforms");
-/** The public npm registry. In development, HENGLOS_REGISTRY points at the local Verdaccio (http://localhost:4873). */
+/** The public npm registry. In development, HENGLOS_REGISTRY points at the dev Gitea (http://localhost:3000/api/packages/henglosio/npm/). */
 const DEFAULT_REGISTRY = "https://registry.npmjs.org/";
 
 /** The npm registry to fetch the platform from: `HENGLOS_REGISTRY`, else the public one. */
@@ -22,7 +22,7 @@ async function isCached(versionDir: string): Promise<boolean> {
 }
 
 /**
- * Gets the platform for a local build: downloads `@henglosio/platform` from
+ * Gets the platform for a local build: downloads `@henglosio/hio-system` from
  * the registry the first time, then reuses the copy in
  * `~/.henglos/io/platforms/<version>`.
  *

@@ -2,7 +2,7 @@ import * as path from "path";
 import { exit } from "process";
 import type { Command } from "commander";
 import type { BuildContext } from "@henglosio/runner";
-import { createSend, loadRunner, resolveFromMap, resolveFromWorkspace } from "../core/packages.js";
+import { createSend, loadBoardFirmware, loadRunner, resolveFromMap, resolveFromWorkspace } from "../core/packages.js";
 
 /**
  * Registers `hio build <workspace>`.
@@ -34,7 +34,7 @@ export const registerBuildCommand = (cli: Command) => {
 
 		try {
 
-			const { board, platform, components, settings } = options.map
+			const { board, platform, components, settings, options: boardOptions } = options.map
 				? await resolveFromMap(path.resolve(process.cwd(), options.map))
 				: await resolveFromWorkspace(workspace);
 
@@ -44,6 +44,8 @@ export const registerBuildCommand = (cli: Command) => {
 				platform,
 				components,
 				settings,
+				boardFirmware: await loadBoardFirmware(board),
+				options: boardOptions,
 				log: (data) => send({ type: "data", data }),
 			};
 

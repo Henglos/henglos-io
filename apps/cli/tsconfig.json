@@ -8,7 +8,7 @@
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
-    "module": "esnext",
+    "module": "nodenext",
     "target": "esnext",
     
     // For nodejs:
@@ -33,6 +33,8 @@
     // "noFallthroughCasesInSwitch": true,
     // "noPropertyAccessFromIndexSignature": true,
 
+    "moduleResolution": "nodenext",
+    
 	"esModuleInterop": true,
 
     // Recommended Options

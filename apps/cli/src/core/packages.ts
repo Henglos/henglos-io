@@ -1,12 +1,14 @@
 import * as path from "path";
 import * as fs from "fs/promises";
+import { pathToFileURL } from "url";
 import {
 	PackageService,
 	type BoardPackage,
 	type ComponentPackage,
 	type PlatformPackage,
 } from "@henglosio/shared";
-import type { Runner, RunnerProtocol } from "@henglosio/runner";
+import { resolveBoardOptions, type BoardOptionValue } from "@henglosio/workflow";
+import type { BoardFirmware, Runner, RunnerProtocol } from "@henglosio/runner";
 import { resolvePlatform } from "./platform.js";
 
 /**
@@ -20,6 +22,8 @@ export type ResolvedPackages = {
 	components: ComponentPackage[];
 	/** The workflow's platform setting overrides, by name. Empty: the platform's defaults. */
 	settings: Record<string, number>;
+	/** The value of each of the board's options: the workflow's, or the default. */
+	options: Record<string, string>;
 };
 
 /**
@@ -31,6 +35,7 @@ type RunnerMap = {
 	platform: string;
 	components: string[];
 	settings?: Record<string, number>;
+	options?: Record<string, BoardOptionValue>;
 };
 
 const packages = new PackageService();
@@ -59,7 +64,7 @@ export async function resolveFromMap(mapPath: string): Promise<ResolvedPackages>
 		components.push(component);
 	}
 
-	return { board, platform, components, settings: map.settings ?? {} };
+	return { board, platform, components, settings: map.settings ?? {}, options: resolveBoardOptions(board.options ?? [], map.options ?? {}) };
 
 }
 
@@ -99,7 +104,7 @@ export async function resolveFromWorkspace(workspace: string): Promise<ResolvedP
 	}
 
 	// Local builds run with the platform's defaults.
-	return { board, platform, components, settings: {} };
+	return { board, platform, components, settings: {}, options: resolveBoardOptions(board.options ?? [], {}) };
 
 }
 
@@ -114,6 +119,24 @@ export async function resolveFromWorkspace(workspace: string): Promise<ResolvedP
 export async function loadRunner(platform: PlatformPackage): Promise<Runner> {
 	const mod = await import(path.resolve(platform.path, platform.build.script));
 	return (mod.default ?? mod) as Runner;
+}
+
+/**
+ * Loads a board's firmware script — the file its manifest names in
+ * `firmware.script`. Node runs it as TypeScript, as long as it isn't under a
+ * node_modules folder.
+ *
+ * @param board The resolved board package.
+ * @returns The script's default export.
+ * @throws When it can't be loaded, or doesn't export `build` and `flash`.
+ */
+export async function loadBoardFirmware(board: BoardPackage): Promise<BoardFirmware> {
+	const script = path.resolve(board.path, board.firmware.script);
+	const mod = await import(pathToFileURL(script).href) as { default?: Partial<BoardFirmware> };
+	if (typeof mod.default?.build !== "function" || typeof mod.default.flash !== "function") {
+		throw new Error(`${board.firmware.script} must export default { build, flash }.`);
+	}
+	return mod.default as BoardFirmware;
 }
 
 /**

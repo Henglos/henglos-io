@@ -1,3 +1,4 @@
+import { pathToFileURL } from "url";
 import * as path from "path";
 import * as fs from "fs/promises";
 import { LineCounter, parseDocument, type Document } from "yaml";
@@ -62,7 +63,7 @@ export async function lintPackage(target: string): Promise<LintReport> {
 
 	const manifestPath = await locateManifest(packageDir);
 	if (!manifestPath) {
-		error(packageDir, "No manifest.yaml — it goes at the package's root (or in workspace/, for a board).");
+		error(packageDir, "No manifest.yaml — it goes at the package's root.");
 		return report;
 	}
 	report.manifestPath = manifestPath;
@@ -89,6 +90,16 @@ export async function lintPackage(target: string): Promise<LintReport> {
 	switch (data.kind) {
 
 		case "board": {
+			const script = asRecord(data.firmware).script;
+			if (typeof script === "string") {
+				const scriptPath = path.resolve(manifestDir, script);
+				if (!(await isFile(scriptPath))) {
+					error(manifestPath, `firmware.script: ${script} doesn't exist.`, lineOf(yaml, ["firmware", "script"]));
+				} else if (script.endsWith(".ts")) {
+					const problem = await firmwareScriptProblem(scriptPath);
+					if (problem) error(scriptPath, problem);
+				}
+			}
 			const ui = asRecord(data.ui).schema;
 			if (typeof ui !== "string") break;
 			const schemaPath = path.resolve(manifestDir, ui);
@@ -99,12 +110,12 @@ export async function lintPackage(target: string): Promise<LintReport> {
 			const schema = await readYaml(schemaPath, error);
 			if (!schema) break;
 			// The hosting adds the manifest's capabilities to the schema before checking it.
-			const schemaData = { ...asRecord(schema.doc.toJS()), ...(data.capabilities !== undefined ? { capabilities: data.capabilities } : {}) };
+			const schemaData = { ...asRecord(schema.doc.toJS()), ...(data.capabilities !== undefined ? { capabilities: data.capabilities } : {}), ...(data.options !== undefined ? { options: data.options } : {}) };
 			const board = BoardSchema.safeParse(schemaData);
 			if (!board.success) {
 				for (const issue of board.error.issues) {
 					// Capabilities are written in the manifest, not in the schema.
-					if (issue.path[0] === "capabilities") error(manifestPath, describe(issue, issue.path, schemaData), lineOf(yaml, issue.path));
+					if (issue.path[0] === "capabilities" || issue.path[0] === "options") error(manifestPath, describe(issue, issue.path, schemaData), lineOf(yaml, issue.path));
 					else error(schemaPath, describe(issue, issue.path, schemaData), lineOf(schema, issue.path));
 				}
 			}
@@ -224,13 +235,11 @@ function escapeRegExp(text: string): string {
 
 /**
  * The package's root from what `hio lint` was given: the folder itself, or
- * the folder of a manifest.yaml (its parent, for a board's workspace/manifest.yaml).
+ * the folder of a manifest.yaml.
  */
 async function resolvePackageDir(target: string): Promise<string> {
 	const stat = await fs.stat(target).catch(() => null);
-	if (!stat?.isFile()) return target;
-	const dir = path.dirname(target);
-	return path.basename(dir) === "workspace" && !(await isFile(path.join(dir, "package.json"))) ? path.dirname(dir) : dir;
+	return stat?.isFile() ? path.dirname(target) : target;
 }
 
 /** Reads and parses a YAML file, reporting syntax errors at their line. */
@@ -269,6 +278,18 @@ function describe(issue: ZodError["issues"][number], at: PropertyKey[], data: un
 		if (value !== undefined && (typeof value !== "object" || value === null)) message += ` — got ${JSON.stringify(value)}`;
 	}
 	return at.length ? `${formatPath(at)}: ${message}` : message;
+}
+
+// Why a board's firmware script can't be used, if it can't: it's loaded as Node
+// will load it in the image, so what Node can't run shows here too.
+async function firmwareScriptProblem(file: string): Promise<string | null> {
+	try {
+		const mod = await import(pathToFileURL(file).href) as { default?: { build?: unknown; flash?: unknown } };
+		if (typeof mod.default?.build !== "function" || typeof mod.default.flash !== "function") return "It must export default { build, flash }.";
+		return null;
+	} catch (err) {
+		return `It can't be loaded: ${err instanceof Error ? err.message : String(err)}`;
+	}
 }
 
 /** The value as an object to read fields from — `{}` when it isn't one. */

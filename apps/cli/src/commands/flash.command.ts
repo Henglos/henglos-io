@@ -2,7 +2,7 @@ import * as path from "path";
 import { exit } from "process";
 import type { Command } from "commander";
 import type { FlashContext } from "@henglosio/runner";
-import { createSend, loadRunner, resolveFromMap, resolveFromWorkspace } from "../core/packages.js";
+import { createSend, loadBoardFirmware, loadRunner, resolveFromMap, resolveFromWorkspace } from "../core/packages.js";
 
 /**
  * Registers `hio flash <workspace>`.
@@ -29,7 +29,7 @@ export const registerFlashCommand = (cli: Command) => {
 	flashCommand.description("run the platform's flash: write the board's MicroPython firmware");
 	flashCommand.option("--map <path>", "path to runner.map.json");
 	flashCommand.option("--port <port>", "serial port to flash to");
-	flashCommand.option("--firmware <path>", "local firmware image (default: the board manifest's firmware.image)");
+	flashCommand.option("--firmware <path>", "local firmware image (default: the board's stock firmware)");
 	flashCommand.option("--baudrate <rate>", "baud rate for flashing", "460800");
 	flashCommand.action(async (workspace: string, options: { map?: string; port?: string; firmware?: string; baudrate: string }) => {
 
@@ -44,7 +44,7 @@ export const registerFlashCommand = (cli: Command) => {
 		try {
 
 			// Flashing writes the firmware only: the components aren't needed.
-			const { board, platform } = options.map
+			const { board, platform, options: boardOptions } = options.map
 				? await resolveFromMap(path.resolve(process.cwd(), options.map))
 				: await resolveFromWorkspace(workspace);
 
@@ -55,6 +55,8 @@ export const registerFlashCommand = (cli: Command) => {
 				baudrate: Number(options.baudrate),
 				...(options.firmware ? { firmware: path.resolve(process.cwd(), options.firmware) } : {}),
 				advanced: {},
+				boardFirmware: await loadBoardFirmware(board),
+				options: boardOptions,
 				log: (data) => send({ type: "data", data }),
 			};
 

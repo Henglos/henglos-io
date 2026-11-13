@@ -1,6 +1,6 @@
 {
   "name": "@henglosio/cli",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "The HenglosIO command-line interface.",
   "author": "Henglos",
   "license": "SEE LICENSE IN LICENSE",
@@ -24,6 +24,7 @@
   },
   "scripts": {
     "start": "node dist/index.mjs",
+    "debug": "node --import tsx --inspect src/index.js ",
     "build": "tsdown"
   },
   "dependencies": {
@@ -32,8 +33,10 @@
     "@pybricks/mpy-cross-v6": "2.0.0",
     "axios": "^1.15.0",
     "commander": "^14.0.3",
+    "consola": "3.4.2",
     "daemonize-process": "^4.1.1",
     "dockerode": "^4.0.10",
+    "dotenv": "^17.4.2",
     "hono": "^4.12.22",
     "native-machine-id": "^0.3.11",
     "pacote": "^21.0.0",
@@ -55,6 +58,7 @@
     "@henglosio/workflow": "workspace:*",
     "@types/node": "^22.19.11",
     "@types/semver": "7.7.1",
-    "tsdown": "latest"
+    "tsdown": "latest",
+    "tsx": "^4.23.1"
   }
 }
