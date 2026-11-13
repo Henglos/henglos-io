@@ -23,8 +23,10 @@ by hand and publish it with `uv publish`.
 2. To release: `pnpm version-packages` — applies the pending changesets: bumps
    the versions, updates internal dependencies, writes each CHANGELOG.md.
    Review and commit.
-3. `pnpm release` — publishes to npm what isn't there yet, and tags each
-   package (`@henglosio/cli@1.2.0`). Then `git push --follow-tags`.
+3. `pnpm release` — publishes to npm what isn't there yet. It creates no git
+   tags (`--no-git-tag`): the repo is tagged per release of the whole project
+   (`v1.2.0-beta`), not per package — each package's version lives in its
+   package.json and CHANGELOG.md.
 
 **A change in a bundled package** (driver, shared, runner, rfc2217) ships inside
 the CLI: name `@henglosio/cli` in its changeset — being private, they don't bump

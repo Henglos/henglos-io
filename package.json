@@ -12,7 +12,7 @@
     "lint": "turbo lint",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "changeset publish"
+    "release": "changeset publish --no-git-tag"
   },
   "devDependencies": {
     "@changesets/cli": "3.0.3",
