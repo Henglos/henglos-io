@@ -5,7 +5,6 @@
 #
 set -eu
 
-SCRIPT_VERSION="1.1.0"
 HENGLOS_DIR="${HENGLOS_DIR:-./henglos}"
 COMPOSE_DIR="deploy/docker"
 SOURCE_REPO_URL="${HENGLOS_REPO_URL:-https://raw.githubusercontent.com/Henglos/henglos-io/main}"
@@ -41,7 +40,7 @@ fail() {
 
 usage() {
 	cat <<USAGE
-get-hio.sh v${SCRIPT_VERSION} — set up a self-hosted Henglos IO with Docker Compose.
+get-hio.sh — set up a self-hosted Henglos IO with Docker Compose (always the latest release).
 
 Usage: get-hio.sh [options]
        curl -fsSL ${INSTALL_URL} | sh -s -- [options]
