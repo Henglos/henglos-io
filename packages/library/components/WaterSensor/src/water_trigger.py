@@ -1,4 +1,4 @@
-from hio.sdk import HIOTrigger, trigger, ticks_ms, ticks_diff
+from henglosio.sdk import HIOTrigger, trigger, ticks_ms, ticks_diff
 
 from .water import measure, text
 

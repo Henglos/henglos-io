@@ -9,8 +9,8 @@ import machine
 
 from support import LoopbackTransport, StubConfig, request_frame, take_responses
 
-from hio.sdk import HIOAction, HIOTrigger, action, trigger
-from hio.sdk.core.identifier import generate_id
+from henglosio.sdk import HIOAction, HIOTrigger, action, trigger
+from henglosio.sdk.core.identifier import generate_id
 from hio.system.core.Context import encode_value
 from hio.system.core.packets.ExecutePacket import ExecutePacket
 from hio.system.core.packets.RecordPacket import RecordPacket

@@ -16,9 +16,9 @@ requires = ["uv_build>=0.13.8,<0.14.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-# `hio` is a namespace: the sdk ships hio/sdk, the board's runtime (hio-system)
-# adds hio/system next to it.
-module-name = "hio.sdk"
+# `henglosio` is a namespace (no henglosio/__init__.py): the sdk is
+# henglosio.sdk, leaving room for other henglosio.* packages.
+module-name = "henglosio.sdk"
 
 [dependency-groups]
 dev = ["pytest>=8"]

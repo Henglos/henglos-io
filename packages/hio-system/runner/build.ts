@@ -199,6 +199,10 @@ function firmwareContext(context: { board: { firmware: { micropython: string } }
 	};
 }
 
+// What goes on the board: the runtime (hio/) and the sdk components import
+// (henglosio/sdk — packed into the release, see scripts/bundle-sdk.mjs).
+const RUNTIME_PACKAGES = ["hio", "henglosio"];
+
 // The runtime laid out for freezing in FREEZE_STAGE (the workflow's settings
 // written in), plus hio_build.py naming the build — returns its id: a hash of
 // everything that goes into the image, so an unchanged runtime isn't built
@@ -208,19 +212,22 @@ function stageRuntime(root: string, rewritten: Map<string, string>, identity: st
 	rmSync(FREEZE_STAGE, { recursive: true, force: true });
 	const hash = createHash("sha256").update(identity);
 
-	for (const file of [...pythonFiles(path.join(root, "hio"))].sort()) {
-		const source = readFileSync(rewritten.get(file) ?? path.join(root, "hio", file));
-		const target = path.join(FREEZE_STAGE, "hio", file);
-		mkdirSync(path.dirname(target), { recursive: true });
-		writeFileSync(target, source);
-		hash.update(`\0${file}\0`).update(source);
-	}
+	for (const pkg of RUNTIME_PACKAGES) {
+		for (const file of [...pythonFiles(path.join(root, pkg))].sort()) {
+			// The workflow's settings are only ever written into hio/.
+			const source = readFileSync((pkg === "hio" && rewritten.get(file)) || path.join(root, pkg, file));
+			const target = path.join(FREEZE_STAGE, pkg, file);
+			mkdirSync(path.dirname(target), { recursive: true });
+			writeFileSync(target, source);
+			hash.update(`\0${pkg}/${file}\0`).update(source);
+		}
 
-	// `hio` has no __init__.py in the package: in dev it's a namespace joining
-	// hio-sdk (hio/sdk) and this package (hio/system). On the board it's one
-	// tree — a regular package, not relying on MicroPython's namespace support.
-	const init = path.join(FREEZE_STAGE, "hio", "__init__.py");
-	if (!existsSync(init)) writeFileSync(init, "");
+		// `henglosio` has no __init__.py in the package (a namespace on the
+		// host, for henglosio.sdk); on the board, a regular package — not
+		// relying on MicroPython's namespace support.
+		const init = path.join(FREEZE_STAGE, pkg, "__init__.py");
+		if (!existsSync(init)) writeFileSync(init, "");
+	}
 
 	const buildId = hash.digest("hex").slice(0, 16);
 	writeFileSync(path.join(FREEZE_STAGE, "hio_build.py"), [
@@ -241,7 +248,7 @@ const PlatformRunner: Runner = {
 	// board:
 	//   firmware.bin, firmware.json         the board's MicroPython with the runtime
 	//                                       frozen in — when its script builds one
-	//   hio/**.mpy                          or else the runtime, for its filesystem
+	//   hio/**.mpy, henglosio/**.mpy        or else the runtime, for its filesystem
 	//   main.py, boot.py                    plain .py — MicroPython never runs them as .mpy
 	// and, for each component in context.components (the driver passes none
 	// any more: each session installs only the actions it uses — its
@@ -309,7 +316,7 @@ const PlatformRunner: Runner = {
 			writeFileSync(manifest, [
 				"# The port's own frozen modules (asyncio, requests…), plus the runtime.",
 				`include("$(PORT_DIR)/boards/manifest.py")`,
-				`package("hio", base_path="${FREEZE_STAGE}")`,
+				...RUNTIME_PACKAGES.map(pkg => `package("${pkg}", base_path="${FREEZE_STAGE}")`),
 				`module("hio_build.py", base_path="${FREEZE_STAGE}")`,
 				"",
 			].join("\n"));
@@ -332,15 +339,17 @@ const PlatformRunner: Runner = {
 			copyFileSync(cached, path.join(output, FIRMWARE_IMAGE));
 			const info: FirmwareInfo = { buildId, micropython: version, image: FIRMWARE_IMAGE };
 			writeFileSync(path.join(output, FIRMWARE_INFO), JSON.stringify(info, null, 2));
-			modules = [...pythonFiles(path.join(FREEZE_STAGE, "hio"))].length;
+			modules = RUNTIME_PACKAGES.reduce((total, pkg) => total + [...pythonFiles(path.join(FREEZE_STAGE, pkg))].length, 0);
 
 		} else {
 
-			// From the staged runtime: the settings written in, and hio/__init__.py.
-			for (const file of pythonFiles(path.join(FREEZE_STAGE, "hio"))) {
-				const name = `hio/${file}`;
-				await compile(path.join(FREEZE_STAGE, name), path.join(output, name.replace(/\.py$/, ".mpy")), name);
-				modules++;
+			// From the staged runtime: the settings written in, and the __init__.py files.
+			for (const pkg of RUNTIME_PACKAGES) {
+				for (const file of pythonFiles(path.join(FREEZE_STAGE, pkg))) {
+					const name = `${pkg}/${file}`;
+					await compile(path.join(FREEZE_STAGE, name), path.join(output, name.replace(/\.py$/, ".mpy")), name);
+					modules++;
+				}
 			}
 
 		}

@@ -142,7 +142,7 @@ schema:
 
 		"src/read.py": `from machine import Pin
 
-from hio.sdk import HIOAction, action, SUCCESS, FALLBACK
+from henglosio.sdk import HIOAction, action, SUCCESS, FALLBACK
 
 
 # ${displayName} / Read — reads the pin and publishes whether it's high.
@@ -167,7 +167,7 @@ class ReadAction(HIOAction):
 
 		"src/change_trigger.py": `from machine import Pin
 
-from hio.sdk import HIOTrigger, trigger
+from henglosio.sdk import HIOTrigger, trigger
 
 
 # ${displayName} / Change Trigger — runs its branch when the pin changes.

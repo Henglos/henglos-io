@@ -1,10 +1,10 @@
-# hio.sdk.testing: an action runs without the runtime, over plain dicts, and
+# henglosio.sdk.testing: an action runs without the runtime, over plain dicts, and
 # sees its values the way the runtime's ActionContext hands them out.
 
 import pytest
 
-from hio.sdk import HIOAction, HIOContext, HIOStreamError, SUCCESS, FALLBACK
-from hio.sdk.testing import MemoryContext, MemoryStream, run
+from henglosio.sdk import HIOAction, HIOContext, HIOStreamError, SUCCESS, FALLBACK
+from henglosio.sdk.testing import MemoryContext, MemoryStream, run
 
 
 class _Echo(HIOAction):

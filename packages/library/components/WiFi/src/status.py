@@ -1,4 +1,4 @@
-from hio.sdk import HIOAction, action
+from henglosio.sdk import HIOAction, action
 
 from .wlan import access_point, current_ssid, ip, rssi, signal, station
 

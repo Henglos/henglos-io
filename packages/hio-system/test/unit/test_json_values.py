@@ -8,8 +8,8 @@ import struct
 
 from support import Host
 
-from hio.sdk import HIOAction, action
-from hio.sdk.core.identifier import generate_id, variable_id
+from henglosio.sdk import HIOAction, action
+from henglosio.sdk.core.identifier import generate_id, variable_id
 from hio.system.core.Context import decode_value, encode_value
 from hio.system.core.packets.ActionBody import decode_action_body, encode_action_body
 from hio.system.core.packets.ExecutePacket import ExecutePacket

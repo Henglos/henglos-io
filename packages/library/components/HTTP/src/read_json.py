@@ -1,6 +1,6 @@
 import json
 
-from hio.sdk import HIOAction, action, SUCCESS, FALLBACK
+from henglosio.sdk import HIOAction, action, SUCCESS, FALLBACK
 
 from .http import PathError, pick, publish_value, text
 

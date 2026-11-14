@@ -1,9 +1,9 @@
 import json
 import struct
 
-from ...sdk.core.context import HIOContext
-from ...sdk.core.stream import HIOStream, HIOStreamError
-from ...sdk.core.identifier import generate_id, variable_id
+from henglosio.sdk.core.context import HIOContext
+from henglosio.sdk.core.stream import HIOStream, HIOStreamError
+from henglosio.sdk.core.identifier import generate_id, variable_id
 from .services.PacketCodec import Config, DataType
 from .GlobalVariables import GlobalVariables
 

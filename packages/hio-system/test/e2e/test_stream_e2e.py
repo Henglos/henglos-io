@@ -7,7 +7,7 @@ import struct
 
 from support import Host, execute_frame, stream_frame, request_frame
 
-from hio.sdk import HIOAction, action, SUCCESS, generate_id
+from henglosio.sdk import HIOAction, action, SUCCESS, generate_id
 from hio.system.core.services.PacketCodec import CommandId, OutputId, StreamStatus
 
 

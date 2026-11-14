@@ -1,4 +1,4 @@
-from hio.sdk import HIOAction, action, ticks_ms, ticks_diff, FALLBACK
+from henglosio.sdk import HIOAction, action, ticks_ms, ticks_diff, FALLBACK
 
 
 # Time / Every — paces a loop without blocking it: goes out "Due" once every

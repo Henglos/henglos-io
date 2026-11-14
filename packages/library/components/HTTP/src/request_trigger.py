@@ -1,6 +1,6 @@
 import json
 
-from hio.sdk import HIOTrigger, trigger
+from henglosio.sdk import HIOTrigger, trigger
 
 from . import server
 from .http import PathError, pick, publish_value, text

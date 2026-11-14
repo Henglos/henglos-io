@@ -6,8 +6,8 @@ import pytest
 
 from support import LoopbackTransport, StubConfig, stream_frame, request_frame, take_responses
 
-from hio.sdk.core.identifier import generate_id
-from hio.sdk.core.stream import HIOStreamError
+from henglosio.sdk.core.identifier import generate_id
+from henglosio.sdk.core.stream import HIOStreamError
 from hio.system.core.services.BatchStream import BatchStream
 from hio.system.core.services.CommandIngress import CommandIngress
 from hio.system.core.services.FrameReader import FrameReader

@@ -1,6 +1,6 @@
 from machine import Pin
 
-from hio.sdk import HIOTrigger, trigger, ticks_ms, ticks_diff
+from henglosio.sdk import HIOTrigger, trigger, ticks_ms, ticks_diff
 
 from .sound import active_level, level, number, peak_to_peak
 

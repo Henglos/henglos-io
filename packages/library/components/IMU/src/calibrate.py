@@ -1,4 +1,4 @@
-from hio.sdk import HIOAction, action, sleep_ms, SUCCESS, FALLBACK
+from henglosio.sdk import HIOAction, action, sleep_ms, SUCCESS, FALLBACK
 
 from .sensor import clamp, forget, number, sensor
 

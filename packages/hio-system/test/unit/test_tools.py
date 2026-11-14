@@ -7,7 +7,7 @@ import pytest
 
 from support import StubConfig, request_frame
 
-from hio.sdk.core.identifier import generate_id
+from henglosio.sdk.core.identifier import generate_id
 from hio.system.SystemConfig import SystemConfig
 from hio.system.core.packets.RecordPacket import RecordPacket
 from hio.system.core.services.PacketCodec import CommandId, OutputId, StreamStatus

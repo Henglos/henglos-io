@@ -8,7 +8,7 @@ import struct
 
 from support import Host, LoopbackTransport, StubConfig, take_responses
 
-from hio.sdk.core.identifier import generate_id, variable_id
+from henglosio.sdk.core.identifier import generate_id, variable_id
 from hio.system.core import Logic
 from hio.system.core.packets.ExecutePacket import ExecutePacket
 from hio.system.core.packets.RecordPacket import RecordPacket
@@ -216,7 +216,7 @@ def test_recording_accepts_the_logic_actions(tmp_path):
 
 # --- a CODE operand ------------------------------------------------------------
 
-from hio.sdk import HIOAction, action                          # noqa: E402
+from henglosio.sdk import HIOAction, action                          # noqa: E402
 from hio.system.core.services.PacketCodec import CodeLink      # noqa: E402
 
 

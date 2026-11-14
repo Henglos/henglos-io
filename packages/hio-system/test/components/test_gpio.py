@@ -12,8 +12,8 @@ from machine import Pin
 
 from support import Host, execute_frame
 
-from hio.sdk import SUCCESS, FALLBACK, generate_id
-from hio.sdk.core import registry
+from henglosio.sdk import SUCCESS, FALLBACK, generate_id
+from henglosio.sdk.core import registry
 from hio.system.core.Context import ActionContext, PipelineContext
 from hio.system.core.services.PacketCodec import CommandId, OutputId, Config, DataType
 

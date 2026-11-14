@@ -12,12 +12,16 @@ The Henglos IO runtime that runs on the board itself, on top of MicroPython.
 
 ## The sdk
 
-Components are written against [`hio-sdk`](../hio-sdk) (`from hio.sdk import ...`).
+Components are written against [`hio-sdk`](../hio-sdk) (`from henglosio.sdk import ...`).
 In the monorepo it lives in `packages/hio-sdk` and comes in through the uv
-workspace (`uv sync` at the root): `hio` is a namespace joining `hio/sdk` and
-this package's `hio/system`. Each release ships the sdk inside it — `npm pack` /
-`npm publish` copy it to `hio/sdk` (prepack) and remove it after (postpack);
-the tarball's `package.json` records its version under `hio.sdk`.
+workspace (`uv sync` at the root). Each release ships the sdk inside it —
+`npm pack` / `npm publish` copy it to `henglosio/sdk` (prepack) and remove it
+after (postpack); the tarball's `package.json` records its version under
+`hio.sdk`. The board gets both packages: the runtime (`hio`) and the sdk
+(`henglosio`).
+
+Components written before 1.2.0 import `hio.sdk`: `hio/sdk` forwards to
+`henglosio.sdk`, so they keep working.
 
 ## Where it fits
 

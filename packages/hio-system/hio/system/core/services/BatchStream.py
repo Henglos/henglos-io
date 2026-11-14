@@ -1,4 +1,4 @@
-from ....sdk.core.stream import HIOStream, HIOStreamError
+from henglosio.sdk.core.stream import HIOStream, HIOStreamError
 from ..compat import sleep_ms, ticks_ms, ticks_diff
 from ..output import respond
 from ..packets.StreamPacket import StreamPacket

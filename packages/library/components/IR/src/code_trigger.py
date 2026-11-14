@@ -1,4 +1,4 @@
-from hio.sdk import HIOTrigger, trigger
+from henglosio.sdk import HIOTrigger, trigger
 
 from .ir import number, publish, receiver, text
 

@@ -3,7 +3,7 @@ name: WiFi
 schemaVersion: 1
 
 dependences:
-  platform: ^1.0.0
+  platform: ^1.2.0
   # What it needs of the board — only boards listing it run it.
   capabilities: [wifi]
 

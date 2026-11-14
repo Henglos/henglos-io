@@ -1,6 +1,6 @@
 {
 	"name": "@henglosio/component-servo",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"description": "Servo motor component for HenglosIO: positional (0-180°) and continuous-rotation (360°)",
 	"author": "Henglos",
 	"license": "SEE LICENSE IN LICENSE",

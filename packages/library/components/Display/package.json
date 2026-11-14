@@ -1,6 +1,6 @@
 {
 	"name": "@henglosio/component-display",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"description": "Monochrome I2C OLED display (SSD1306, SH1106) component for HenglosIO",
 	"author": "Henglos",
 	"license": "SEE LICENSE IN LICENSE",

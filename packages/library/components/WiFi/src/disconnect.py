@@ -1,4 +1,4 @@
-from hio.sdk import HIOAction, action, SUCCESS
+from henglosio.sdk import HIOAction, action, SUCCESS
 
 from .wlan import access_point, station, text
 

@@ -2,7 +2,7 @@ import time
 from array import array
 
 from machine import Pin, PWM
-from hio.sdk import sleep_ms
+from henglosio.sdk import sleep_ms
 
 from .protocols import PROTOCOLS, decode
 

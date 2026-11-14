@@ -3,8 +3,8 @@
 
 import os
 
-# The clock is the SDK's — actions use the same one (hio.sdk).
-from ...sdk.core.clock import sleep_ms, ticks_ms, ticks_diff  # noqa: F401
+# The clock is the SDK's — actions use the same one (henglosio.sdk).
+from henglosio.sdk.core.clock import sleep_ms, ticks_ms, ticks_diff  # noqa: F401
 
 # Always False at runtime (MicroPython has no `typing`); type checkers read
 # any `if TYPE_CHECKING:` block as taken. For imports only types need — e.g.

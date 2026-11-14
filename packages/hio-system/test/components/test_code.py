@@ -6,7 +6,7 @@ import importlib.util
 import json
 import os
 
-from hio.sdk import SUCCESS, FALLBACK, generate_id
+from henglosio.sdk import SUCCESS, FALLBACK, generate_id
 from hio.system.core.Context import ActionContext, PipelineContext
 from hio.system.core.services.PacketCodec import Config, DataType
 

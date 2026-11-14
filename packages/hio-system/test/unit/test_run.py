@@ -7,8 +7,8 @@ import struct
 
 from support import Host, LoopbackTransport, StubConfig, execute_frame, take_responses
 
-from hio.sdk import HIOAction, action
-from hio.sdk.core.identifier import generate_id, variable_id
+from henglosio.sdk import HIOAction, action
+from henglosio.sdk.core.identifier import generate_id, variable_id
 from hio.system.core.packets.ExecutePacket import ExecutePacket
 from hio.system.core.packets.RecordPacket import RecordPacket
 from hio.system.core.packets.RunPacket import RunPacket

@@ -1,6 +1,6 @@
 from machine import ADC, Pin
 
-from hio.sdk import ticks_ms, ticks_diff
+from henglosio.sdk import ticks_ms, ticks_diff
 
 
 # What the Sound Sensor actions share — a microphone module with a

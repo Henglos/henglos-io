@@ -1,7 +1,7 @@
 # Runs the MicroPython runtime under CPython: stubs the MicroPython-only
 # modules it imports and puts packages/hio-system on sys.path so tests import
-# it as `hio` — the same package the board runs. hio.sdk comes from the uv
-# workspace (packages/hio-sdk, installed editable): `hio` is a namespace.
+# it as `hio` — the same package the board runs. henglosio.sdk comes from the uv
+# workspace (packages/hio-sdk, installed editable).
 
 import os
 import sys

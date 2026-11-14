@@ -1,4 +1,4 @@
-from hio.sdk import HIOAction, action, SUCCESS
+from henglosio.sdk import HIOAction, action, SUCCESS
 
 from .fs import CHUNK, FsError, checked, fail, folders, real, stat
 

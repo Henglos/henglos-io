@@ -1,6 +1,6 @@
 import json
 
-from hio.sdk import HIOAction, action, SUCCESS, FALLBACK
+from henglosio.sdk import HIOAction, action, SUCCESS, FALLBACK
 
 
 # Code / Run — runs a short Python script written in the studio, on the board.

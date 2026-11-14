@@ -1,4 +1,4 @@
-from hio.sdk import HIOAction, action, SUCCESS, FALLBACK
+from henglosio.sdk import HIOAction, action, SUCCESS, FALLBACK
 
 from .icons import ICONS, SIZE
 from .oled import decode_bitmap, display, forget, number, read_pbm, text, update, wiring

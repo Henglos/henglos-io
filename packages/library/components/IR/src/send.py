@@ -1,6 +1,6 @@
 import time
 
-from hio.sdk import HIOAction, action, sleep_ms, SUCCESS, FALLBACK
+from henglosio.sdk import HIOAction, action, sleep_ms, SUCCESS, FALLBACK
 
 from .ir import CARRIER_HZ, clamp, frames, number, text, transmitter
 from .protocols import PROTOCOLS

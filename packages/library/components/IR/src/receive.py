@@ -1,4 +1,4 @@
-from hio.sdk import HIOAction, action, SUCCESS, FALLBACK
+from henglosio.sdk import HIOAction, action, SUCCESS, FALLBACK
 
 from .ir import publish, wait_code
 

@@ -6,8 +6,8 @@ import asyncio
 
 from support import LoopbackTransport, StubConfig, execute_frame, request_frame, take_responses
 
-from hio.sdk import HIOAction, action
-from hio.sdk.core.identifier import generate_id
+from henglosio.sdk import HIOAction, action
+from henglosio.sdk.core.identifier import generate_id
 from hio.system.HIOSystem import HIOSystem
 from hio.system.core.packets.RecordPacket import RecordPacket
 from hio.system.core.services.CommandIngress import CommandIngress

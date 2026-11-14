@@ -1,5 +1,5 @@
-from .....sdk.core.registry import action
-from .....sdk.core.action import HIOAction, SUCCESS, FALLBACK
+from henglosio.sdk.core.registry import action
+from henglosio.sdk.core.action import HIOAction, SUCCESS, FALLBACK
 from ...Context import decode_value, encode_value, plain
 from ...services.PacketCodec import MAX_DATA_BUFFER
 from ... import Logic

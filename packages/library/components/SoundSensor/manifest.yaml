@@ -3,7 +3,7 @@ name: Sound Sensor
 schemaVersion: 1
 
 dependences:
-  platform: ^1.0.0
+  platform: ^1.2.0
 
 schema:
 

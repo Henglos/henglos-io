@@ -21,6 +21,11 @@ const FIRMWARE_FLASH_BAUDRATE = 460800;
 type FirmwareInfo = { buildId: string; micropython: string; image: string };
 const FIRMWARE_INFO = "firmware.json";
 
+// The runtime's folders on the board's filesystem — the runtime and the sdk
+// components import. Cleared before writing: a stale copy (an older platform's,
+// or one a frozen firmware now replaces) comes first on sys.path.
+const RUNTIME_DIRS = ["/hio", "/henglosio"];
+
 // Installs a compiled workflow on the board. Two kinds of build:
 //
 // The runtime frozen into the board's firmware (firmware.json — a board whose
@@ -112,7 +117,7 @@ export class FlashWorkflowUseCase {
 			ctx.progress("upload", 0);
 			// The runtime only: /components and /files are what sessions installed
 			// (BoardInstaller) — kept, so the next Play has nothing to resend.
-			await repl!.remove("/hio");
+			for (const dir of RUNTIME_DIRS) await repl!.remove(dir);
 
 			const folders = [...new Set(files.flatMap(file => parentFolders(file)))].sort((a, b) => a.length - b.length);
 			await repl!.mkdirs(folders.map(folder => `/${folder}`));
@@ -198,7 +203,7 @@ export class FlashWorkflowUseCase {
 			ctx.progress("upload", 0);
 			// A runtime on the filesystem (an older platform's) comes first on
 			// sys.path — it would run instead of the frozen one.
-			await repl!.remove("/hio");
+			for (const dir of RUNTIME_DIRS) await repl!.remove(dir);
 
 			const entries = files.filter(file => file !== FIRMWARE_INFO && file !== firmware.image);
 			for (let i = 0; i < entries.length; i++) {

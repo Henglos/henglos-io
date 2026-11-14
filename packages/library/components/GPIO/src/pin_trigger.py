@@ -1,6 +1,6 @@
 from machine import Pin
 
-from hio.sdk import HIOTrigger, trigger, ticks_ms, ticks_diff
+from henglosio.sdk import HIOTrigger, trigger, ticks_ms, ticks_diff
 
 
 # GPIO / Pin Trigger — runs its branch on an edge of a pin: a button pressed,

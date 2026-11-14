@@ -1,7 +1,7 @@
 import json
 import time
 
-from hio.sdk import HIOAction, action, sleep_ms, SUCCESS, FALLBACK
+from henglosio.sdk import HIOAction, action, sleep_ms, SUCCESS, FALLBACK
 
 from .wlan import clamp, current_ssid, failure, ip, mac, rssi, set_hostname, station, text
 

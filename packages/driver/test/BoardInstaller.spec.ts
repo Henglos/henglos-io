@@ -150,8 +150,8 @@ describe("BoardInstaller against the runtime", () => {
 			"import sys",
 			`sys.path.insert(0, ${JSON.stringify(board.sandbox.replaceAll("\\", "/"))})`,
 			"from hio.system.core.services.ComponentLoader import ComponentLoader",
-			"from hio.sdk.core import registry",
-			"from hio.sdk.core.identifier import generate_id",
+			"from henglosio.sdk.core import registry",
+			"from henglosio.sdk.core.identifier import generate_id",
 			"print(ComponentLoader('/components').load(), registry.find(generate_id('gpio/write')) is not None)",
 		].join("\n"));
 		await repl.close(false);

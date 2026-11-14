@@ -2,7 +2,7 @@ import math
 
 from machine import Pin
 
-from hio.sdk import ticks_ms, ticks_diff
+from henglosio.sdk import ticks_ms, ticks_diff
 
 
 # What the DHT actions share — a DHT11 or DHT22 (AM2302) on one data pin,

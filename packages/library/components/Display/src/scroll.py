@@ -1,4 +1,4 @@
-from hio.sdk import HIOAction, action, sleep_ms, SUCCESS, FALLBACK
+from henglosio.sdk import HIOAction, action, sleep_ms, SUCCESS, FALLBACK
 
 from .fonts import ADVANCE, width as text_width
 from .oled import CHAR, display, forget, format_text, number, printable, show_value, text, wiring

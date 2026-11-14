@@ -1,6 +1,6 @@
 from machine import Pin
 
-from hio.sdk import HIOAction, action, SUCCESS, FALLBACK
+from henglosio.sdk import HIOAction, action, SUCCESS, FALLBACK
 
 
 # GPIO Read — sets the pin as input and publishes its current level.

@@ -1,6 +1,6 @@
 import math
 
-from hio.sdk import HIOAction, action, FALLBACK
+from henglosio.sdk import HIOAction, action, FALLBACK
 
 from .sensor import clamp, number, reading
 

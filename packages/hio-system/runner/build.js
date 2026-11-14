@@ -7061,19 +7061,22 @@ function firmwareContext(context) {
     run: (command, args = []) => run(command, args, context.log)
   };
 }
+var RUNTIME_PACKAGES = ["hio", "henglosio"];
 function stageRuntime(root, rewritten, identity2) {
   rmSync(FREEZE_STAGE, { recursive: true, force: true });
   const hash = createHash("sha256").update(identity2);
-  for (const file of [...pythonFiles(path.join(root, "hio"))].sort()) {
-    const source = readFileSync(rewritten.get(file) ?? path.join(root, "hio", file));
-    const target = path.join(FREEZE_STAGE, "hio", file);
-    mkdirSync(path.dirname(target), { recursive: true });
-    writeFileSync(target, source);
-    hash.update(`\x00${file}\x00`).update(source);
+  for (const pkg of RUNTIME_PACKAGES) {
+    for (const file of [...pythonFiles(path.join(root, pkg))].sort()) {
+      const source = readFileSync(pkg === "hio" && rewritten.get(file) || path.join(root, pkg, file));
+      const target = path.join(FREEZE_STAGE, pkg, file);
+      mkdirSync(path.dirname(target), { recursive: true });
+      writeFileSync(target, source);
+      hash.update(`\x00${pkg}/${file}\x00`).update(source);
+    }
+    const init = path.join(FREEZE_STAGE, pkg, "__init__.py");
+    if (!existsSync(init))
+      writeFileSync(init, "");
   }
-  const init = path.join(FREEZE_STAGE, "hio", "__init__.py");
-  if (!existsSync(init))
-    writeFileSync(init, "");
   const buildId = hash.digest("hex").slice(0, 16);
   writeFileSync(path.join(FREEZE_STAGE, "hio_build.py"), [
     "# Written by the platform's build: which build of the runtime this",
@@ -7135,7 +7138,7 @@ var PlatformRunner = {
       writeFileSync(manifest, [
         "# The port's own frozen modules (asyncio, requests…), plus the runtime.",
         `include("$(PORT_DIR)/boards/manifest.py")`,
-        `package("hio", base_path="${FREEZE_STAGE}")`,
+        ...RUNTIME_PACKAGES.map((pkg) => `package("${pkg}", base_path="${FREEZE_STAGE}")`),
         `module("hio_build.py", base_path="${FREEZE_STAGE}")`,
         ""
       ].join(`
@@ -7156,12 +7159,14 @@ var PlatformRunner = {
       copyFileSync(cached, path.join(output, FIRMWARE_IMAGE));
       const info = { buildId, micropython: version, image: FIRMWARE_IMAGE };
       writeFileSync(path.join(output, FIRMWARE_INFO), JSON.stringify(info, null, 2));
-      modules = [...pythonFiles(path.join(FREEZE_STAGE, "hio"))].length;
+      modules = RUNTIME_PACKAGES.reduce((total, pkg) => total + [...pythonFiles(path.join(FREEZE_STAGE, pkg))].length, 0);
     } else {
-      for (const file of pythonFiles(path.join(FREEZE_STAGE, "hio"))) {
-        const name = `hio/${file}`;
-        await compile(path.join(FREEZE_STAGE, name), path.join(output, name.replace(/\.py$/, ".mpy")), name);
-        modules++;
+      for (const pkg of RUNTIME_PACKAGES) {
+        for (const file of pythonFiles(path.join(FREEZE_STAGE, pkg))) {
+          const name = `${pkg}/${file}`;
+          await compile(path.join(FREEZE_STAGE, name), path.join(output, name.replace(/\.py$/, ".mpy")), name);
+          modules++;
+        }
       }
     }
     for (const entry of ["main.py", "boot.py"]) {

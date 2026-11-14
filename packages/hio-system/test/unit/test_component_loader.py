@@ -6,12 +6,12 @@ import sys
 
 import pytest
 
-from hio.sdk.core import registry
-from hio.sdk.core.identifier import generate_id
+from henglosio.sdk.core import registry
+from henglosio.sdk.core.identifier import generate_id
 from hio.system.core.services.ComponentLoader import ComponentLoader
 
 _ACTION = """
-from hio.sdk import HIOAction, action
+from henglosio.sdk import HIOAction, action
 
 @action("%s")
 class Action(HIOAction):

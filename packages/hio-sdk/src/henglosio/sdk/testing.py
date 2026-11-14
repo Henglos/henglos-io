@@ -7,7 +7,7 @@ from .core.stream import HIOStream, HIOStreamError
 # Runs an action without the runtime — in a component's unit tests, or by hand
 # on the board's REPL:
 #
-#   from hio.sdk.testing import MemoryContext, run
+#   from henglosio.sdk.testing import MemoryContext, run
 #   from components.http.request import RequestAction
 #
 #   ctx = MemoryContext({"request/method": "GET", "request/url": "https://example.com"})

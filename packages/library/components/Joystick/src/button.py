@@ -1,4 +1,4 @@
-from hio.sdk import HIOAction, action, sleep_ms, FALLBACK
+from henglosio.sdk import HIOAction, action, sleep_ms, FALLBACK
 
 from .stick import clamp, pressed
 

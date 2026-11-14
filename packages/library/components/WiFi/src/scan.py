@@ -1,6 +1,6 @@
 import json
 
-from hio.sdk import HIOAction, action, sleep_ms, SUCCESS
+from henglosio.sdk import HIOAction, action, sleep_ms, SUCCESS
 
 from .wlan import station
 

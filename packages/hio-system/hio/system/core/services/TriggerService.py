@@ -1,5 +1,5 @@
-from ....sdk.core import registry
-from ....sdk.core.trigger import HIOTrigger
+from henglosio.sdk.core import registry
+from henglosio.sdk.core.trigger import HIOTrigger
 from ..Context import TriggerContext
 from ..GlobalVariables import GlobalVariables
 from .PacketCodec import OutputId

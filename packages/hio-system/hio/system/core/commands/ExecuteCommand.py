@@ -1,6 +1,6 @@
-from ....sdk.core import registry
-from ....sdk.core.action import HIOAction, SUCCESS, FALLBACK
-from ....sdk.core.identifier import generate_id
+from henglosio.sdk.core import registry
+from henglosio.sdk.core.action import HIOAction, SUCCESS, FALLBACK
+from henglosio.sdk.core.identifier import generate_id
 from ..Context import ActionContext, ScriptContext, PipelineContext, ConversionError, coerce, decode_value, encode_value
 from ..GlobalVariables import GlobalVariables
 from .. import Logic

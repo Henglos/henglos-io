@@ -1,4 +1,4 @@
-from hio.sdk import HIOAction, action, FALLBACK
+from henglosio.sdk import HIOAction, action, FALLBACK
 
 from .sound import listen, publish
 

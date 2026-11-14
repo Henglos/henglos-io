@@ -1,4 +1,4 @@
-from hio.sdk import HIOAction, action, sleep_ms, SUCCESS, FALLBACK
+from henglosio.sdk import HIOAction, action, sleep_ms, SUCCESS, FALLBACK
 
 from .driver import clamp, frequency, last_duty, set_duty, text
 

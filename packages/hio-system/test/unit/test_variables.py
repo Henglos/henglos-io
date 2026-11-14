@@ -7,8 +7,8 @@ import struct
 
 from support import Host, LoopbackTransport, StubConfig, take_responses
 
-from hio.sdk import HIOAction, action
-from hio.sdk.core.identifier import generate_id, variable_id
+from henglosio.sdk import HIOAction, action
+from henglosio.sdk.core.identifier import generate_id, variable_id
 from hio.system.core.packets.ActionBody import decode_action_body, encode_action_body
 from hio.system.core.packets.ExecutePacket import ExecutePacket
 from hio.system.core.packets.RecordPacket import RecordPacket
@@ -308,7 +308,7 @@ def test_remove_without_a_variable_goes_out_fallback():
 
 
 def test_the_built_in_variables_actions_are_registered_like_any_action():
-	from hio.sdk.core import registry
+	from henglosio.sdk.core import registry
 	from hio.system.core.commands.ExecuteCommand import BUILTIN_ACTION_IDS
 
 	for name in ("set", "append", "set field", "clear", "remove"):

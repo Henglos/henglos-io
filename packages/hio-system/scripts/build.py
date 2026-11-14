@@ -16,11 +16,14 @@ import sys
 import mpy_cross
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))     # packages/hio-system
-# Where hio/ comes from: this package (hio/system, hio/tools) and the sdk
-# (packages/hio-sdk/src — hio/sdk). In a packed release the sdk is already
-# under ROOT/hio/sdk and the second root doesn't exist.
-ROOTS = [ROOT, os.path.join(os.path.dirname(ROOT), "hio-sdk", "src")]
-SOURCE = "hio"
+# What goes on the board, as (root, package): the runtime — this package's
+# hio/ — and the sdk, henglosio/ from packages/hio-sdk/src (in a packed
+# release it's under ROOT, and that root doesn't exist).
+SOURCES = [
+	(ROOT, "hio"),
+	(os.path.join(os.path.dirname(ROOT), "hio-sdk", "src"), "henglosio"),
+	(ROOT, "henglosio"),
+]
 ENTRY_POINTS = ("boot.py", "main.py")
 BUILD = os.path.join(ROOT, "build")
 
@@ -35,8 +38,8 @@ def compile_all() -> int:
 	count = 0
 	failed = []
 
-	for root in ROOTS:
-		for directory, dirs, files in os.walk(os.path.join(root, SOURCE)):
+	for root, package in SOURCES:
+		for directory, dirs, files in os.walk(os.path.join(root, package)):
 			dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
 
 			for name in files:
@@ -57,10 +60,11 @@ def compile_all() -> int:
 				else:
 					count += 1
 
-	# hio/ is a namespace in the source (sdk + system); on the board, one package.
-	init = os.path.join(BUILD, SOURCE, "__init__.py")
-	if not os.path.exists(init[:-3] + ".mpy"):
-		open(init, "w").close()
+	# henglosio/ is a namespace in the source; on the board, a regular package.
+	for package in ("hio", "henglosio"):
+		init = os.path.join(BUILD, package, "__init__.py")
+		if os.path.isdir(os.path.dirname(init)) and not os.path.exists(init[:-3] + ".mpy"):
+			open(init, "w").close()
 
 	for name in ENTRY_POINTS:
 		path = os.path.join(ROOT, name)

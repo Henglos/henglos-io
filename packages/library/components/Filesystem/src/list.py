@@ -1,7 +1,7 @@
 import json
 import os
 
-from hio.sdk import HIOAction, action, SUCCESS
+from henglosio.sdk import HIOAction, action, SUCCESS
 
 from .fs import FsError, checked, fail, real, stat
 

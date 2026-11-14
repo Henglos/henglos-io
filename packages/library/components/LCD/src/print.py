@@ -1,4 +1,4 @@
-from hio.sdk import HIOAction, action, SUCCESS, FALLBACK
+from henglosio.sdk import HIOAction, action, SUCCESS, FALLBACK
 
 from .lcd import display, encode, forget, format_text, layout, show, text, wiring
 

@@ -1,4 +1,4 @@
-from hio.sdk import HIOAction, action, SUCCESS, FALLBACK
+from henglosio.sdk import HIOAction, action, SUCCESS, FALLBACK
 
 from .fonts import ADVANCE
 from .oled import CHAR, display, forget, format_text, number, printable, show_value, text, update, wiring

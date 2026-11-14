@@ -1,7 +1,7 @@
 kind: platform
 name: HenglosIO
 schemaVersion: 1
-version: 1.1.0
+version: 1.2.0
 
 # The platform builds itself, in the board's image: runner/build.js has the
 # board's firmware script build MicroPython with the runtime frozen in (or, when

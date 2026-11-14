@@ -1,5 +1,5 @@
-from ....sdk.core import registry
-from ....sdk.core.identifier import generate_id
+from henglosio.sdk.core import registry
+from henglosio.sdk.core.identifier import generate_id
 from ..interfaces.ICommand import ICommand
 from ..interfaces.IConfig import IConfig
 from ..interfaces.ITransport import ITransport

@@ -1,4 +1,4 @@
-from ....sdk.core import registry
+from henglosio.sdk.core import registry
 from ..compat import TYPE_CHECKING
 from ..interfaces.ICommand import ICommand
 from ..interfaces.IConfig import IConfig

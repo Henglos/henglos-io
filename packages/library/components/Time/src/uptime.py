@@ -1,4 +1,4 @@
-from hio.sdk import HIOAction, action, ticks_ms, SUCCESS
+from henglosio.sdk import HIOAction, action, ticks_ms, SUCCESS
 
 
 # Time / Uptime — publishes the board's millisecond clock.

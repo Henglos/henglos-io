@@ -2,8 +2,8 @@
 # block it's sent (one JSON line in: {"code": ...}; one out: {"out", "err"})
 # in one persistent namespace — so hio.tools.repl keeps its runtime between
 # blocks, as on a board. The runtime is the real one (packages/hio-system, with
-# hio.sdk from packages/hio-sdk — `hio` is a namespace across the two), under
-# CPython with the MicroPython stubs from its tests.
+# henglosio.sdk from packages/hio-sdk), under CPython with the MicroPython stubs
+# from its tests.
 #
 # Every absolute path ("/hio/...") is redirected into argv[1], so uploads and
 # the stored program never touch the real filesystem.

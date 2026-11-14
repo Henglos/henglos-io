@@ -1,6 +1,6 @@
 from support import stream_frame, request_frame
 
-from hio.sdk.core.identifier import generate_id
+from henglosio.sdk.core.identifier import generate_id
 from hio.system.core.services.PacketCodec import PacketCodec, CommandId, FrameType, StreamStatus
 from hio.system.core.packets.StreamPacket import StreamPacket
 

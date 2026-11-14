@@ -1,4 +1,4 @@
-from hio.sdk import HIOTrigger, trigger, ticks_ms, ticks_diff
+from henglosio.sdk import HIOTrigger, trigger, ticks_ms, ticks_diff
 
 from .sensor import measure, min_interval, model_of, publish, text, to_unit
 

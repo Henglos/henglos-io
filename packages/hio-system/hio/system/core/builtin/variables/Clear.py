@@ -1,5 +1,5 @@
-from .....sdk.core.registry import action
-from .....sdk.core.action import HIOAction, SUCCESS, FALLBACK
+from henglosio.sdk.core.registry import action
+from henglosio.sdk.core.action import HIOAction, SUCCESS, FALLBACK
 from ...Context import encode_value
 from ...services.PacketCodec import DataType
 

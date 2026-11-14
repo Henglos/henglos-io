@@ -14,7 +14,7 @@ import types
 
 import pytest
 
-from hio.sdk import SUCCESS, FALLBACK, generate_id
+from henglosio.sdk import SUCCESS, FALLBACK, generate_id
 from hio.system.core.Context import ActionContext, PipelineContext, decode_value
 from hio.system.core.GlobalVariables import GlobalVariables
 from hio.system.core.services.PacketCodec import Config, DataType, OutputId, OutputLink

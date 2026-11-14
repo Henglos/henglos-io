@@ -1,4 +1,4 @@
-from hio.sdk import HIOAction, action
+from henglosio.sdk import HIOAction, action
 
 from .fs import FsError, checked, stat
 

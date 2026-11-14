@@ -11,8 +11,8 @@ from hio.system.core.services.PacketCodec import (
 )
 from hio.system.core.packets.ExecutePacket import ExecutePacket
 from hio.system.core.packets.StreamPacket import StreamPacket
-from hio.sdk import HIOAction, action
-from hio.sdk.core.identifier import generate_id
+from henglosio.sdk import HIOAction, action
+from henglosio.sdk.core.identifier import generate_id
 from hio.system.HIOSystem import HIOSystem
 
 

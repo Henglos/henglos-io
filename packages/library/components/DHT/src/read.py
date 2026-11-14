@@ -1,4 +1,4 @@
-from hio.sdk import HIOAction, action, sleep_ms, SUCCESS, FALLBACK
+from henglosio.sdk import HIOAction, action, sleep_ms, SUCCESS, FALLBACK
 
 from .sensor import measure, min_interval, model_of, publish, text
 

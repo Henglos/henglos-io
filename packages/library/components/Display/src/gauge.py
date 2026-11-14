@@ -1,6 +1,6 @@
 import math
 
-from hio.sdk import HIOAction, action, SUCCESS, FALLBACK
+from henglosio.sdk import HIOAction, action, SUCCESS, FALLBACK
 
 from .oled import display, forget, number, show_value, update, wiring
 
