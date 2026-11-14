@@ -1,5 +1,11 @@
 # @henglosio/cli
 
+## 1.1.2
+
+### Patch Changes
+
+- Flashing a frozen runtime creates the folders it writes into first: on a freshly erased board, writing components/__init__.py failed with OSError ENOENT.
+
 ## 1.1.1
 
 ### Patch Changes

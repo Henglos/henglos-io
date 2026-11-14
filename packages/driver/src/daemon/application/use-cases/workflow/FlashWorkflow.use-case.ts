@@ -206,6 +206,12 @@ export class FlashWorkflowUseCase {
 			for (const dir of RUNTIME_DIRS) await repl!.remove(dir);
 
 			const entries = files.filter(file => file !== FIRMWARE_INFO && file !== firmware.image);
+			// Their folders first (components/ for components/__init__.py): a
+			// freshly erased board has none, and writing into one that doesn't
+			// exist fails with ENOENT.
+			const folders = [...new Set(entries.flatMap(file => parentFolders(file)))].sort((a, b) => a.length - b.length);
+			await repl!.mkdirs(folders.map(folder => `/${folder}`));
+
 			for (let i = 0; i < entries.length; i++) {
 				const file = entries[i]!;
 				await repl!.writeFile(`/${file}`, await fs.readFile(path.join(buildPath, file)));
