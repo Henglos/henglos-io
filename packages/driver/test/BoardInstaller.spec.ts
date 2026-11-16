@@ -159,4 +159,30 @@ describe("BoardInstaller against the runtime", () => {
 		expect(loaded.trim()).toBe("['gpio/write'] True");
 	}, 60000);
 
+	test("writes the limits the workflow overrides, and the runtime reloads to read them — no build", async () => {
+		const repl = await openFake(board);
+		const limit = async () => (await repl.exec("from hio.system.SystemConfig import SystemConfig\nprint(SystemConfig.MAX_VARIABLES)")).trim();
+		expect(await limit()).toBe("16");                                   // the default, imported as main.py would have
+
+		await installer.sync(repl, { components: [], files: [], settings: { MAX_VARIABLES: 32 } }, silent);
+		expect(JSON.parse(fs.readFileSync(path.join(board.sandbox, "hio_settings.json"), "utf-8"))).toEqual({ MAX_VARIABLES: 32 });
+		expect(await limit()).toBe("32");                                   // reloaded with the new value
+
+		// Unchanged: nothing written, nothing reloaded.
+		const before = writes();
+		await installer.sync(repl, { components: [], files: [], settings: { MAX_VARIABLES: 32 } }, silent);
+		expect(writes()).toBe(before);
+
+		// No overrides: the file goes, the defaults come back.
+		await installer.sync(repl, { components: [], files: [], settings: {} }, silent);
+		expect(fs.existsSync(path.join(board.sandbox, "hio_settings.json"))).toBe(false);
+		expect(await limit()).toBe("16");
+
+		// An older hosting sends none: the board's file is left alone.
+		fs.writeFileSync(path.join(board.sandbox, "hio_settings.json"), JSON.stringify({ MAX_VARIABLES: 8 }));
+		await installer.sync(repl, { components: [], files: [] }, silent);
+		expect(fs.existsSync(path.join(board.sandbox, "hio_settings.json"))).toBe(true);
+		await repl.close(false);
+	}, 60000);
+
 });

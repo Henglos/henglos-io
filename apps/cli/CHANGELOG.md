@@ -1,5 +1,11 @@
 # @henglosio/cli
 
+## 1.3.0
+
+### Minor Changes
+
+- Limits are no longer compiled in: the runtime reads the workflow's overrides from /hio_settings.json when it starts, and the driver writes that file before a session (reloading the runtime when it changes). Changing a limit needs no compile or flash, and one firmware serves every workflow of a board.
+
 ## 1.2.0
 
 ### Minor Changes

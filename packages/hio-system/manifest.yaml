@@ -1,7 +1,7 @@
 kind: platform
 name: HenglosIO
 schemaVersion: 1
-version: 1.2.0
+version: 1.3.0
 
 # The platform builds itself, in the board's image: runner/build.js has the
 # board's firmware script build MicroPython with the runtime frozen in (or, when
@@ -11,13 +11,15 @@ build:
   script: ./runner/build.js
   output: /workspace/build
 
-# Limits a workflow may override (studio → Platform). The build compiles the
-# runtime with the workflow's values: `key` is the constant, `file` where it's
-# assigned (under hio/, default system/SystemConfig.py), `default` must match
-# what's written there. Protocol limits (group Protocol) are also what the
-# host builds its packets with — @henglosio/workflow reads the same overrides
-# (protocolLimits), so the two sides always agree. `rules` tie limits to each
-# other; the build and the studio both check them.
+# Limits a workflow may override (studio → Platform). Not compiled in: the
+# driver writes the workflow's values to /hio_settings.json on the board before
+# a session, and the runtime reads them when it starts (hio/system/core/
+# settings.py) — changing one needs no build or flash. `key` is what the runtime
+# reads with setting("KEY", default), and `default` must match the default
+# there. Protocol limits (group Protocol) are also what the host builds its
+# packets with — @henglosio/workflow reads the same overrides (protocolLimits),
+# so the two sides always agree. `rules` tie limits to each other; the hosting
+# and the studio both check them.
 #
 # Not here on purpose: DEFAULT_BAUDRATE — it's the control link's speed, not
 # a limit; changing it on the board alone would cut the driver off.
@@ -97,7 +99,6 @@ settings:
     displayName: Packet size
     description: Upper bound for a frame's LEN — every EXECUTE and every response. The host splits nothing — an action that doesn't fit fails to compile.
     group: Protocol
-    file: system/core/services/PacketCodec.py
     type: integer
     default: 1024
     min: 64
@@ -108,7 +109,6 @@ settings:
     displayName: Config value size
     description: Largest value one EXECUTE carries — text, bytes, a color, a list or an object (its JSON).
     group: Protocol
-    file: system/core/services/PacketCodec.py
     type: integer
     default: 512
     min: 4
@@ -119,7 +119,6 @@ settings:
     displayName: Script size
     description: Largest Code script (CODE binding) one config carries.
     group: Protocol
-    file: system/core/services/PacketCodec.py
     type: integer
     default: 192
     min: 16
@@ -130,7 +129,6 @@ settings:
     displayName: Configs per action
     description: Configs one action's EXECUTE may carry — Start's include one per variable with an initial value.
     group: Protocol
-    file: system/core/services/PacketCodec.py
     type: integer
     default: 15
     min: 1
@@ -140,7 +138,6 @@ settings:
     displayName: Outputs per action
     description: Connected outputs one action may have (Success, Fallback and custom ones).
     group: Protocol
-    file: system/core/services/PacketCodec.py
     type: integer
     default: 4
     min: 1

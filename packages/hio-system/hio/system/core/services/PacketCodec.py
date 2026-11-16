@@ -69,6 +69,7 @@
 # Context, a value handed to an SDK action) must copy it with bytes(...) first.
 
 from ..interfaces.IPacket import IPacket
+from ..settings import setting
 
 
 STX = 0x02
@@ -78,12 +79,14 @@ HEADER_SIZE = 3                                       # STX + LEN(16)
 MIN_PACKET_SIZE = 5                                   # FRAME_TYPE + FRAME_ID(16) + CRC16(16), empty payload
 MIN_FRAME_SIZE = HEADER_SIZE + MIN_PACKET_SIZE + 1    # + ETX
 
-# Board limits — defaults from platform_old's HIOSDK/common/limits.h.
-MAX_PACKET_SIZE = 1024          # upper bound for LEN
-MAX_DATA_BUFFER = 512           # one resolved config value (a list or an object's JSON included)
-MAX_CODE_BUFFER = 192           # one CODE config's source text
-MAX_CONFIGS_PER_COMMAND = 15
-MAX_OUTPUTS_PER_ACTION = 4
+# Board limits — the protocol's, so the host builds its packets with the same
+# values (@henglosio/workflow's protocolLimits): the defaults here, or the
+# workflow's overrides (core/settings.py).
+MAX_PACKET_SIZE = setting("MAX_PACKET_SIZE", 1024)                  # upper bound for LEN
+MAX_DATA_BUFFER = setting("MAX_DATA_BUFFER", 512)                   # one resolved config value (a list or an object's JSON included)
+MAX_CODE_BUFFER = setting("MAX_CODE_BUFFER", 192)                   # one CODE config's source text
+MAX_CONFIGS_PER_COMMAND = setting("MAX_CONFIGS_PER_COMMAND", 15)
+MAX_OUTPUTS_PER_ACTION = setting("MAX_OUTPUTS_PER_ACTION", 4)
 MAX_FRAME_SIZE = HEADER_SIZE + MAX_PACKET_SIZE + 1
 
 # Room left for PAYLOAD once FRAME_TYPE + FRAME_ID and CRC16 are counted in LEN.

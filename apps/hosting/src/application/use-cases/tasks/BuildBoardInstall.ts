@@ -1,11 +1,14 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { ResolveBoardInstall, describeUnsupported, unsupportedNodes, type IWorkflowRuntime } from "@henglosio/workflow";
-import type { BoardInstall } from "@henglosio/shared";
+import { checkPlatformSettings, type BoardInstall } from "@henglosio/shared";
 
 import type { IAccountPackageRepository } from "@/domain/repositories/IAccountPackageRepository.repo";
 import type { IPackageLinkRepository } from "@/domain/repositories/IPackageLinkRepository.repo";
 import type { IWorkflowFileRepository } from "@/domain/repositories/IWorkflowFileRepository.repo";
-import { InvalidWorkflowFile, UnsupportedCapability } from "@/application/errors/Workflow.error";
+import type { IWorkflowRepository } from "@/domain/repositories/IWorkflowRepository.repo";
+import { InvalidPlatformSettings, InvalidWorkflowFile, UnsupportedCapability } from "@/application/errors/Workflow.error";
+import { PlatformNotFound } from "@/application/errors/services/Platform.error";
+import { GetPlatformSettingsUseCase } from "../platform/GetPlatformSettings.use-case";
 import { CredentialService } from "@/application/services/Credential.service";
 import { createHash } from "crypto";
 
@@ -13,9 +16,10 @@ import { createHash } from "crypto";
  * What a session (Play, Run, Debug, Record) asks the driver to put on the
  * board before its first frame: the components' actions the workflow uses
  * (by package name@version — the driver has them cached) and the files its
- * configs reference, with their bytes, and the values of the credentials
- * they pick (the user's — `userId`). See ResolveBoardInstall and the driver's
- * BoardInstaller.
+ * configs reference, with their bytes, the values of the credentials they
+ * pick (the user's — `userId`), and the limits the workflow overrides (checked
+ * against its platform version — the runtime reads them at start, no build).
+ * See ResolveBoardInstall and the driver's BoardInstaller.
  */
 @Injectable()
 export class BuildBoardInstall {
@@ -26,6 +30,8 @@ export class BuildBoardInstall {
 		@Inject("IAccountPackageRepository") private readonly accountPackageRepository: IAccountPackageRepository,
 		@Inject("IPackageLinkRepository") private readonly packageLinkRepository: IPackageLinkRepository,
 		@Inject("IWorkflowFileRepository") private readonly fileRepository: IWorkflowFileRepository,
+		@Inject("IWorkflowRepository") private readonly workflowRepository: IWorkflowRepository,
+		private readonly getPlatformSettings: GetPlatformSettingsUseCase,
 		private readonly credentials: CredentialService,
 	) {}
 
@@ -40,7 +46,8 @@ export class BuildBoardInstall {
 	/**
 	 * @param workflow The workflow as it is now (the caller has flushed the live doc).
 	 * @throws UnsupportedCapability when a node needs what the board doesn't have;
-	 *   InvalidWorkflowFile when an attached file is gone; CredentialMissing.
+	 *   InvalidWorkflowFile when an attached file is gone; CredentialMissing;
+ *   InvalidPlatformSettings when a limit override isn't allowed.
 	 */
 	async execute(userId: string, workflowId: string, workflow: IWorkflowRuntime): Promise<BoardInstall> {
 
@@ -78,8 +85,34 @@ export class BuildBoardInstall {
 			files.push({ path: credential.path, sha256: createHash("sha256").update(data).digest("hex"), data });
 		}
 
-		return { components, files };
+		return { components, files, settings: await this.settings(workflowId, workflow) };
 
+	}
+
+	// The workflow's limit overrides its platform version declares, checked —
+	// out of range or a broken rule fails the session before a byte is sent.
+	// Undefined when the version can't be read: the board's file stays as it is.
+	private async settings(workflowId: string, workflow: IWorkflowRuntime): Promise<Record<string, number> | undefined> {
+		const stored = await this.workflowRepository.findById(workflowId);
+		if (!stored) return undefined;
+
+		let declared;
+		try {
+			declared = await this.getPlatformSettings.execute(stored.platform);
+		} catch (error) {
+			if (error instanceof PlatformNotFound) return undefined;
+			throw error;
+		}
+
+		const overrides: Record<string, unknown> = workflow.platformSettings ?? {};
+		const problem = Object.values(checkPlatformSettings(declared.settings, declared.rules, overrides))[0];
+		if (problem) throw new InvalidPlatformSettings(problem);
+
+		// Only what this version declares (a workflow moved from another may
+		// carry keys it doesn't have) — the runtime would ignore the rest anyway.
+		return Object.fromEntries(declared.settings
+			.filter(setting => typeof overrides[setting.key] === "number")
+			.map(setting => [setting.key, overrides[setting.key] as number]));
 	}
 
 }

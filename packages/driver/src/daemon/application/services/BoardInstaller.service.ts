@@ -13,6 +13,9 @@ import { PackageService } from "./PackageService.service.js";
 //   /components/<component>/<module>.mpy   what their scripts import (from .x import …)
 //   /files/<sha>.<ext>                     files attached to configs
 //   /secrets/<credential id>.json          credentials picked in configs (the hosting's values)
+//   /hio_settings.json                     the limits the workflow overrides — read by the
+//                                          runtime when it starts (no build): when it changes,
+//                                          the runtime is reloaded
 //
 // Compiled here (MpyCompiler); a board whose MicroPython doesn't import
 // .mpy v6 gets the .py source instead. Each root keeps an .index.json of
@@ -42,6 +45,8 @@ type Wanted = { data: Uint8Array; sha: string };
 // credential stays on the board only while a workflow there picks it.
 const ROOTS = ["/components", "/files", "/secrets"] as const;
 const INDEX = ".index.json";
+// The runtime reads it when it's imported (hio/system/core/settings.py).
+const SETTINGS = "/hio_settings.json";
 
 const sha256 = (data: Uint8Array | string) => createHash("sha256").update(data).digest("hex");
 
@@ -179,11 +184,33 @@ export class BoardInstaller {
 			await board.writeFile(`${root}/${INDEX}`, new TextEncoder().encode(JSON.stringify(entries)));
 		}
 
+		// ── The limits ────────────────────────────────────────────────────────
+		// Only the overrides — the runtime keeps its defaults for the rest. No
+		// overrides, no file. Absent from an older hosting: left as it is.
+		let settingsChanged = false;
+		if (install.settings) {
+			const entries = Object.entries(install.settings).sort(([a], [b]) => a.localeCompare(b));
+			const content = entries.length > 0 ? JSON.stringify(Object.fromEntries(entries)) : null;
+			if (content !== onBoard.settings) {
+				if (content === null) await board.remove(SETTINGS);
+				else await board.writeFile(SETTINGS, new TextEncoder().encode(content));
+				settingsChanged = true;
+				log.info(content === null ? "Board: limits back to the defaults." : `Board: limits ${entries.map(([k, v]) => `${k}=${v}`).join(", ")}.`);
+			}
+		}
+
 		// What main.py imported is dropped, so the session's runtime loads the
 		// components afresh: the new versions, and a clean state — a session
 		// doesn't inherit what the stored program left in them (a joystick's center...).
-		if (install.components.length > 0 || toWrite.length > 0 || toRemove.length > 0) {
-			await board.exec("import sys\nfor _k in [k for k in sys.modules if k == 'components' or k.startswith('components.')]: del sys.modules[_k]\nimport gc\ngc.collect()");
+		// New limits: the runtime itself too (hio, henglosio), which read them on import.
+		if (install.components.length > 0 || toWrite.length > 0 || toRemove.length > 0 || settingsChanged) {
+			const prefixes = settingsChanged ? ["components", "hio", "henglosio"] : ["components"];
+			await board.exec([
+				"import sys",
+				`for _k in [k for k in sys.modules if any(k == p or k.startswith(p + '.') for p in ${JSON.stringify(prefixes)})]: del sys.modules[_k]`,
+				"import gc",
+				"gc.collect()",
+			].join("\n"));
 		}
 
 		const bytes = toWrite.reduce((sum, [, { data }]) => sum + data.length, 0);
@@ -194,8 +221,8 @@ export class BoardInstaller {
 
 	}
 
-	// The board's files under the roots, its folders under /components, and the indexes.
-	private async read(board: BoardFiles): Promise<{ present: Set<string>; folders: string[]; roots: Set<string>; index: Record<string, string> }> {
+	// The board's files under the roots, its folders under /components, the indexes and the limits file.
+	private async read(board: BoardFiles): Promise<{ present: Set<string>; folders: string[]; roots: Set<string>; index: Record<string, string>; settings: string | null }> {
 		const out = await board.exec([
 			"import os, json",
 			"_r = {'files': [], 'dirs': [], 'roots': [], 'index': {}}",
@@ -214,16 +241,22 @@ export class BoardInstaller {
 			"    try:",
 			`        with open(_root + '/${INDEX}') as _f: _r['index'].update(json.load(_f))`,
 			"    except Exception: pass",
+			"try:",
+			`    with open('${SETTINGS}') as _f: _r['settings'] = _f.read()`,
+			"except Exception: _r['settings'] = None",
 			"print('<<' + json.dumps(_r) + '>>')",
 		].join("\n"), 30000);
 
 		const match = /<<(.*)>>/s.exec(out);
-		const parsed = match ? JSON.parse(match[1]!) as { files: string[]; dirs: string[]; roots: string[]; index: Record<string, string> } : { files: [], dirs: [], roots: [], index: {} };
+		const parsed = match
+			? JSON.parse(match[1]!) as { files: string[]; dirs: string[]; roots: string[]; index: Record<string, string>; settings?: string | null }
+			: { files: [], dirs: [], roots: [], index: {}, settings: null };
 		return {
 			present: new Set(parsed.files),
 			folders: parsed.dirs.filter(dir => dir.startsWith("/components/")),
 			roots: new Set(parsed.roots),
 			index: parsed.index,
+			settings: parsed.settings ?? null,
 		};
 	}
 

@@ -49,6 +49,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 	cannot_load_package:          "Couldn't load the package.",
 	manifest_not_found:           "The package's manifest wasn't found.",
 	platform_not_found:           "Platform not found.",
+	invalid_platform_settings:    "A limit in Settings → Limits isn't allowed by this platform version.",
 	incompatible_platform_version:"Incompatible platform version.",
 	firmware_not_found_in_registry:"Firmware not found in the registry.",
 	sdk_not_found_in_registry:    "SDK not found in the registry.",

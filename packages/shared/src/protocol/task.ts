@@ -116,7 +116,7 @@ export const TaskFlashPayloadSchema = zod.object({
 // canvas, by component package, and the files attached to configs. The
 // driver adds what the actions' scripts import, compiles them and syncs the
 // board's /components and /files before the first frame (BoardInstaller),
-// sending only what changed.
+// sending only what changed — and the limits the workflow overrides.
 export const BoardInstallSchema = zod.object({
 	components: zod.array(zod.object({
 		name: zod.string(),
@@ -135,6 +135,11 @@ export const BoardInstallSchema = zod.object({
 		sha256: zod.string(),
 		data: zod.instanceof(Uint8Array),
 	})),
+	// The workflow's overrides of the runtime's limits (the platform manifest's
+	// `settings`, checked by the hosting): written to /hio_settings.json, read by
+	// the runtime when it starts — no build. Absent from an older hosting: the
+	// board's file is left as it is.
+	settings: zod.record(zod.string(), zod.number().int()).optional(),
 });
 
 /** An `execute` task's payload: the board's port, the first frame, and what to install first. */

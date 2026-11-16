@@ -3,11 +3,12 @@ import { BoardOptionSchema } from "@henglosio/workflow";
 
 // ── Platform manifest ─────────────────────────────────────────────────────────
 
-// A limit a workflow may override — `key` is the constant the platform's
-// build rewrites to the workflow's value before compiling, assigned in `file`
-// (under hio/, default system/SystemConfig.py). Protocol limits (PacketCodec.py)
-// are read by the host too — @henglosio/workflow's protocolLimits — so both
-// sides of the link always agree.
+// A limit a workflow may override — `key` is what the runtime reads with
+// setting("KEY", default) from /hio_settings.json, which the driver writes
+// before a session (no build). `file` is from platforms that compiled the
+// limits in (before hio-system 1.3.0) and is ignored. Protocol limits are read
+// by the host too — @henglosio/workflow's protocolLimits — so both sides of
+// the link always agree.
 export const PlatformSettingSchema = zod.object({
 	key: zod.string().regex(/^[A-Z][A-Z0-9_]*$/),
 	displayName: zod.string().min(1),
@@ -21,16 +22,17 @@ export const PlatformSettingSchema = zod.object({
 	unit: zod.string().optional(),
 }).refine(setting => setting.min <= setting.default && setting.default <= setting.max, "default must be within [min, max]");
 
-// A limit a workflow may override — `key` is the constant the platform's
-// build rewrites to the workflow's value before compiling, assigned in `file`
-// (under hio/, default system/SystemConfig.py). Protocol limits (PacketCodec.py)
-// are read by the host too — @henglosio/workflow's protocolLimits — so both
-// sides of the link always agree.
+// A limit a workflow may override — `key` is what the runtime reads with
+// setting("KEY", default) from /hio_settings.json, which the driver writes
+// before a session (no build). `file` is from platforms that compiled the
+// limits in (before hio-system 1.3.0) and is ignored. Protocol limits are read
+// by the host too — @henglosio/workflow's protocolLimits — so both sides of
+// the link always agree.
 export type PlatformSetting = zod.infer<typeof PlatformSettingSchema>;
 
 // Ties one limit to another (with the overrides applied): `key` must be
 // at least / at most `other + plus`, e.g. the receive buffer must hold a whole
-// packet. Checked by the platform's build and by the studio.
+// packet. Checked by the hosting (before a session) and by the studio.
 export const PlatformRuleSchema = zod.union([
 	zod.object({ key: zod.string(), atLeast: zod.string(), plus: zod.number().int().default(0), message: zod.string() }),
 	zod.object({ key: zod.string(), atMost: zod.string(), plus: zod.number().int().default(0), message: zod.string() }),
@@ -38,7 +40,7 @@ export const PlatformRuleSchema = zod.union([
 
 // Ties one limit to another (with the overrides applied): `key` must be
 // at least / at most `other + plus`, e.g. the receive buffer must hold a whole
-// packet. Checked by the platform's build and by the studio.
+// packet. Checked by the hosting (before a session) and by the studio.
 export type PlatformRule = zod.infer<typeof PlatformRuleSchema>;
 
 /**

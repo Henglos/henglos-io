@@ -29,10 +29,11 @@ type PlatformWindowProps = {
 };
 
 /**
- * The workflow's platform — the runtime compiled onto the board: which
- * version, and the limits it's compiled with. Centered and modal, over an
- * overlay: these change what runs on the board, so they get the whole screen's
- * attention. Both apply the next time the workflow is compiled and uploaded.
+ * The workflow's platform — the runtime on the board: which version (applies
+ * once the workflow is compiled and uploaded), and its limits (sent with the
+ * next run, read by the runtime when it starts — no compile, from platform
+ * 1.3.0). Centered and modal, over an overlay: these change what runs on the
+ * board, so they get the whole screen's attention.
  */
 export const PlatformWindow: React.FC<PlatformWindowProps> = ({ onClose }) => {
 
@@ -55,7 +56,7 @@ export const PlatformWindow: React.FC<PlatformWindowProps> = ({ onClose }) => {
 	const overrides = workflow.data.platformSettings ?? {};
 	const problems = checkPlatformSettings(settings, data?.rules ?? [], overrides);
 	const declared = new Set(settings.map(setting => setting.key));
-	// Overrides this platform version doesn't declare (set under another one) — the build ignores them.
+	// Overrides this platform version doesn't declare (set under another one) — the board ignores them.
 	const stray = data ? Object.keys(overrides).filter(key => !declared.has(key)) : [];
 	const overridden = Object.keys(overrides).filter(key => declared.has(key)).length;
 
@@ -185,7 +186,7 @@ export const PlatformWindow: React.FC<PlatformWindowProps> = ({ onClose }) => {
 
 							{stray.length > 0 && (
 								<div className="flex flex-col gap-2 rounded-md border border-line-subtle p-3">
-									<Text variant="dim" size="xs">Not limits of platform {version} — ignored by the build:</Text>
+									<Text variant="dim" size="xs">Not limits of platform {version} — ignored by the board:</Text>
 									{stray.map(key => (
 										<div key={key} className="flex items-center gap-2">
 											<Text variant="low" size="xs" font="mono">{key} = {overrides[key]}</Text>
@@ -202,7 +203,7 @@ export const PlatformWindow: React.FC<PlatformWindowProps> = ({ onClose }) => {
 					</div>
 
 					<div className="px-4 py-2.5 border-t border-line-subtle shrink-0">
-						<Text variant="low" size="xs">Changes apply the next time the workflow is compiled and uploaded to the board.</Text>
+						<Text variant="low" size="xs">Limits apply the next time the workflow runs — no compile needed (platform 1.3.0 and later; earlier versions compile them in). A new version still needs a compile and upload.</Text>
 					</div>
 
 				</div>

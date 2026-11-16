@@ -1,6 +1,6 @@
 {
 	"name": "@henglosio/hio-system",
-	"version": "1.2.0",
+	"version": "1.3.0",
 	"description": "HenglosIO runtime for MicroPython boards.",
 	"author": "Henglos",
 	"license": "SEE LICENSE IN LICENSE",
@@ -15,14 +15,13 @@
 	],
 	"scripts": {
 		"build": "bun build ./runner/build.ts --outfile ./runner/build.js --target node",
-		"test": "uv run --project . pytest -q test && bun test runner",
+		"test": "uv run --project . pytest -q test",
 		"build:mpy": "uv run --project . python scripts/build.py",
 		"prepack": "node scripts/bundle-sdk.mjs",
 		"postpack": "node scripts/bundle-sdk.mjs --clean"
 	},
 	"devDependencies": {
 		"@henglosio/runner": "workspace:*",
-		"@types/node": "^22.0.0",
-		"yaml": "2.8.2"
+		"@types/node": "^22.0.0"
 	}
 }

@@ -2,10 +2,8 @@ import type { Runner } from "@henglosio/runner";
 
 import { spawn } from "child_process";
 import { createHash } from "crypto";
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "fs";
-import os from "os";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "fs";
 import path from "path";
-import { parse as parseYaml } from "yaml";
 
 // The platform's Runner, run by `hio build` / `hio flash` inside the board's
 // image (its manifest's firmware.image). It builds the runtime and the workflow's components for the *board's* firmware — a .mpy
@@ -29,112 +27,10 @@ type ComponentSchema = {
 const moduleName = (text: string) => text.toLowerCase().replace(/[^a-z0-9_]/g, "_");
 
 // ── Platform settings ─────────────────────────────────────────────────────────
-// A workflow can override the limits this platform declares in its
-// manifest.yaml (`settings`). Each key is a constant assigned in one file of
-// the runtime (`file`, under hio/ — SystemConfig.py by default; the protocol's
-// in PacketCodec.py): the build compiles those files with the workflow's
-// values instead of the defaults written in them.
-
-export type PlatformSetting = {
-	key: string;
-	displayName: string;
-	type: "integer";
-	default: number;
-	min: number;
-	max: number;
-	file?: string;
-};
-
-// Ties one setting to another (with the overrides applied): `key` must be at
-// least / at most `atLeast`/`atMost` + `plus` — checked before compiling.
-export type PlatformRule = { key: string; atLeast?: string; atMost?: string; plus?: number; message: string };
-
-const SYSTEM_CONFIG = "system/SystemConfig.py";
-
-type Manifest = { settings?: PlatformSetting[]; rules?: PlatformRule[] };
-
-// What this platform version lets a workflow override.
-function declared(root: string): Required<Manifest> {
-	const manifest = parseYaml(readFileSync(path.join(root, "manifest.yaml"), "utf-8")) as Manifest;
-	return { settings: manifest.settings ?? [], rules: manifest.rules ?? [] };
-}
-
-// The workflow's overrides: from the context, or — an `hio` CLI older than
-// BuildContext.settings, baked into the build image — straight from the
-// runner.map.json the driver wrote next to the workspace.
-function workflowSettings(context: { workspace: string; settings?: Record<string, number> }): Record<string, number> {
-	if (context.settings) return context.settings;
-	const mapPath = path.join(context.workspace, "runner.map.json");
-	if (!existsSync(mapPath)) return {};
-	try {
-		return (JSON.parse(readFileSync(mapPath, "utf-8")) as { settings?: Record<string, number> }).settings ?? {};
-	} catch {
-		return {};
-	}
-}
-
-/**
- * The overrides this platform declares, checked: in range, and every rule
- * holding once they're applied over the defaults. Undeclared keys are
- * returned apart (the workflow may come from another platform version) —
- * anything else wrong fails the build.
- */
-export function resolveSettings(overrides: Record<string, number>, settings: PlatformSetting[], rules: PlatformRule[]): { values: Map<PlatformSetting, number>; skipped: string[] } {
-
-	const values = new Map<PlatformSetting, number>();
-	const skipped: string[] = [];
-	const effective: Record<string, number> = Object.fromEntries(settings.map(s => [s.key, s.default]));
-
-	for (const [key, value] of Object.entries(overrides)) {
-		const setting = settings.find(s => s.key === key);
-		if (!setting) {
-			skipped.push(key);
-			continue;
-		}
-		if (!Number.isInteger(value) || value < setting.min || value > setting.max) {
-			throw new Error(`Platform setting ${key} = ${value} is out of range (${setting.min}–${setting.max}).`);
-		}
-		values.set(setting, value);
-		effective[key] = value;
-	}
-
-	for (const rule of rules) {
-		const other = rule.atLeast ?? rule.atMost;
-		const value = effective[rule.key];
-		const bound = other !== undefined ? effective[other] : undefined;
-		if (value === undefined || bound === undefined) continue;
-		const limit = bound + (rule.plus ?? 0);
-		if (rule.atLeast !== undefined ? value < limit : value > limit) {
-			throw new Error(`Platform settings: ${rule.message} (${rule.key} = ${value}, needs ${rule.atLeast !== undefined ? "≥" : "≤"} ${limit}).`);
-		}
-	}
-
-	return { values, skipped };
-
-}
-
-/**
- * `source` with each of `values` written in: `KEY = const(N)` or `KEY = N`,
- * keeping const() when it was there and whatever follows the value (a
- * trailing comment). A key with no assignment in the file fails the build.
- */
-export function applySettings(source: string, file: string, values: Map<PlatformSetting, number>): string {
-
-	for (const [setting, value] of values) {
-		if ((setting.file ?? SYSTEM_CONFIG) !== file) continue;
-
-		const line = new RegExp(`^([ \\t]*${setting.key}[ \\t]*=[ \\t]*)(?:const\\(([^)\\n]*)\\)|([^\\n#]*?))([ \\t]*(?:#.*)?)$`, "m");
-		const match = source.match(line);
-		if (!match) throw new Error(`Platform setting ${setting.key} has no assignment in hio/${file}.`);
-
-		const isConst = match[2] !== undefined;
-		source = source.replace(line, (_, head: string, _const, _plain, tail: string) =>
-			`${head}${isConst ? `const(${value})` : value}${tail}`);
-	}
-
-	return source;
-
-}
+// The limits a workflow overrides (the manifest's `settings`) aren't compiled
+// in: the driver writes them to /hio_settings.json on the board before a
+// session, and the runtime reads them at start (hio/system/core/settings.py).
+// The firmware doesn't depend on them — one build serves every workflow.
 
 function run(command: string, args: string[], log: Log, env: Record<string, string> = {}): Promise<void> {
 	return new Promise((resolve, reject) => {
@@ -203,19 +99,17 @@ function firmwareContext(context: { board: { firmware: { micropython: string } }
 // (henglosio/sdk — packed into the release, see scripts/bundle-sdk.mjs).
 const RUNTIME_PACKAGES = ["hio", "henglosio"];
 
-// The runtime laid out for freezing in FREEZE_STAGE (the workflow's settings
-// written in), plus hio_build.py naming the build — returns its id: a hash of
+// The runtime laid out for freezing in FREEZE_STAGE, plus hio_build.py naming the build — returns its id: a hash of
 // everything that goes into the image, so an unchanged runtime isn't built
 // (or flashed) again.
-function stageRuntime(root: string, rewritten: Map<string, string>, identity: string): string {
+function stageRuntime(root: string, identity: string): string {
 
 	rmSync(FREEZE_STAGE, { recursive: true, force: true });
 	const hash = createHash("sha256").update(identity);
 
 	for (const pkg of RUNTIME_PACKAGES) {
 		for (const file of [...pythonFiles(path.join(root, pkg))].sort()) {
-			// The workflow's settings are only ever written into hio/.
-			const source = readFileSync((pkg === "hio" && rewritten.get(file)) || path.join(root, pkg, file));
+			const source = readFileSync(path.join(root, pkg, file));
 			const target = path.join(FREEZE_STAGE, pkg, file);
 			mkdirSync(path.dirname(target), { recursive: true });
 			writeFileSync(target, source);
@@ -277,27 +171,8 @@ const PlatformRunner: Runner = {
 		const root = context.platform.path;
 		let modules = 0;
 
-		// The workflow's overrides, written into copies of the files that assign
-		// them — the package itself is mounted read-only.
-		const { settings, rules } = declared(root);
-		const { values, skipped } = resolveSettings(workflowSettings(context), settings, rules);
-		const rewritten = new Map<string, string>();         // hio/<file> → its rewritten copy
-		if (values.size > 0) {
-			const temp = mkdtempSync(path.join(os.tmpdir(), "hio-settings-"));
-			for (const file of new Set([...values.keys()].map(setting => setting.file ?? SYSTEM_CONFIG))) {
-				const copy = path.join(temp, file.replaceAll("/", "__"));
-				writeFileSync(copy, applySettings(readFileSync(path.join(root, "hio", file), "utf-8"), file, values));
-				rewritten.set(file, copy);
-			}
-			const changed = [...values].filter(([setting, value]) => value !== setting.default).map(([setting, value]) => `${setting.key}=${value}`);
-			if (changed.length) await context.log(`[build] platform settings: ${changed.join(", ")}
-`);
-		}
-		if (skipped.length) await context.log(`[build] platform settings ignored (not settings of this platform version): ${skipped.join(", ")}
-`);
-
 		// Frozen into a firmware the board's script builds. Built only when this
-		// runtime (with these settings and options) isn't in the cache yet.
+		// runtime (with these options) isn't in the cache yet.
 		const script = readFileSync(path.resolve(context.board.path, context.board.firmware.script));
 		const identity = JSON.stringify({
 			version,
@@ -306,7 +181,7 @@ const PlatformRunner: Runner = {
 			options: Object.entries(context.options).sort(([a], [b]) => a.localeCompare(b)),
 			platform: context.platform.version,
 		});
-		const buildId = stageRuntime(root, rewritten, identity);
+		const buildId = stageRuntime(root, identity);
 		const cached = path.join(CACHE, "firmware", `${buildId}.bin`);
 
 		if (existsSync(cached)) {
@@ -343,7 +218,7 @@ const PlatformRunner: Runner = {
 
 		} else {
 
-			// From the staged runtime: the settings written in, and the __init__.py files.
+			// From the staged runtime, with its __init__.py files.
 			for (const pkg of RUNTIME_PACKAGES) {
 				for (const file of pythonFiles(path.join(FREEZE_STAGE, pkg))) {
 					const name = `${pkg}/${file}`;

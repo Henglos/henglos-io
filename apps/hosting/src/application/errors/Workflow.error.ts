@@ -114,3 +114,15 @@ export class DebugSessionNotFound extends BaseError {
 	}
 
 }
+
+/**
+ * The workflow's limit overrides break what its platform version allows — out
+ * of range, or a rule between two of them. `info`: the first problem.
+ */
+export class InvalidPlatformSettings extends BaseError {
+
+	constructor(problem: string) {
+		super(400, "invalid_platform_settings", problem)
+	}
+
+}
