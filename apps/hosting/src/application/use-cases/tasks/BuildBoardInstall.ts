@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { ResolveBoardInstall, describeUnsupported, unsupportedNodes, type IWorkflowRuntime } from "@henglosio/workflow";
+import { ResolveBoardInstall, boardOptionScope, describeUnsupported, unsupportedNodes, type BoardOptionValue, type IWorkflowRuntime } from "@henglosio/workflow";
 import { checkPlatformSettings, type BoardInstall } from "@henglosio/shared";
 
 import type { IAccountPackageRepository } from "@/domain/repositories/IAccountPackageRepository.repo";
@@ -85,7 +85,7 @@ export class BuildBoardInstall {
 			files.push({ path: credential.path, sha256: createHash("sha256").update(data).digest("hex"), data });
 		}
 
-		return { components, files, settings: await this.settings(workflowId, workflow) };
+		return { components, files, settings: await this.settings(workflowId, workflow), options: runtimeOptions(workflow) };
 
 	}
 
@@ -115,4 +115,13 @@ export class BuildBoardInstall {
 			.map(setting => [setting.key, overrides[setting.key] as number]));
 	}
 
+}
+
+// The board's options with `scope: runtime`: what the workflow picked, or the
+// default. They go to the board with the session — changing one needs no build.
+function runtimeOptions(workflow: IWorkflowRuntime): Record<string, BoardOptionValue> {
+	const picked = workflow.boardOptions ?? {};
+	return Object.fromEntries((workflow.board.base.options ?? [])
+		.filter(option => boardOptionScope(option) === "runtime")
+		.map(option => [option.key, picked[option.key] ?? option.default]));
 }

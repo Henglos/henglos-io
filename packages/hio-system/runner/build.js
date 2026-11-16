@@ -47,6 +47,55 @@ function firmwareContext(context) {
     run: (command, args = []) => run(command, args, context.log)
   };
 }
+function scopedOptions(context, scopes) {
+  const declared = new Map((context.board.options ?? []).map((option) => [option.key, option.scope ?? "build"]));
+  return Object.fromEntries(Object.entries(context.options).filter(([key]) => scopes.includes(declared.get(key) ?? "build")).sort(([a], [b]) => a.localeCompare(b)));
+}
+function scriptHash(context) {
+  return createHash("sha256").update(readFileSync(path.resolve(context.board.path, context.board.firmware.script))).digest("hex");
+}
+async function withCacheLock(fn) {
+  mkdirSync(CACHE, { recursive: true });
+  const holder = spawn("flock", [path.join(CACHE, "firmware.lock"), "sh", "-c", "echo locked; exec cat"], { stdio: ["pipe", "pipe", "inherit"] });
+  const exited = new Promise((resolve) => holder.on("close", () => resolve()));
+  const locked = await new Promise((resolve, reject) => {
+    holder.stdout.on("data", (chunk) => {
+      if (chunk.toString().includes("locked"))
+        resolve(true);
+    });
+    holder.on("error", (error) => error.code === "ENOENT" ? resolve(false) : reject(error));
+    holder.on("close", (code) => reject(new Error(`flock exited with code ${code} before taking the lock`)));
+  });
+  try {
+    return await fn();
+  } finally {
+    if (locked) {
+      holder.stdin.end();
+      await exited;
+    }
+  }
+}
+async function prepareBoard(context) {
+  const prepare = context.boardFirmware.prepare;
+  if (!prepare)
+    return;
+  const options = scopedOptions(context, ["prepare"]);
+  const key = createHash("sha256").update(JSON.stringify({
+    script: scriptHash(context),
+    micropython: context.board.firmware.micropython,
+    image: context.board.firmware.image,
+    options
+  })).digest("hex").slice(0, 16);
+  const marker = path.join(CACHE, "prepared", key);
+  if (existsSync(marker))
+    return;
+  await context.phase?.("prepare");
+  await context.log(`[prepare] ${context.board.name}'s environment, MicroPython ${context.board.firmware.micropython} — once; a first one may take a while
+`);
+  await prepare({ ...firmwareContext(context), options });
+  mkdirSync(path.dirname(marker), { recursive: true });
+  writeFileSync(marker, new Date().toISOString());
+}
 var RUNTIME_PACKAGES = ["hio", "henglosio"];
 function stageRuntime(root, identity) {
   rmSync(FREEZE_STAGE, { recursive: true, force: true });
@@ -76,6 +125,7 @@ function stageRuntime(root, identity) {
 }
 var PlatformRunner = {
   async build(context) {
+    await context.phase?.("build");
     const output = context.platform.build.output;
     mkdirSync(output, { recursive: true });
     for (const entry of readdirSync(output))
@@ -88,12 +138,11 @@ var PlatformRunner = {
     };
     const root = context.platform.path;
     let modules = 0;
-    const script = readFileSync(path.resolve(context.board.path, context.board.firmware.script));
     const identity = JSON.stringify({
       version,
       image: context.board.firmware.image,
-      script: createHash("sha256").update(script).digest("hex"),
-      options: Object.entries(context.options).sort(([a], [b]) => a.localeCompare(b)),
+      script: scriptHash(context),
+      options: Object.entries(scopedOptions(context, ["prepare", "build"])),
       platform: context.platform.version
     });
     const buildId = stageRuntime(root, identity);
@@ -114,9 +163,13 @@ var PlatformRunner = {
       const image = `${cached}.partial`;
       mkdirSync(path.dirname(cached), { recursive: true });
       rmSync(image, { force: true });
-      await context.log(`[build] ${context.board.name}'s firmware script, MicroPython ${version} — a first build may fetch its toolchain, and take a while
+      await withCacheLock(async () => {
+        await prepareBoard(context);
+        await context.phase?.("build");
+        await context.log(`[build] ${context.board.name}'s firmware script, MicroPython ${version}
 `);
-      await context.boardFirmware.build({ ...firmwareContext(context), freezeManifest: manifest, firmwareOutput: image });
+        await context.boardFirmware.build({ ...firmwareContext(context), freezeManifest: manifest, firmwareOutput: image });
+      });
       if (existsSync(image)) {
         copyFileSync(image, cached);
         rmSync(image, { force: true });
@@ -164,7 +217,7 @@ var PlatformRunner = {
         actionModules.add(module);
         scripts.add(source);
       }
-      for (const directory of new Set([...scripts].map((script2) => path.dirname(script2)))) {
+      for (const directory of new Set([...scripts].map((script) => path.dirname(script)))) {
         for (const entry of readdirSync(directory)) {
           const source = path.join(directory, entry);
           if (!entry.endsWith(".py") || entry === "__init__.py" || scripts.has(source))
@@ -181,6 +234,8 @@ var PlatformRunner = {
     }
   },
   async flash(context) {
+    await withCacheLock(() => prepareBoard(context));
+    await context.phase?.("flash");
     const tunnel = process.env.USB_TUNNEL_PORT;
     await context.boardFirmware.flash({
       ...firmwareContext(context),

@@ -58,6 +58,7 @@ export const registerFlashCommand = (cli: Command) => {
 				boardFirmware: await loadBoardFirmware(board),
 				options: boardOptions,
 				log: (data) => send({ type: "data", data }),
+				phase: (phase) => send({ type: "phase", phase }),
 			};
 
 			await (await loadRunner(platform)).flash(context);

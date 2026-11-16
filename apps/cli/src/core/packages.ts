@@ -140,23 +140,29 @@ export async function loadBoardFirmware(board: BoardPackage): Promise<BoardFirmw
 }
 
 /**
- * Where the Runner's logs and errors go.
+ * Where the Runner's logs, phases and errors go.
  *
  * - With a callback URL (container mode): each message is POSTed, as JSON, to
- *   the driver — which passes it on to the studio.
- * - Without one (local mode): logs go to stdout, errors to stderr.
+ *   the driver — which passes it on to the studio. A phase goes as one only to a
+ *   driver that says it reads them (`HIO_RUNNER_PHASES=1`); to an older one, as
+ *   a log line.
+ * - Without one (local mode): logs and phases go to stdout, errors to stderr.
  *
  * @param callbackUrl The driver's `HIO_CALLBACK_URL`, if any.
  * @returns A function that sends one message.
  */
 export function createSend(callbackUrl: string | undefined): (payload: RunnerProtocol) => Promise<void> {
+	const phaseLine = (phase: string) => `── ${phase} ──\n`;
 	if (!callbackUrl) {
 		return async (payload) => {
 			if (payload.type === "data") process.stdout.write(payload.data);
+			else if (payload.type === "phase") process.stdout.write(phaseLine(payload.phase));
 			else process.stderr.write(`[error:${payload.id}] ${payload.data}\n`);
 		};
 	}
+	const phases = process.env["HIO_RUNNER_PHASES"] === "1";
 	return async (payload) => {
+		if (payload.type === "phase" && !phases) payload = { type: "data", data: phaseLine(payload.phase) };
 		await fetch(callbackUrl, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },

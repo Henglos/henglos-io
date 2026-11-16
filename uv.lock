@@ -37,7 +37,7 @@ source = { virtual = "." }
 
 [[package]]
 name = "hio-sdk"
-version = "1.0.0"
+version = "1.1.0"
 source = { editable = "packages/hio-sdk" }
 
 [package.dev-dependencies]
@@ -52,7 +52,7 @@ dev = [{ name = "pytest", specifier = ">=8" }]
 
 [[package]]
 name = "hio-system"
-version = "1.3.0"
+version = "1.4.0"
 source = { virtual = "packages/hio-system" }
 dependencies = [
     { name = "hio-sdk" },

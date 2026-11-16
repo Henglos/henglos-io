@@ -4,7 +4,7 @@
  */
 
 /** The platform versions a new package says it works with. */
-const PLATFORM_RANGE = "^1.2.0";
+const PLATFORM_RANGE = "^1.4.0";
 
 /** What a template is filled in with. */
 export type TemplateOptions = {
@@ -290,17 +290,25 @@ firmware:
 #     displayName: Flash size
 #     description: The module's flash size.
 #     type: select          # integer (with min, max), boolean or select (with choices)
+#     scope: build          # what a change redoes: prepare, build (the default) or runtime
 #     default: 4MB
 #     choices: [4MB, 8MB, 16MB]
 `,
 
-		"src/firmware.ts": `import type { BoardFirmware, FirmwareBuildContext, FirmwareFlashContext } from "@henglosio/runner";
+		"src/firmware.ts": `import type { BoardFirmware, FirmwareBuildContext, FirmwareFlashContext, FirmwarePrepareContext } from "@henglosio/runner";
 
 // How MicroPython gets onto the board — run by the platform in the manifest's
 // firmware.image. ctx.run(command, args) runs a command of that image, ctx.log
 // reports to the studio, ctx.cache is kept between runs and ctx.options holds
 // the board's options (the manifest's \`options\`).
 export default {
+
+	// Optional: sets up what build and flash need — sources, toolchains — in
+	// ctx.cache (the container is thrown away, the cache is kept). Runs once, until
+	// it succeeds, for this script, ctx.micropython and the options with
+	// \`scope: prepare\`; the studio shows it as its own phase.
+	async prepare(ctx: FirmwarePrepareContext) {
+	},
 
 	// Optional: builds MicroPython ctx.micropython with ctx.freezeManifest (the
 	// runtime) frozen in, into ctx.firmwareOutput. Left empty, the runtime goes

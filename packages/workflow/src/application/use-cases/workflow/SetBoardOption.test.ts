@@ -3,7 +3,7 @@ import * as Y from "yjs";
 import { CreateWorkflow } from "./CreateWorkflow.use-case.js";
 import { SetBoardOption } from "./SetBoardOption.use-case.js";
 import { readWorkflowDoc, reconcileWorkflowDoc } from "../../../collab/WorkflowDoc.js";
-import { BoardOptionSchema, resolveBoardOptions, type IBoardOption } from "../../../domain/entities/IBoard.schema.js";
+import { BoardOptionSchema, boardOptionScope, resolveBoardOptions, type IBoardOption } from "../../../domain/entities/IBoard.schema.js";
 
 const base = () => new CreateWorkflow().execute("wf", "", { name: "esp32", displayName: "ESP32", description: "", connection: { serial: { baudrates: [115200] } }, pins: [{ gpio: 2, type: ["digital_out"], displayName: "GPIO2" }] } as never, "pkg");
 
@@ -14,6 +14,14 @@ const OPTIONS: IBoardOption[] = [
 ];
 
 describe("board options", () => {
+
+	it("declares what a change redoes — build when it doesn't say", () => {
+		const option = { key: "LED", displayName: "LED", description: "", type: "integer" as const, default: 2, min: 0, max: 40 };
+		expect(boardOptionScope(BoardOptionSchema.parse(option))).toBe("build");
+		expect(boardOptionScope(BoardOptionSchema.parse({ ...option, scope: "runtime" }))).toBe("runtime");
+		expect(boardOptionScope(BoardOptionSchema.parse({ ...option, scope: "prepare" }))).toBe("prepare");
+		expect(() => BoardOptionSchema.parse({ ...option, scope: "later" })).toThrow();
+	});
 
 	it("sets, replaces and clears values — no empty object left behind", () => {
 		const set = new SetBoardOption();

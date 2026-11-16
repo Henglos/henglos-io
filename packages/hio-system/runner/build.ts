@@ -84,7 +84,7 @@ const FIRMWARE_IMAGE = "firmware.bin";
 // an incremental build sees the same manifest every time.
 const FREEZE_STAGE = "/tmp/hio-freeze";
 
-// What both of the board's firmware actions get (BoardFirmware).
+// What every one of the board's firmware actions gets (BoardFirmware).
 function firmwareContext(context: { board: { firmware: { micropython: string } }; options: Record<string, string>; log: Log }) {
 	return {
 		micropython: context.board.firmware.micropython,
@@ -93,6 +93,75 @@ function firmwareContext(context: { board: { firmware: { micropython: string } }
 		log: context.log,
 		run: (command: string, args: string[] = []) => run(command, args, context.log),
 	};
+}
+
+// ── Prepare ──────────────────────────────────────────────────────────────────
+// A board's firmware script may set up its environment (sources, toolchains)
+// in a `prepare` of its own. It runs before the board's build and flash — under
+// the cache's lock, and only until it once succeeds for this script, this
+// MicroPython and the `scope: prepare` options: a marker in the cache says so,
+// written last, so an interrupted prepare runs again.
+
+type ScopedOption = { key: string; scope?: "prepare" | "build" | "runtime" | undefined };
+
+// The options whose scope is one of `scopes` (an undeclared key counts as build).
+function scopedOptions(context: { options: Record<string, string>; board: { options?: ScopedOption[] | undefined } }, scopes: string[]): Record<string, string> {
+	const declared = new Map((context.board.options ?? []).map(option => [option.key, option.scope ?? "build"]));
+	return Object.fromEntries(Object.entries(context.options)
+		.filter(([key]) => scopes.includes(declared.get(key) ?? "build"))
+		.sort(([a], [b]) => a.localeCompare(b)));
+}
+
+// The board's firmware script, hashed — a changed script prepares and builds again.
+function scriptHash(context: { board: { path: string; firmware: { script: string } } }): string {
+	return createHash("sha256").update(readFileSync(path.resolve(context.board.path, context.board.firmware.script))).digest("hex");
+}
+
+// Runs `fn` holding the cache's lock — flock(1), so it holds across the
+// containers sharing the cache and goes with this process. Where there's no
+// flock (a local `hio build` on another OS), it runs unlocked.
+async function withCacheLock<T>(fn: () => Promise<T>): Promise<T> {
+	mkdirSync(CACHE, { recursive: true });
+	const holder = spawn("flock", [path.join(CACHE, "firmware.lock"), "sh", "-c", "echo locked; exec cat"], { stdio: ["pipe", "pipe", "inherit"] });
+	const exited = new Promise<void>(resolve => holder.on("close", () => resolve()));
+
+	const locked = await new Promise<boolean>((resolve, reject) => {
+		holder.stdout.on("data", (chunk: Buffer) => { if (chunk.toString().includes("locked")) resolve(true); });
+		holder.on("error", (error: NodeJS.ErrnoException) => error.code === "ENOENT" ? resolve(false) : reject(error));
+		holder.on("close", code => reject(new Error(`flock exited with code ${code} before taking the lock`)));
+	});
+
+	try {
+		return await fn();
+	} finally {
+		if (locked) {
+			holder.stdin.end();
+			await exited;
+		}
+	}
+}
+
+// The board's prepare, when it has one and it hasn't succeeded for this key yet.
+// Call it holding the cache's lock.
+async function prepareBoard(context: Parameters<Runner["build"]>[0] | Parameters<Runner["flash"]>[0]): Promise<void> {
+	const prepare = context.boardFirmware.prepare;
+	if (!prepare) return;
+
+	const options = scopedOptions(context, ["prepare"]);
+	const key = createHash("sha256").update(JSON.stringify({
+		script: scriptHash(context),
+		micropython: context.board.firmware.micropython,
+		image: context.board.firmware.image,
+		options,
+	})).digest("hex").slice(0, 16);
+	const marker = path.join(CACHE, "prepared", key);
+	if (existsSync(marker)) return;
+
+	await context.phase?.("prepare");
+	await context.log(`[prepare] ${context.board.name}'s environment, MicroPython ${context.board.firmware.micropython} — once; a first one may take a while\n`);
+	await prepare({ ...firmwareContext(context), options });
+	mkdirSync(path.dirname(marker), { recursive: true });
+	writeFileSync(marker, new Date().toISOString());
 }
 
 // What goes on the board: the runtime (hio/) and the sdk components import
@@ -153,6 +222,8 @@ const PlatformRunner: Runner = {
 	//   components/<component>/<module>.mpy the modules the actions share (driver.py...)
 	async build(context) {
 
+		await context.phase?.("build");
+
 		// Emptied, not removed: the driver mounts it from the host, and a mount
 		// point can't be deleted (EBUSY).
 		const output = context.platform.build.output;
@@ -173,12 +244,12 @@ const PlatformRunner: Runner = {
 
 		// Frozen into a firmware the board's script builds. Built only when this
 		// runtime (with these options) isn't in the cache yet.
-		const script = readFileSync(path.resolve(context.board.path, context.board.firmware.script));
+		// `scope: runtime` options don't change the firmware — they go to the board.
 		const identity = JSON.stringify({
 			version,
 			image: context.board.firmware.image,
-			script: createHash("sha256").update(script).digest("hex"),
-			options: Object.entries(context.options).sort(([a], [b]) => a.localeCompare(b)),
+			script: scriptHash(context),
+			options: Object.entries(scopedOptions(context, ["prepare", "build"])),
 			platform: context.platform.version,
 		});
 		const buildId = stageRuntime(root, identity);
@@ -198,8 +269,12 @@ const PlatformRunner: Runner = {
 			const image = `${cached}.partial`;
 			mkdirSync(path.dirname(cached), { recursive: true });
 			rmSync(image, { force: true });
-			await context.log(`[build] ${context.board.name}'s firmware script, MicroPython ${version} — a first build may fetch its toolchain, and take a while\n`);
-			await context.boardFirmware.build({ ...firmwareContext(context), freezeManifest: manifest, firmwareOutput: image });
+			await withCacheLock(async () => {
+				await prepareBoard(context);
+				await context.phase?.("build");
+				await context.log(`[build] ${context.board.name}'s firmware script, MicroPython ${version}\n`);
+				await context.boardFirmware.build({ ...firmwareContext(context), freezeManifest: manifest, firmwareOutput: image });
+			});
 			// Renamed once complete: a cancelled build never counts as cached.
 			if (existsSync(image)) {
 				copyFileSync(image, cached);
@@ -296,6 +371,11 @@ const PlatformRunner: Runner = {
 	// (a new runtime) leaves the filesystem — components, files, the stored
 	// program — where it was.
 	async flash(context) {
+
+		// The lock only while preparing: a flash holds a board, not the cache's
+		// sources — other workflows' builds go on meanwhile.
+		await withCacheLock(() => prepareBoard(context));
+		await context.phase?.("flash");
 
 		const tunnel = process.env.USB_TUNNEL_PORT;
 

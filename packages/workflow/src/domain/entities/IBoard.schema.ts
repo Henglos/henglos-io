@@ -80,11 +80,24 @@ export const BoardConnectionStateSchema = zod.object({
 	message: "connection state must have at least serial or wifi",
 });
 
+/**
+ * What changing an option redoes — `prepare`: the firmware's environment
+ * (toolchains), then a build and a flash; `build` (the default): a build and a
+ * flash; `runtime`: nothing — the value goes to the board with the session
+ * (/hio_settings.json), where components read it.
+ */
+export const BoardOptionScopeSchema = zod.enum(["prepare", "build", "runtime"]);
+export type BoardOptionScope = zod.infer<typeof BoardOptionScopeSchema>;
+
 const BoardOptionBase = {
 	key: zod.string().regex(/^[A-Z][A-Z0-9_]*$/),
 	displayName: zod.string().min(1),
 	description: zod.string(),
+	scope: BoardOptionScopeSchema.optional(),
 };
+
+/** An option's scope — `build` when it doesn't say. */
+export const boardOptionScope = (option: { scope?: BoardOptionScope }): BoardOptionScope => option.scope ?? "build";
 
 const BoardOptionShape = zod.discriminatedUnion("type", [
 	zod.object({ ...BoardOptionBase, type: zod.literal("integer"), default: zod.number().int(), min: zod.number().int(), max: zod.number().int() }).strict(),

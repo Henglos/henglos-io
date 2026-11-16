@@ -178,6 +178,13 @@ describe("BoardInstaller against the runtime", () => {
 		expect(fs.existsSync(path.join(board.sandbox, "hio_settings.json"))).toBe(false);
 		expect(await limit()).toBe("16");
 
+		// The board's `scope: runtime` options: under "options", read with board_option().
+		await installer.sync(repl, { components: [], files: [], settings: { MAX_VARIABLES: 32 }, options: { STATUS_LED: 5 } }, silent);
+		expect(JSON.parse(fs.readFileSync(path.join(board.sandbox, "hio_settings.json"), "utf-8"))).toEqual({ MAX_VARIABLES: 32, options: { STATUS_LED: 5 } });
+		expect((await repl.exec("from henglosio.sdk import board_option\nprint(board_option('STATUS_LED', 2))")).trim()).toBe("5");
+		expect(await limit()).toBe("32");
+		await installer.sync(repl, { components: [], files: [], settings: {}, options: {} }, silent);
+
 		// An older hosting sends none: the board's file is left alone.
 		fs.writeFileSync(path.join(board.sandbox, "hio_settings.json"), JSON.stringify({ MAX_VARIABLES: 8 }));
 		await installer.sync(repl, { components: [], files: [] }, silent);

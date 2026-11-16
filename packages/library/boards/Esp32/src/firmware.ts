@@ -1,5 +1,4 @@
 import type { BoardFirmware, FirmwareBuildContext } from "@henglosio/runner";
-import { spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -34,52 +33,54 @@ const ESP_IDF_REPO = "https://github.com/espressif/esp-idf.git";
 
 type Context = Pick<FirmwareBuildContext, "run" | "log">;
 
+// Where ESP-IDF `version` lives in the cache — and what its install.sh and
+// export.sh read (IDF_TOOLS_PATH: ctx.run passes this process's environment on).
+function idfPath(cache: string, version: string): string {
+	process.env["IDF_TOOLS_PATH"] = path.join(cache, "espressif");
+	return path.join(cache, "esp-idf", version);
+}
+
 export default {
+
+	// Once per MicroPython version (the platform runs it under the cache's lock,
+	// and only until it succeeds): the MicroPython checkout, ESP-IDF — the version
+	// MicroPython's CI uses — and its toolchain for the chip, all in ctx.cache.
+	async prepare(ctx) {
+		const micropython = path.join(ctx.cache, "micropython", "v" + ctx.micropython);
+		await cloneOnce(ctx, "MicroPython v" + ctx.micropython, MICROPYTHON_REPO, "v" + ctx.micropython, micropython, []);
+
+		const idfVersion = idfVersionFor(micropython);
+		const idf = idfPath(ctx.cache, idfVersion);
+		const ready = path.join(idf, ".hio-ready-" + CHIP);
+		if (!fs.existsSync(ready)) {
+			await cloneOnce(ctx, "ESP-IDF " + idfVersion + " (a few minutes)", ESP_IDF_REPO, idfVersion, idf, ["--recursive", "--shallow-submodules"]);
+			await ctx.log("[prepare] installing ESP-IDF's " + CHIP + " toolchain\n");
+			await ctx.run(path.join(idf, "install.sh"), [CHIP]);
+			fs.writeFileSync(ready, "");
+		}
+	},
 
 	// MicroPython with the runtime frozen in, so it runs from flash and the RAM is
 	// left to the workflow (a runtime loaded from .mpy files costs ~75 KB of an
 	// ESP32's ~110). Same version and layout as STOCK, so it's written at the same
-	// offset, and the board's filesystem stays.
-	//
-	// Everything slow happens once per version, in ctx.cache (shared by every
-	// workflow's container, so under a lock): the MicroPython checkout, ESP-IDF
-	// (the version MicroPython's CI uses) and its toolchain for the chip. The
-	// build itself is incremental.
+	// offset, and the board's filesystem stays. Incremental: only what changed
+	// compiles again.
 	async build(ctx) {
-		fs.mkdirSync(ctx.cache, { recursive: true });
+		const micropython = path.join(ctx.cache, "micropython", "v" + ctx.micropython);
+		const idfVersion = idfVersionFor(micropython);
+		const idf = idfPath(ctx.cache, idfVersion);
+		await ctx.log("[firmware] MicroPython v" + ctx.micropython + " · " + PORT + "/" + BOARD + " · ESP-IDF " + idfVersion + "\n");
 
-		await withLock(path.join(ctx.cache, "firmware.lock"), async () => {
+		const jobs = "-j" + os.availableParallelism();
+		const portDir = path.join(micropython, "ports", PORT);
+		await withIdf(ctx, idf, "make", ["-C", path.join(micropython, "mpy-cross"), jobs]);
+		await withIdf(ctx, idf, "make", ["-C", portDir, "BOARD=" + BOARD, "submodules"]);
 
-			const micropython = path.join(ctx.cache, "micropython", "v" + ctx.micropython);
-			await cloneOnce(ctx, "MicroPython v" + ctx.micropython, MICROPYTHON_REPO, "v" + ctx.micropython, micropython, []);
+		const boardDir = stageBoard(ctx.cache, ctx.micropython, path.join(portDir, "boards", BOARD));
+		const buildDir = path.join(ctx.cache, "build", "v" + ctx.micropython + "-" + PORT + "-" + BOARD);
+		await withIdf(ctx, idf, "make", ["-C", portDir, "BOARD_DIR=" + boardDir, "BUILD=" + buildDir, "FROZEN_MANIFEST=" + ctx.freezeManifest, jobs]);
 
-			const idfVersion = idfVersionFor(micropython);
-			const idf = path.join(ctx.cache, "esp-idf", idfVersion);
-			// install.sh and export.sh read it — ctx.run passes this process's environment on.
-			process.env["IDF_TOOLS_PATH"] = path.join(ctx.cache, "espressif");
-
-			const ready = path.join(idf, ".hio-ready-" + CHIP);
-			if (!fs.existsSync(ready)) {
-				await cloneOnce(ctx, "ESP-IDF " + idfVersion + " (once — a few minutes)", ESP_IDF_REPO, idfVersion, idf, ["--recursive", "--shallow-submodules"]);
-				await ctx.log("[firmware] installing ESP-IDF's " + CHIP + " toolchain (once)\n");
-				await ctx.run(path.join(idf, "install.sh"), [CHIP]);
-				fs.writeFileSync(ready, "");
-			}
-
-			await ctx.log("[firmware] MicroPython v" + ctx.micropython + " · " + PORT + "/" + BOARD + " · ESP-IDF " + idfVersion + "\n");
-
-			const jobs = "-j" + os.availableParallelism();
-			const portDir = path.join(micropython, "ports", PORT);
-			await withIdf(ctx, idf, "make", ["-C", path.join(micropython, "mpy-cross"), jobs]);
-			await withIdf(ctx, idf, "make", ["-C", portDir, "BOARD=" + BOARD, "submodules"]);
-
-			const boardDir = stageBoard(ctx.cache, ctx.micropython, path.join(portDir, "boards", BOARD));
-			const buildDir = path.join(ctx.cache, "build", "v" + ctx.micropython + "-" + PORT + "-" + BOARD);
-			await withIdf(ctx, idf, "make", ["-C", portDir, "BOARD_DIR=" + boardDir, "BUILD=" + buildDir, "FROZEN_MANIFEST=" + ctx.freezeManifest, jobs]);
-
-			fs.copyFileSync(path.join(buildDir, "firmware.bin"), ctx.firmwareOutput);
-
-		});
+		fs.copyFileSync(path.join(buildDir, "firmware.bin"), ctx.firmwareOutput);
 	},
 
 	// One esptool run, one connection: erase-flash and then write-flash would reset
@@ -105,28 +106,6 @@ export default {
 } satisfies BoardFirmware;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-// Runs `fn` holding an exclusive lock on `file` — flock(1), so it holds across
-// the containers sharing the cache, and is released if this process dies.
-async function withLock(file: string, fn: () => Promise<void>): Promise<void> {
-	const holder = spawn("flock", [file, "sh", "-c", "echo locked; exec cat"], { stdio: ["pipe", "pipe", "inherit"] });
-	const exited = new Promise<void>(resolve => holder.on("close", () => resolve()));
-
-	await new Promise<void>((resolve, reject) => {
-		holder.stdout.on("data", (chunk: Buffer) => {
-			if (chunk.toString().includes("locked")) resolve();
-		});
-		holder.on("error", reject);
-		holder.on("close", code => reject(new Error("flock exited with code " + code + " before taking the lock")));
-	});
-
-	try {
-		await fn();
-	} finally {
-		holder.stdin.end();      // `cat` ends, flock lets go
-		await exited;
-	}
-}
 
 // Clones `ref` of `repo` into `dir`, unless it's there already — through a
 // .partial folder, so an interrupted clone is never mistaken for a finished one.

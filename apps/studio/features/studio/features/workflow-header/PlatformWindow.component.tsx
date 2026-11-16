@@ -12,7 +12,7 @@ import { getPlatformSettings, listPackages, updateWorkflow } from "@shared/api";
 import { WorkflowAtom } from "@/features/studio/store/workflow.store";
 import { useWorkflowMutate } from "@/features/studio/hooks/useWorkflowMutate";
 import { useSyncedDraft } from "@/features/studio/lib/useSyncedDraft";
-import { boardOptionError, type BoardOptionValue, type IBoardOption } from "@henglosio/workflow";
+import { boardOptionError, boardOptionScope, type BoardOptionValue, type IBoardOption } from "@henglosio/workflow";
 import { usePlatformVersions } from "./usePlatformVersions.hook";
 
 // Hosting error ids a platform change can come back with (UpdateWorkflowUseCase).
@@ -307,6 +307,16 @@ const Section: React.FC<{ title: string; aside?: React.ReactNode; children: Reac
 	</div>
 );
 
+// What changing an option redoes — its `scope` (build when it doesn't say).
+const SCOPE_HINTS = {
+	runtime: "Applies on the next run.",
+	build: "Needs a compile and upload.",
+	prepare: "Sets the build environment up again, then needs a compile and upload.",
+} as const;
+
+// An option's description, followed by what a change to it redoes.
+const describeOption = (option: IBoardOption) => `${option.description} ${SCOPE_HINTS[boardOptionScope(option)]}`.trim();
+
 // The parameters of the board's firmware, when it has any — a form from its
 // manifest's `options`.
 const BoardOptionsSection: React.FC = () => {
@@ -330,7 +340,7 @@ const BoardOptionsSection: React.FC = () => {
 					return (
 						<LimitRow
 							key={option.key}
-							setting={option}
+							setting={{ ...option, description: describeOption(option) }}
 							value={typeof value === "number" ? value : undefined}
 							problem={value === undefined ? undefined : boardOptionError(option, value) ?? undefined}
 							onChange={next => set(option, next)}
@@ -359,7 +369,7 @@ const BoardOptionsSection: React.FC = () => {
 						)}
 						{boardOptionError(option, value)
 							? <Text variant="low" size="xs" className="text-danger!">{boardOptionError(option, value)}</Text>
-							: <Text variant="low" size="xs">{option.description}</Text>}
+							: <Text variant="low" size="xs">{describeOption(option)}</Text>}
 					</div>
 				);
 			})}

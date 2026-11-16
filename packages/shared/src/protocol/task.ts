@@ -140,6 +140,10 @@ export const BoardInstallSchema = zod.object({
 	// the runtime when it starts — no build. Absent from an older hosting: the
 	// board's file is left as it is.
 	settings: zod.record(zod.string(), zod.number().int()).optional(),
+	// The board's options with `scope: runtime` — the workflow's values, or the
+	// defaults: written to the same file (under "options"), where components read
+	// them (henglosio.sdk.board_option). No build either.
+	options: zod.record(zod.string(), zod.union([zod.string(), zod.number(), zod.boolean()])).optional(),
 });
 
 /** An `execute` task's payload: the board's port, the first frame, and what to install first. */

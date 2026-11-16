@@ -7,17 +7,28 @@ type BaseContext = {
 	workspace: string;
 	/** Reports output — to the driver, which passes it on to the studio. */
 	log: (data: string) => Promise<void>;
+	/**
+	 * Says which phase the Runner is in ("prepare", "build", "flash") — the
+	 * studio shows each apart. Absent from an older `hio`: phases aren't reported.
+	 */
+	phase?: (phase: RunnerPhase) => Promise<void>;
 
 }
 
-/** What both of a board's firmware actions get. */
+/** The phases a Runner goes through — see BaseContext.phase. */
+export type RunnerPhase = "prepare" | "build" | "flash";
+
+/** What every one of a board's firmware actions gets. */
 type FirmwareContext = {
 
 	/** The MicroPython version the board's manifest says it runs. */
 	micropython: string;
 	/** A folder kept between builds, for this board's image: sources, toolchains, build folders. */
 	cache: string;
-	/** The board's options (its manifest's `options`): the workflow's values, or the defaults. */
+	/**
+	 * The board's options (its manifest's `options`): the workflow's values, or
+	 * the defaults. `prepare` gets only those with `scope: prepare`.
+	 */
 	options: Record<string, string>;
 	/** Reports output to the studio. */
 	log: (data: string) => Promise<void>;
@@ -29,10 +40,17 @@ type FirmwareContext = {
 
 }
 
+/**
+ * What a board's firmware `prepare` gets: the environment only — no workflow,
+ * no board connected. What it sets up must go in `cache`: the container is
+ * thrown away, the cache is kept.
+ */
+export type FirmwarePrepareContext = FirmwareContext;
+
 /** What a board's firmware `build` gets. */
 export type FirmwareBuildContext = FirmwareContext & {
 
-	/** MicroPython's FROZEN_MANIFEST: the runtime, with the workflow's settings written in. */
+	/** MicroPython's FROZEN_MANIFEST: the runtime, frozen into the firmware. */
 	freezeManifest: string;
 	/**
 	 * Where to leave a firmware with that manifest frozen in. Left empty, the
@@ -64,9 +82,16 @@ export type FirmwareFlashContext = FirmwareContext & {
  *
  * The firmware must keep MicroPython's REPL on the serial port, which is how the
  * driver installs the runtime, and match the manifest's `firmware.micropython`.
+ *
+ * The platform runs `prepare` before `build` and `flash` — under a lock (the
+ * cache is shared between workflows), and only until it once succeeds for the
+ * board's version, its MicroPython and its `scope: prepare` options. `build`
+ * and `flash` run under the same lock.
  */
 export type BoardFirmware = {
 
+	/** Optional: sets up what build and flash need (sources, toolchains) in ctx.cache. */
+	prepare?: (context: FirmwarePrepareContext) => Promise<void> | void;
 	build: (context: FirmwareBuildContext) => Promise<void> | void;
 	flash: (context: FirmwareFlashContext) => Promise<void> | void;
 
@@ -84,7 +109,8 @@ export type BuildContext =  BaseContext & {
 	components: ComponentPackage[];
 
 	// The workflow's overrides of the platform's settings (its manifest's
-	// `settings`, by key) — the build checks them against those declarations.
+	// `settings`, by key). From hio-system 1.3.0 they aren't compiled in — the
+	// runtime reads them on the board — but older platforms' builds still use them.
 	settings: Record<string, number>;
 
 	/** The board's firmware script. */

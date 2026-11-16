@@ -13,9 +13,9 @@ import { PackageService } from "./PackageService.service.js";
 //   /components/<component>/<module>.mpy   what their scripts import (from .x import …)
 //   /files/<sha>.<ext>                     files attached to configs
 //   /secrets/<credential id>.json          credentials picked in configs (the hosting's values)
-//   /hio_settings.json                     the limits the workflow overrides — read by the
-//                                          runtime when it starts (no build): when it changes,
-//                                          the runtime is reloaded
+//   /hio_settings.json                     the limits the workflow overrides, and the board's
+//                                          `scope: runtime` options — read when the runtime
+//                                          starts (no build): when it changes, it's reloaded
 //
 // Compiled here (MpyCompiler); a board whose MicroPython doesn't import
 // .mpy v6 gets the .py source instead. Each root keeps an .index.json of
@@ -184,18 +184,23 @@ export class BoardInstaller {
 			await board.writeFile(`${root}/${INDEX}`, new TextEncoder().encode(JSON.stringify(entries)));
 		}
 
-		// ── The limits ────────────────────────────────────────────────────────
-		// Only the overrides — the runtime keeps its defaults for the rest. No
-		// overrides, no file. Absent from an older hosting: left as it is.
+		// ── The limits, and the runtime options ───────────────────────────────
+		// Only the limits' overrides — the runtime keeps its defaults for the
+		// rest — and the board's `scope: runtime` options, under "options". Nothing
+		// of either: no file. Both absent (an older hosting): left as it is.
 		let settingsChanged = false;
-		if (install.settings) {
-			const entries = Object.entries(install.settings).sort(([a], [b]) => a.localeCompare(b));
-			const content = entries.length > 0 ? JSON.stringify(Object.fromEntries(entries)) : null;
+		if (install.settings || install.options) {
+			const sorted = <T>(record: Record<string, T>) => Object.fromEntries(Object.entries(record).sort(([a], [b]) => a.localeCompare(b)));
+			const limits = sorted(install.settings ?? {});
+			const options = sorted(install.options ?? {});
+			const file = { ...limits, ...(Object.keys(options).length > 0 ? { options } : {}) };
+			const content = Object.keys(file).length > 0 ? JSON.stringify(file) : null;
 			if (content !== onBoard.settings) {
 				if (content === null) await board.remove(SETTINGS);
 				else await board.writeFile(SETTINGS, new TextEncoder().encode(content));
 				settingsChanged = true;
-				log.info(content === null ? "Board: limits back to the defaults." : `Board: limits ${entries.map(([k, v]) => `${k}=${v}`).join(", ")}.`);
+				const said = Object.entries({ ...limits, ...options }).map(([k, v]) => `${k}=${v}`).join(", ");
+				log.info(content === null ? "Board: limits and options back to the defaults." : `Board: ${said}.`);
 			}
 		}
 

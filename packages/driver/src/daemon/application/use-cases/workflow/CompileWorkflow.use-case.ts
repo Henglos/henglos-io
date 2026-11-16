@@ -140,6 +140,7 @@ export class CompileWorkflowUseCase {
 
 		const { sessionId, url } = this.containerTunnel.createSession(ctx.taskId, (payload) => {
 			if (payload.type === "data") ctx.log("stdout", payload.data);
+			else if (payload.type === "phase") ctx.progress(payload.phase);
 			else ctx.log("stderr", String(payload.data));
 		});
 
@@ -147,7 +148,7 @@ export class CompileWorkflowUseCase {
 			ctx.progress("build");
 			const result = await this.containerService.execCommand(containerName, ["sh", "-c", "npx hio build --map runner.map.json ."], {
 				workingDir: "/workspace",
-				env: { HIO_CALLBACK_URL: url },
+				env: { HIO_CALLBACK_URL: url, HIO_RUNNER_PHASES: "1" },
 				signal: ctx.signal,
 				onLog: (data) => ctx.log("stdout", data),
 			});

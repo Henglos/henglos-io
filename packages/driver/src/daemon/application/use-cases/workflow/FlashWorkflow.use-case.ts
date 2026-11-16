@@ -249,6 +249,7 @@ export class FlashWorkflowUseCase {
 		const usbTunnelPort = await this.usbTunnel.connect(port, REPL_BAUDRATE);
 		const { sessionId, url } = this.containerTunnel.createSession(ctx.taskId, (payload) => {
 			if (payload.type === "data") ctx.log("stdout", payload.data);
+			else if (payload.type === "phase") ctx.progress(payload.phase);
 			else ctx.log("stderr", String(payload.data));
 		});
 
@@ -264,6 +265,7 @@ export class FlashWorkflowUseCase {
 					workingDir: "/workspace",
 					env: {
 						HIO_CALLBACK_URL: url,
+						HIO_RUNNER_PHASES: "1",
 						USB_TUNNEL_HOST: "host.docker.internal",
 						USB_TUNNEL_PORT: String(usbTunnelPort),
 						USB_PORT: port,
