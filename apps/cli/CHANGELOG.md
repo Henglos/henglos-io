@@ -1,5 +1,11 @@
 # @henglosio/cli
 
+## 1.2.0
+
+### Minor Changes
+
+- `hio create board` writes a minimal, typed board for any MicroPython board: build and flash are empty stubs taking FirmwareBuildContext / FirmwareFlashContext — no ESP32 recipe, image, pins or capabilities. New components and boards require platform ^1.2.0 (henglosio.sdk).
+
 ## 1.1.2
 
 ### Patch Changes
