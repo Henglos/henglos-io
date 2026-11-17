@@ -6,16 +6,6 @@ export const generateDriverPairToken = async (): Promise<PairTokenOut> => {
 	return data;
 };
 
-export const registerDriver = async (hwid: string): Promise<string> => {
-	const { data } = await http.post<{ apiKey: string }>("/drivers/register", { hwid });
-	return data.apiKey;
-};
-
-export const loginDriver = async (hwid: string, apiKey: string): Promise<string> => {
-	const { data } = await http.post<{ token: string }>("/drivers/login", { hwid, apiKey });
-	return data.token;
-};
-
 export const listDrivers = async (): Promise<DriverItem[]> => {
 	const { data } = await http.get<{ drivers: DriverItem[] }>("/drivers");
 	return data.drivers;
