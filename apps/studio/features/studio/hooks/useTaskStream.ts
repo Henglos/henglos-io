@@ -2,7 +2,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { useEffect } from "react";
 import type { TaskEvent } from "@henglosio/shared";
 import { getAppSocket, subscribeToTask } from "@shared/lib/socket";
-import { ActiveTaskAtom, ActiveTaskIdAtom, TaskEventsAtom } from "../store/logs.store";
+import { ActiveTaskAtom, ActiveTaskIdAtom, ActiveTaskSinceAtom, TaskEventsAtom } from "../store/logs.store";
 
 /**
  * Follows the active task's event stream: folds `task:event`s into the store in
@@ -14,6 +14,7 @@ export const useTaskStream = () => {
 	const taskId       = useAtomValue(ActiveTaskIdAtom);
 	const setEvents     = useSetAtom(TaskEventsAtom);
 	const setActiveTask = useSetAtom(ActiveTaskAtom);
+	const setSince      = useSetAtom(ActiveTaskSinceAtom);
 
 	// Keep the socket connected eagerly so hosting has our socket registered.
 	useEffect(() => { getAppSocket(); }, []);
@@ -24,6 +25,7 @@ export const useTaskStream = () => {
 
 		setEvents([]);
 		setActiveTask(null);
+		setSince(Date.now());
 
 		const onEvent = (event: TaskEvent) => {
 
@@ -52,5 +54,5 @@ export const useTaskStream = () => {
 		const unsubscribe = subscribeToTask(taskId, onEvent);
 		return unsubscribe;
 
-	}, [taskId, setEvents, setActiveTask]);
+	}, [taskId, setEvents, setActiveTask, setSince]);
 };

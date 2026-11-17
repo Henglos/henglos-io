@@ -1,4 +1,5 @@
 import zod from "zod";
+import { SyncPackageSchema } from "./commands.js";
 
 // ── Task model ────────────────────────────────────────────────────────────────
 // A Task is a first-class handle over a long-running driver operation
@@ -99,6 +100,11 @@ export const TaskCompilePayloadSchema = zod.object({
 	// What the workflow picked for its board's options (the board's `options`, by
 	// key), handed to the board's firmware script.
 	options: zod.record(zod.string(), zod.union([zod.string(), zod.number(), zod.boolean()])).optional(),
+	// The workflow's packages (board, platform, components), synced first — as
+	// `workflow:sync` would: a workflow made or changed since the driver
+	// connected builds too. Absent from an older hosting: the driver builds
+	// with what it synced before.
+	packages: SyncPackageSchema.array().optional(),
 });
 
 // Installs the compiled runtime on the board: flashes the MicroPython

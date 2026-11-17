@@ -5,10 +5,14 @@ import { WorkflowService } from "../../services/WorkflowService.service.js";
 import { IContainerRuntime } from "../../../domain/interfaces/IContainerRuntime.interface.js";
 import { CommandContext } from "../../../domain/entities/CommandContext.js";
 import { SyncWorkflowUseCase } from "./SyncWorkflow.use-case.js";
+import { createLogger } from "../../../infrastructure/logger/Logger.js";
+
+const log = createLogger("sync");
 
 /**
  * Brings the driver up to date with every workflow of its user (on connect): drops the
- * workflows that are gone, syncs the rest.
+ * workflows that are gone, syncs the rest — each on its own: one that fails (a
+ * package not on the registry…) doesn't keep the others from syncing.
  */
 @injectable()
 export class SyncWorkflowsUseCase {
@@ -30,12 +34,17 @@ export class SyncWorkflowsUseCase {
 			}
 		}
 
+		let synced = true;
 		for (const { workflowId, packages } of workflows) {
-			const result = await this.syncWorkflowUseCase.execute(workflowId, packages, ctx);
-			if (!result) return false;
+			try {
+				if (!await this.syncWorkflowUseCase.execute(workflowId, packages, ctx)) synced = false;
+			} catch (error) {
+				synced = false;
+				log.warn(`Couldn't sync workflow ${workflowId}: ${error instanceof Error ? error.message : String(error)}`);
+			}
 		}
 
-		return true;
+		return synced;
 
 	}
 

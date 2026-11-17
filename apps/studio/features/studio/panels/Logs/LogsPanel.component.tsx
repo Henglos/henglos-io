@@ -5,22 +5,11 @@ import { Button, Text } from "@henglosio/ui";
 import { stopTask } from "@shared/api";
 import { ActiveTaskAtom, ActiveTaskIdAtom, TaskEventsAtom, isTerminalStatus } from "../../store/logs.store";
 import { DriverConnectionAtom } from "../../store/driver.store";
+import { phaseLabel } from "../../lib/taskPhases";
 
 type Row =
 	| { _id: string; kind: "log"; stream: "stdout" | "stderr" | "info"; text: string }
 	| { _id: string; kind: "note"; tone: "info" | "danger"; text: string };
-
-// A task's phases as the log shows them — the board's firmware gets its own
-// "prepare" (setting up toolchains, once) apart from the build and the flash.
-const PHASE_LABELS: Record<string, string> = {
-	prepare: "Preparing the environment",
-	build: "Building",
-	flash: "Flashing",
-	firmware: "Writing the firmware",
-	check: "Checking the board",
-	upload: "Uploading",
-	install: "Installing",
-};
 
 function toRows(events: TaskEvent[]): Row[] {
 	const rows: Row[] = [];
@@ -30,7 +19,7 @@ function toRows(events: TaskEvent[]): Row[] {
 				rows.push({ _id: `e${ev.seq}`, kind: "log", stream: ev.stream, text: ev.line });
 				break;
 			case "progress":
-				rows.push({ _id: `e${ev.seq}`, kind: "note", tone: "info", text: `— ${PHASE_LABELS[ev.phase] ?? ev.phase}${ev.pct != null ? ` ${ev.pct}%` : ""}` });
+				rows.push({ _id: `e${ev.seq}`, kind: "note", tone: "info", text: `— ${phaseLabel(ev.phase)}${ev.pct != null ? ` ${ev.pct}%` : ""}` });
 				break;
 			case "status":
 				rows.push({ _id: `e${ev.seq}`, kind: "note", tone: "info", text: `— ${ev.status}` });

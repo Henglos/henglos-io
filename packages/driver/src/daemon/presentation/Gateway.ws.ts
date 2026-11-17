@@ -233,25 +233,19 @@ export class GatewayWS {
 
 		this.ws.socket?.on("workflows:sync", async (data: DriverSyncWorkflowsInDTO) => {
 
+			// One answer: `error` (its message — an Error doesn't cross the socket), or
+			// `done` with whether every workflow synced.
 			const context = new CommandContext(data.id, this.ws);
-			const result = await this.syncWorkflowsUseCase.execute(data.workflows, context)
-			.catch((error) => {
-
+			try {
+				const synced = await this.syncWorkflowsUseCase.execute(data.workflows, context);
+				this.ws.socket?.emit("workflows:sync:result", { id: data.id, type: "done", data: { synced } });
+			} catch (error) {
 				this.ws.socket?.emit("workflows:sync:result", {
 					id: data.id,
 					type: "error",
-					data: error
+					data: { message: error instanceof Error ? error.message : String(error) },
 				});
-
-			});
-
-			this.ws.socket?.emit("workflows:sync:result", {
-				id: data.id,
-				type: "done",
-				data: {
-					synced: result
-				}
-			});
+			}
 
 		});
 

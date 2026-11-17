@@ -27,9 +27,7 @@ import {
 	UpdateVariableOperationSchema,
 	RemoveVariableOperationSchema,
 	BindActionConfigurationVariableOperationSchema,
-	PLATFORM_PACKAGE,
 	type UpdateWorkflowIn,
-	type SyncPackage,
 } from '@henglosio/shared';
 
 import { type IUserRepository } from '@/domain/repositories/IUserRepository.repo';
@@ -52,6 +50,7 @@ import { DriverConnectionRegistry } from '@/application/services/DriverConnectio
 import { PlatformService } from '@/application/services/Platform.service';
 import semver from 'semver';
 import { WorkflowCollabService } from '@/application/services/WorkflowCollab.service';
+import { WorkflowPackagesService } from '@/application/services/WorkflowPackages.service';
 import { TelemetryService, packageName } from "@/application/services/Telemetry.service";
 
 type UpdateWorkflowInput = UpdateWorkflowIn;
@@ -98,6 +97,7 @@ export class UpdateWorkflowUseCase {
 		@Inject('IPackageLinkRepository')
 		private readonly packageLinkRepository: IPackageLinkRepository,
 		private readonly telemetry: TelemetryService,
+		private readonly workflowPackages: WorkflowPackagesService,
 	) {}
 
 	// `board.packageId`/component `packageId` should always be an AccountPackage id, but
@@ -463,21 +463,7 @@ export class UpdateWorkflowUseCase {
 		if (shouldSyncDrivers) {
 			const drivers = this.driverConnectionRegistry.getAllByUser(userId);
 
-			const uniqueComponentPkgIds = [...new Set(workflow.data.components.map(c => c.packageId))];
-			const [boardPkg, ...componentPkgs] = await Promise.all([
-				this.resolveAccountPackage(workflow.data.board.packageId),
-				...uniqueComponentPkgIds.map(id => this.resolveAccountPackage(id)),
-			]);
-
-			const packages: SyncPackage[] = [
-				...(boardPkg ? [{ name: boardPkg.pkg.spec, version: boardPkg.pkg.version, role: 'board' as const }] : []),
-				{ name: PLATFORM_PACKAGE, version: workflow.platform, role: 'platform' as const },
-				...componentPkgs
-					.filter(Boolean)
-					.map(pkg => ({ name: pkg!.pkg.spec, version: pkg!.pkg.version, role: 'component' as const })),
-			];
-
-			console.log(packages)
+			const packages = await this.workflowPackages.packagesOf(workflow);
 
 			for (const driver of drivers) {
 				this.driverConnectionRegistry.emit(driver.driverId, 'workflow:sync', {

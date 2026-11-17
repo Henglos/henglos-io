@@ -12,5 +12,5 @@ export class CompileTaskCommand implements ITaskCommand<TaskCompilePayload> {
 	constructor(private readonly useCase: CompileWorkflowUseCase) {}
 	isValidPayload(p: unknown): p is TaskCompilePayload { return TaskCompilePayloadSchema.safeParse(p).success; }
 	locks(p: TaskCompilePayload): string[] { return [`workflow:${p.workflowId}`]; }
-	execute(p: TaskCompilePayload, ctx: TaskContext) { return this.useCase.execute(p.workflowId, ctx, p.settings ?? {}, p.options ?? {}); }
+	execute(p: TaskCompilePayload, ctx: TaskContext) { return this.useCase.execute(p.workflowId, ctx, p.settings ?? {}, p.options ?? {}, p.packages); }
 }

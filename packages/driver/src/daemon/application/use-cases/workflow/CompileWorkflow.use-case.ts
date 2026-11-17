@@ -3,7 +3,7 @@ import { inject, injectable } from "tsyringe";
 import { createHash } from "crypto";
 import fs from "fs/promises";
 
-import { PackageService as PackageValidator, WorkflowCompileResponse } from "@henglosio/shared";
+import { PackageService as PackageValidator, type SyncPackage, WorkflowCompileResponse } from "@henglosio/shared";
 
 import { ContainerTunnel } from "../../services/ContainerTunnel.service.js";
 import { RunnerHost } from "../../services/RunnerHost.service.js";
@@ -11,6 +11,7 @@ import { TaskContext } from "../../../domain/entities/TaskContext.js";
 import { IContainerRuntime, VolumeBind } from "../../../domain/interfaces/IContainerRuntime.interface.js";
 import { PackageService } from "../../services/PackageService.service.js";
 import { WorkflowService } from "../../services/WorkflowService.service.js";
+import { SyncWorkflowUseCase } from "./SyncWorkflow.use-case.js";
 
 // Builds the board's runtime in the board's image (see the platform's
 // Runner.build): frozen into a MicroPython firmware when the board's script
@@ -45,6 +46,7 @@ export class CompileWorkflowUseCase {
 		private readonly workflowService: WorkflowService,
 		private readonly packageService: PackageService,
 		private readonly runnerHost: RunnerHost,
+		private readonly syncWorkflow: SyncWorkflowUseCase,
 	) {}
 
 	// `settings`: the workflow's platform setting overrides, handed to the
@@ -52,7 +54,19 @@ export class CompileWorkflowUseCase {
 	// runtime, not the container (no new packages hash). `options`: what the
 	// workflow picked for its board's options, for the board's firmware script —
 	// runner.map.json stays in the container, so the flash gets them too.
-	async execute(workflowId: string, ctx: TaskContext, settings: Record<string, number> = {}, options: Record<string, string | number | boolean> = {}): Promise<WorkflowCompileResponse> {
+	// `packages`: the workflow's, synced first (a workflow made or changed since
+	// this driver connected) — absent from an older hosting.
+	async execute(workflowId: string, ctx: TaskContext, settings: Record<string, number> = {}, options: Record<string, string | number | boolean> = {}, packages?: SyncPackage[]): Promise<WorkflowCompileResponse> {
+
+		if (packages) {
+			ctx.progress("sync");
+			// What isn't cached yet is installed; one that can't be fails the
+			// compile with why (SyncWorkflowUseCase records it too).
+			await this.syncWorkflow.execute(workflowId, packages, {
+				reply: (result) => ctx.info(result.data),
+				fail: (error) => ctx.log("stderr", error),
+			});
+		}
 
 		if (!await this.workflowService.exists(workflowId)) {
 			throw new Error("Workflow not found.");

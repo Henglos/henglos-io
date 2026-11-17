@@ -20,6 +20,7 @@ import { usePlatformSpec } from "./hooks/usePlatformSpec";
 import { PrimarySidebarLayout } from "./layouts/PrimarySidebar.layout";
 import { SecondarySidebarLayout } from "./layouts/SecondarySidebar.layout";
 import { BindDragProvider } from "./lib/bindDrag";
+import { ActivityBox } from "./features/activity/ActivityBox.component";
 
 export const StudioFeature = () => {
 
@@ -81,6 +82,7 @@ export const StudioFeature = () => {
 
 							<WorkspaceLayout />
 							<FloatToolboxLayout />
+							<ActivityBox />
 
 						</div>
 

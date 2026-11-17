@@ -24,8 +24,11 @@ export class SyncWorkflowsUseCase {
 		private readonly driverConnectionRegistry: DriverConnectionRegistry,
 	) {}
 
-	/** @throws OperationNotPermitted when the driver isn't the user's (or isn't connected). */
-	async execute(userId: string, driverId: string) {
+	/**
+	 * @returns The sync's id — the driver answers `workflows:sync:result` with it.
+	 * @throws OperationNotPermitted when the driver isn't the user's (or isn't connected).
+	 */
+	async execute(userId: string, driverId: string): Promise<string> {
 
 		if (this.driverConnectionRegistry.getByDriverId(driverId)?.userId !== userId) throw new OperationNotPermitted;
 
@@ -79,10 +82,12 @@ export class SyncWorkflowsUseCase {
 
 		});
 
+		const id = randomUUID();
 		this.driverConnectionRegistry.emit(driverId, 'workflows:sync', {
-			id: randomUUID(),
+			id,
 			workflows: workflowDTOs,
 		} satisfies DriverSyncWorkflowsInDTO);
+		return id;
 
 	}
 

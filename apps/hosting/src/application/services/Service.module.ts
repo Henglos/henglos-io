@@ -18,6 +18,7 @@ import { CredentialService } from "./Credential.service";
 import { TelemetryService } from "./Telemetry.service";
 import { BoardFilesTaskService } from "./BoardFilesTask.service";
 import { DebugSessionsService } from "./DebugSessions.service";
+import { WorkflowPackagesService } from "./WorkflowPackages.service";
 
 /**
  * The application's services — what the use cases, the gateways and the
@@ -43,6 +44,7 @@ import { DebugSessionsService } from "./DebugSessions.service";
 		TelemetryService,
 		BoardFilesTaskService,
 		DebugSessionsService,
+		WorkflowPackagesService,
 	],
 	exports: [
 		AuthStrategyRegistry,
@@ -60,6 +62,7 @@ import { DebugSessionsService } from "./DebugSessions.service";
 		TelemetryService,
 		BoardFilesTaskService,
 		DebugSessionsService,
+		WorkflowPackagesService,
 	]
 })
 export class ServiceModule {}

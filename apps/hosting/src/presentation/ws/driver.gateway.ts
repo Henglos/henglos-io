@@ -14,11 +14,15 @@ import { TaskRegistry } from '@/application/services/TaskRegistry.service';
 import { InvalidToken } from '@/application/errors/use-cases/Auth.error';
 import { AppWSGateway } from './app.gateway';
 import { SyncWorkflowsUseCase } from '@/application/use-cases/driver/SyncWorkflow.use-case';
-import { type Device, type DriverTasksState, type ReplData, type TaskEvent, BackendDriverConnectedOutDTO, BackendDriverDisconnectedOutDTO } from '@henglosio/shared';
+import { type Device, type DriverTasksState, type ReplData, type TaskEvent, BackendDriverConnectedOutDTO, BackendDriverDisconnectedOutDTO, type BackendDriverSyncOutDTO } from '@henglosio/shared';
 
 
 // How long a driver has to say what it has running, when it connects.
 const TASKS_STATE_TIMEOUT_MS = 5_000;
+
+// What a driver answers a `workflows:sync` with: `error` (an older driver then
+// still sends `done`), or `done` with whether every workflow synced.
+type SyncResult = { id: string; type: 'done' | 'error'; data?: unknown };
 
 /**
  * The drivers' socket — Socket.IO on /io/ws, namespace /driver,
@@ -36,6 +40,9 @@ export class DriverWSGateway
 	implements OnGatewayConnection, OnGatewayDisconnect
 {
 	private readonly logger = new Logger(DriverWSGateway.name);
+
+	// The syncs sent and not answered yet, by id — the studio is told how each ends, once.
+	private readonly pendingSyncs = new Map<string, { userId: string; driverId: string }>();
 
 	constructor(
 		private readonly driverAuth: DriverAuthService,
@@ -78,16 +85,43 @@ export class DriverWSGateway
 
 		// A failed initial sync shouldn't kill an authenticated connection —
 		// log it and let the driver keep running; the app can re-trigger a sync.
+		// The studio follows it (`driver:sync`) until the driver answers.
+		const sync = (state: BackendDriverSyncOutDTO['state'], error?: string) =>
+			this.appGateway.emit(driverAuth.userId, 'driver:sync', { driverId: driverAuth.id, state, ...(error ? { error } : {}) } satisfies BackendDriverSyncOutDTO);
+		sync('syncing');
 		try {
-			await this.driverSyncUseCase.execute(
+			const syncId = await this.driverSyncUseCase.execute(
 				driverAuth.userId,
 				driverAuth.id,
 			);
+			this.pendingSyncs.set(syncId, { userId: driverAuth.userId, driverId: driverAuth.id });
 		} catch (e) {
 			this.logger.error(
 				`Initial workflow sync failed for driver ${driverAuth.id}: ${(e as Error).message}`,
 			);
+			sync('failed', (e as Error).message);
 		}
+	}
+
+	/** How a `workflows:sync` ended on the driver — to its user's studio. */
+	@SubscribeMessage('workflows:sync:result')
+	handleSyncResult(
+		@ConnectedSocket() client: Socket,
+		@MessageBody() result: SyncResult,
+	) {
+		const pending = result?.id ? this.pendingSyncs.get(result.id) : undefined;
+		if (!pending || pending.driverId !== client.data.driverAuth?.id) return;
+		this.pendingSyncs.delete(result.id);
+
+		const synced = result.type === 'done' && (result.data as { synced?: unknown } | undefined)?.synced === true;
+		const error = synced ? undefined
+			: result.type === 'error' ? (result.data as { message?: string } | undefined)?.message ?? 'The sync failed'
+			: "Some workflows couldn't be synced — see the driver's log";
+		this.appGateway.emit(pending.userId, 'driver:sync', {
+			driverId: pending.driverId,
+			state: synced ? 'synced' : 'failed',
+			...(error ? { error } : {}),
+		} satisfies BackendDriverSyncOutDTO);
 	}
 
 	// Makes the task list match what the driver has. No answer in time: as if it
@@ -121,6 +155,11 @@ export class DriverWSGateway
 		}
 
 		this.registry.unregisterBySocketId(client.id);
+
+		// Its syncs won't be answered any more.
+		if (driverAuth) {
+			for (const [id, pending] of this.pendingSyncs) if (pending.driverId === driverAuth.id) this.pendingSyncs.delete(id);
+		}
 
 	}
 

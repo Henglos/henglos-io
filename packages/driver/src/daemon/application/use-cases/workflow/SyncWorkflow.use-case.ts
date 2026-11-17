@@ -3,7 +3,11 @@ import { injectable } from "tsyringe";
 
 import { type PackageMetadata, type WorkflowDependencies, WorkflowService } from "../../services/WorkflowService.service.js";
 import { CachedPackage, PackageService } from "../../services/PackageService.service.js";
-import { CommandContext } from "../../../domain/entities/CommandContext.js";
+/** Where a sync reports what it does — a CommandContext, or a task's log (CompileWorkflowUseCase). */
+export type SyncReporter = {
+	reply(result: { type: "data"; data: string }): void;
+	fail(error: string): void;
+};
 import { PlatformService } from "../../services/PlatformService.service.js";
 
 const isSamePackage = (a: { name: string; version: string }, b: { name: string; version: string }) =>
@@ -18,10 +22,12 @@ export class SyncWorkflowUseCase {
 		private readonly packageService: PackageService,
 	) {}
 
-	async execute(workflowId: string, packages: SyncPackage[], ctx: CommandContext): Promise<boolean> {
+	async execute(workflowId: string, packages: SyncPackage[], ctx: SyncReporter): Promise<boolean> {
 
+		// Awaited: getMetadata below needs the folder, and create's empty metadata
+		// must not land after this sync's.
 		if (!await this.workflowService.exists(workflowId)) {
-			this.workflowService.create(workflowId);
+			await this.workflowService.create(workflowId);
 		}
 
 		// `packages` is the full desired state for this workflow (sent by hosting on every
