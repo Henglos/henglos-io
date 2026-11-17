@@ -133,8 +133,8 @@ export const BoardFirmwareSchema = zod.object({
 	// The MicroPython version the board runs: what the runtime and the
 	// components compile for (a .mpy only imports on that version).
 	micropython: zod.string(),
-	// The Docker image the build and the flash run in. Any image with Node 24+,
-	// `hio` and Python 3 with pip — the official ones are henglosio/workbench-*.
+	// The Docker image the build and the flash run in. Any image with Node 24+
+	// and Python 3 with pip — the official ones are henglosio/workbench-*.
 	image: zod.string().min(1),
 	// The TypeScript file that builds and writes the firmware, in any folder of
 	// the package (relative to this manifest).

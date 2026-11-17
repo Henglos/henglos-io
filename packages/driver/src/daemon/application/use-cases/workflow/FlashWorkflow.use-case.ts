@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import { inject, injectable } from "tsyringe";
 import { ContainerTunnel } from "../../services/ContainerTunnel.service.js";
+import { RunnerHost } from "../../services/RunnerHost.service.js";
 import { IContainerRuntime } from "../../../domain/interfaces/IContainerRuntime.interface.js";
 import { WorkflowService } from "../../services/WorkflowService.service.js";
 import { USBTunnel } from "../../services/USBTunnel.service.js";
@@ -60,6 +61,7 @@ export class FlashWorkflowUseCase {
 		private readonly workflowStateService: WorkflowStateService,
 		private readonly usbTunnel: USBTunnel,
 		private readonly packageService: PackageService,
+		private readonly runnerHost: RunnerHost,
 	) {}
 
 	async execute(
@@ -258,9 +260,17 @@ export class FlashWorkflowUseCase {
 
 		try {
 			ctx.progress("firmware");
+			// This driver's runner host, injected — or the image's `hio` (RunnerHost).
+			const command = await this.runnerHost.command(containerName, [
+				"flash", "--map", "runner.map.json",
+				"--port", port,
+				"--baudrate", String(FIRMWARE_FLASH_BAUDRATE),
+				...(firmware ? ["--firmware", firmware.image] : []),
+				".",
+			]);
 			const result = await this.containerService.execCommand(
 				containerName,
-				["sh", "-c", `npx hio flash --map runner.map.json --port ${port} --baudrate ${FIRMWARE_FLASH_BAUDRATE}${firmware ? ` --firmware ${firmware.image}` : ""} .`],
+				command,
 				{
 					workingDir: "/workspace",
 					env: {

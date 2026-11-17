@@ -1,0 +1,20 @@
+{
+	"name": "@henglosio/board-esp8266",
+	"version": "1.0.0",
+	"description": "Esp8266 board package for HenglosIO",
+	"author": "Henglos",
+	"license": "SEE LICENSE IN LICENSE",
+	"keywords": [
+		"henglosio",
+		"henglosio-board"
+	],
+	"type": "module",
+	"exports": {
+		"./manifest.yaml": "./manifest.yaml",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"manifest.yaml",
+		"src"
+	]
+}

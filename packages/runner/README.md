@@ -21,7 +21,7 @@ A board says how MicroPython gets onto it, in its `manifest.yaml`:
 ```yaml
 firmware:
   micropython: 1.29.0                       # the version the runtime compiles for
-  image: henglosio/workbench-esp32:1.0.0    # the Docker image it all runs in
+  image: henglosio/workbench-espressif:1.0.0  # the Docker image it all runs in
   script: ./src/firmware.ts                 # in any folder of the package
 ```
 
@@ -46,7 +46,7 @@ export default {
 - **`ctx.run`** never uses a shell, so a value is never read as a command.
 - **`ctx.options`** has the board's `options`, as text.
 
-**The image** can be any image with Node 24+, `hio` and Python 3 with pip; the official ones, `henglosio/workbench-*`, are recommended. It only reaches the board through the serial port, at `ctx.serialUrl`.
+**The image** can be any image with Node 24+ and Python 3 with pip (the driver copies its runner in, the image needs no `hio`); the official ones, `henglosio/workbench-*`, are recommended. It only reaches the board through the serial port, at `ctx.serialUrl`.
 
 **The firmware** must keep MicroPython's REPL on the serial port and match `firmware.micropython`.
 

@@ -1,5 +1,11 @@
 # @henglosio/board-esp32
 
+## 1.2.0
+
+### Minor Changes
+
+- Builds in henglosio/workbench-espressif, the image for every Espressif chip, which carries no `hio`.
+
 ## 1.1.0
 
 ### Minor Changes

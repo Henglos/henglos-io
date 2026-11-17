@@ -1,0 +1,33 @@
+kind: board
+name: ESP8266 Generic
+schemaVersion: 1
+
+dependences:
+  # prepare (the toolchain) needs platform 1.4.0.
+  platform: ^1.4.0
+
+ui:
+  schema: ./src/board.schema.yaml
+
+# What the chip offers besides its pins — components that need one of these
+# (their dependences.capabilities) only run on boards that list it. No
+# Bluetooth on the ESP8266.
+capabilities: [wifi]
+
+# How MicroPython gets onto it: src/firmware.ts, in the official image for
+# Espressif's chips; the xtensa-lx106 toolchain comes in prepare. `micropython` is also what the platform's build
+# compiles the runtime and the components for — bump it together with the
+# stock firmware in src/firmware.ts.
+firmware:
+  micropython: 1.29.0
+  image: henglosio/workbench-espressif:1.0.0
+  script: ./src/firmware.ts
+
+options:
+  - key: FLASH_SIZE
+    displayName: Flash size
+    description: The module's flash — 2 MB and up (ESP-12E/F, NodeMCU, Wemos D1 mini) or 1 MB (ESP-01S).
+    type: select
+    default: 2MB+
+    choices: [2MB+, 1MB]
+    scope: build

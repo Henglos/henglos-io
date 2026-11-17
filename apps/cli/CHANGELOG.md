@@ -1,5 +1,11 @@
 # @henglosio/cli
 
+## 1.5.0
+
+### Minor Changes
+
+- The driver injects its own runner host (dist/runner-host.mjs, one self-contained file) into the build container and runs it with the image's Node — an image needs Node, Python and its board's tools, not `hio`, and the runner always matches the driver. Images without it fall back to their `hio`. `hio firmware` fetches the platform on the host and runs the same runner host, and takes `--baudrate`. Flashing passes its arguments without a shell.
+
 ## 1.4.0
 
 ### Minor Changes

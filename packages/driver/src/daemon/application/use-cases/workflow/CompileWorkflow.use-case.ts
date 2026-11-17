@@ -6,6 +6,7 @@ import fs from "fs/promises";
 import { PackageService as PackageValidator, WorkflowCompileResponse } from "@henglosio/shared";
 
 import { ContainerTunnel } from "../../services/ContainerTunnel.service.js";
+import { RunnerHost } from "../../services/RunnerHost.service.js";
 import { TaskContext } from "../../../domain/entities/TaskContext.js";
 import { IContainerRuntime, VolumeBind } from "../../../domain/interfaces/IContainerRuntime.interface.js";
 import { PackageService } from "../../services/PackageService.service.js";
@@ -43,6 +44,7 @@ export class CompileWorkflowUseCase {
 		private readonly containerTunnel: ContainerTunnel,
 		private readonly workflowService: WorkflowService,
 		private readonly packageService: PackageService,
+		private readonly runnerHost: RunnerHost,
 	) {}
 
 	// `settings`: the workflow's platform setting overrides, handed to the
@@ -146,7 +148,9 @@ export class CompileWorkflowUseCase {
 
 		try {
 			ctx.progress("build");
-			const result = await this.containerService.execCommand(containerName, ["sh", "-c", "npx hio build --map runner.map.json ."], {
+			// This driver's runner host, injected — or the image's `hio` (RunnerHost).
+			const command = await this.runnerHost.command(containerName, ["build", "--map", "runner.map.json", "."]);
+			const result = await this.containerService.execCommand(containerName, command, {
 				workingDir: "/workspace",
 				env: { HIO_CALLBACK_URL: url, HIO_RUNNER_PHASES: "1" },
 				signal: ctx.signal,
