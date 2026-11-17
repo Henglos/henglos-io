@@ -1,4 +1,4 @@
-# henglosio/workbench-espressif — where Espressif's boards (ESP32 family, ESP8266)
+# henglosio/workbench-espressif — where Espressif's ESP32-family boards
 # build and write their firmware: a board's firmware.image.
 #
 # What any workbench must have: Node 24+, for the runner host the driver copies
@@ -11,8 +11,7 @@
 #
 # What's big and versioned is fetched by each board's prepare, on its first
 # build, into /root/.cache/hio — a Docker volume the driver shares between the
-# containers: MicroPython's source, ESP-IDF (ESP32) and the xtensa-lx106
-# toolchain with its pinned esptool (ESP8266). So one image serves every chip,
+# containers: MicroPython's source and ESP-IDF. So one image serves every chip,
 # and a new MicroPython or ESP-IDF needs a new board version, not a new image.
 
 FROM node:24-bookworm-slim
@@ -25,7 +24,7 @@ RUN apt-get update -y \
         libffi-dev libssl-dev dfu-util libusb-1.0-0 util-linux \
     && rm -rf /var/lib/apt/lists/*
 
-# The esptool the ESP32 boards flash with (the ESP8266 brings its own, pinned).
+# The esptool the ESP32 boards flash with.
 RUN pip3 install --break-system-packages esptool
 
 # Pre-warms the cache with the mpy-cross today's boards use, so the platform's
