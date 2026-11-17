@@ -10,6 +10,7 @@ import { DriverPairTokenSqliteRepo } from './drizzle/sqlite/DriverPairTokenSqlit
 import { WorkflowFileSqliteRepo } from './drizzle/sqlite/WorkflowFileSqliteRepo.impl';
 import { CredentialSqliteRepo } from './drizzle/sqlite/CredentialSqliteRepo.impl';
 import { StatsSqliteRepo } from './drizzle/sqlite/StatsSqliteRepo.impl';
+import { DefaultPackageOfferSqliteRepo } from './drizzle/sqlite/DefaultPackageOfferSqliteRepo.impl';
 
 const REPOSITORY_TOKENS = [
 	'IUserRepository',
@@ -22,6 +23,7 @@ const REPOSITORY_TOKENS = [
 	'IWorkflowFileRepository',
 	'ICredentialRepository',
 	'IStatsRepository',
+	'IDefaultPackageOfferRepository',
 ] as const;
 
 
@@ -47,6 +49,7 @@ function buildDatabaseProviders(): Provider[] {
 			{ provide: 'IWorkflowFileRepository', useClass: WorkflowFileSqliteRepo },
 			{ provide: 'ICredentialRepository', useClass: CredentialSqliteRepo },
 			{ provide: 'IStatsRepository', useClass: StatsSqliteRepo },
+			{ provide: 'IDefaultPackageOfferRepository', useClass: DefaultPackageOfferSqliteRepo },
 		]);
 	}
 

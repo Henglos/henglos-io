@@ -12,6 +12,9 @@ export interface IUserRepository {
 
 	existsById(id: string): Promise<boolean>;
 
+	/** Every account's id. */
+	findAllIds(): Promise<string[]>;
+
 	findById(id: string): Promise<User | null>;
 	findByEmail(email: Email): Promise<User | null>;
 	findByUsername(username: Username): Promise<User | null>;

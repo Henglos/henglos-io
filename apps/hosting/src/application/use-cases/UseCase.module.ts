@@ -4,6 +4,7 @@ import { ServiceModule } from "../services/Service.module";
 import { DatabaseModule } from "@/infrastructure/database/Database.module";
 
 import { RegisterUserUseCase } from "./auth/RegisterUser.use-case";
+import { SyncDefaultPackagesUseCase } from "./package/SyncDefaultPackages.use-case";
 import { LoginUserUseCase } from "./auth/LoginUser.use-case";
 import { RefreshTokenUseCase } from "./auth/RefreshToken.use-case";
 import { GetSetupStatusUseCase } from "./auth/GetSetupStatus.use-case";
@@ -123,6 +124,7 @@ import { DeleteCredentialUseCase } from "./credential/DeleteCredential.use-case"
 		DeleteCredentialUseCase,
 
 		AddPackageUseCase,
+		SyncDefaultPackagesUseCase,
 		DeletePackageUseCase,
 		ListPackagesUseCase,
 		GetPackageUseCase,

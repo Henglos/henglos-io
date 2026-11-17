@@ -46,6 +46,12 @@ export class UserSqliteRepo implements IUserRepository {
 		return !!user;
 	}
 
+	async findAllIds(): Promise<string[]> {
+
+		const rows = await this.database.connection((db) => db.select({ id: users.id }).from(users));
+		return rows.map((row) => row.id);
+	}
+
 	async existsById(id: string): Promise<boolean> {
 
 		const rows = await this.database.connection((db) => db.select({ id: users.id }).from(users).where(eq(users.id, id)));

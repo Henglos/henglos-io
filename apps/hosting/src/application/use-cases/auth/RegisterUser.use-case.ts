@@ -8,21 +8,21 @@ import { Username } from "@/domain/value-object/Username";
 import { EmailAlreadyExists, UserAlreadyReigstered, UsernameAlreadyExists } from "@/application/errors/use-cases/Auth.error";
 
 import { type IUserRepository } from "@/domain/repositories/IUserRepository.repo";
-import { AddPackageUseCase } from "@/application/use-cases/package/AddPackage.use-case";
-import { DEFAULT_PACKAGES } from "@/config/default-packages";
+import { SyncDefaultPackagesUseCase } from "@/application/use-cases/package/SyncDefaultPackages.use-case";
 import { TelemetryService } from "@/application/services/Telemetry.service";
 
 /**
  * Creates the installation's user — once: a self-hosted installation has a
  * single account, made from the setup page. It starts with the default
- * packages (config/default-packages.json) in its library.
+ * packages (config/default-packages.json) in its library — see
+ * SyncDefaultPackagesUseCase, which also adds the ones an update brings.
  */
 @Injectable()
 export class RegisterUserUseCase {
 
 	constructor(
 		@Inject("IUserRepository") private readonly userRepository: IUserRepository,
-		private readonly addPackageUseCase: AddPackageUseCase,
+		private readonly syncDefaultPackages: SyncDefaultPackagesUseCase,
 		private readonly telemetry: TelemetryService,
 	) {}
 
@@ -53,22 +53,13 @@ export class RegisterUserUseCase {
 
 		user = await this.userRepository.save(user);
 
-		await this.installDefaultPackages(user.id!);
+		// One that can't be installed (its registry is down…) is skipped: the account
+		// is made anyway, and the next start tries it again.
+		await this.syncDefaultPackages.execute(user.id!);
 		this.telemetry.capture("user_registered");
 
 		return user;
 
-	}
-
-	// One that can't be installed (its registry is down…) is skipped: the account is made anyway.
-	private async installDefaultPackages(userId: string): Promise<void> {
-		for (const pkg of DEFAULT_PACKAGES) {
-			try {
-				await this.addPackageUseCase.execute(userId, pkg.spec, pkg.registry, pkg.token);
-			} catch (error) {
-				console.error(`Failed to install default package ${pkg.name}`, error);
-			}
-		}
 	}
 
 }

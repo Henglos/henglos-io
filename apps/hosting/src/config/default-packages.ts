@@ -12,5 +12,9 @@ export type DefaultPackageEntry = {
 	token?: string;
 };
 
-/** The packages installed for the installation's user when it's created — default-packages.json. */
+/**
+ * The packages every user gets — default-packages.json: all of them when the
+ * account is made, and on the next start one added here later (see
+ * SyncDefaultPackagesUseCase). Removing one doesn't uninstall it.
+ */
 export const DEFAULT_PACKAGES: DefaultPackageEntry[] = defaultPackagesConfig.packages;

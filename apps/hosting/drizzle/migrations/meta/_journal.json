@@ -15,6 +15,13 @@
       "when": 1794580173488,
       "tag": "0001_hio_system_platform",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794922722008,
+      "tag": "0002_default_package_offers",
+      "breakpoints": true
     }
   ]
 }

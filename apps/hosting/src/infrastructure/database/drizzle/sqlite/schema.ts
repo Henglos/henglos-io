@@ -60,6 +60,18 @@ export const accountPackages = sqliteTable('account_packages', {
 	unique('account_packages_user_package_unique').on(table.userId, table.packageId),
 ]);
 
+// The default packages (config/default-packages.json) each user was already
+// offered, by name — installed then, or found in the library. A package added
+// to that list later is installed on the next start; one the user removed
+// stays removed.
+export const defaultPackageOffers = sqliteTable('default_package_offers', {
+	userId: text('user_id', { length: 36 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+	name: text('name', { length: 214 }).notNull(),
+	offeredAt: integer('offered_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+}, (table) => [
+	primaryKey({ columns: [table.userId, table.name] }),
+]);
+
 export const accountPackagesRelations = relations(accountPackages, ({ one, many }) => ({
 	user: one(users, { fields: [accountPackages.userId], references: [users.id] }),
 	package: one(packages, { fields: [accountPackages.packageId], references: [packages.id] }),
