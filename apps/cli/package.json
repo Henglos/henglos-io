@@ -39,7 +39,6 @@
     "dockerode": "^4.0.10",
     "dotenv": "^17.4.2",
     "hono": "^4.12.22",
-    "native-machine-id": "^0.3.11",
     "pacote": "^21.0.0",
     "reflect-metadata": "^0.2.2",
     "semver": "7.8.5",

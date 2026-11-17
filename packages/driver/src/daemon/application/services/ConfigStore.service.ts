@@ -5,18 +5,16 @@ import { injectable } from "tsyringe";
 
 /**
  * What the driver keeps between runs (~/.henglos/io/driver/config.json): the hosting's
- * address, this machine's id, and its tokens.
+ * address and its tokens.
  */
 export interface DriverConfig {
 	baseUrl: string | null;
-	hwid: string | null;
 	token: string | null;
 	refreshToken: string | null;
 }
 
 const DEFAULT_CONFIG: DriverConfig = {
 	baseUrl: null,
-	hwid: null,
 	token: null,
 	refreshToken: null,
 };
@@ -41,7 +39,9 @@ export class ConfigStore {
 	async read(): Promise<DriverConfig> {
 		try {
 			const raw = await fs.readFile(this.configFilePath, "utf-8");
-			return { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
+			// `hwid` was the machine's id, which older drivers kept — dropped on the next save.
+			const { hwid: _hwid, ...config } = JSON.parse(raw) as DriverConfig & { hwid?: unknown };
+			return { ...DEFAULT_CONFIG, ...config };
 		} catch {
 			return { ...DEFAULT_CONFIG };
 		}

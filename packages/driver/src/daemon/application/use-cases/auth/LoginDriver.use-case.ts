@@ -1,6 +1,5 @@
 import * as os from "os";
 import axios, { AxiosError } from "axios";
-import { getMachineIdSync } from "native-machine-id";
 import { injectable } from "tsyringe";
 import type { PairDriverIn, PairDriverOut } from "@henglosio/shared";
 import { ConfigStore } from "../../services/ConfigStore.service.js";
@@ -25,9 +24,6 @@ export class LoginDriverUseCase {
 		const { baseUrl } = await this.configStore.read();
 		if (!baseUrl) throw new Error("[auth] No server configured. Run 'hio driver configure <baseUrl>' first.");
 
-		const hwid = getMachineIdSync();
-		if (!hwid) throw new Error("[auth] Try run as admin.");
-
 		const deviceUser = os.userInfo().username;
 		const deviceName = os.hostname();
 
@@ -39,7 +35,6 @@ export class LoginDriverUseCase {
 				`${baseUrl}/io/api/v1/drivers/pair/${pairToken}`,
 				{
 					name,
-					deviceHWID: hwid,
 					deviceName,
 					deviceUser,
 				} satisfies PairDriverIn,
@@ -50,7 +45,6 @@ export class LoginDriverUseCase {
 		}
 
 		await this.configStore.save({
-			hwid,
 			token: data.token,
 			refreshToken: data.refreshToken,
 		});

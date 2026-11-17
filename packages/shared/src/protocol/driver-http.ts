@@ -7,12 +7,11 @@ export const UsbDeviceSchema = zod.object({
 	port: zod.string(),
 });
 
-/** POST /drivers/pair/:pairToken — the machine pairing: what it shows up as, and who it is. */
+/** POST /drivers/pair/:pairToken — the machine pairing: what it shows up as, and where it runs. */
 export const PairDriverInSchema = zod.object({
 
 	name: zod.string(),
 
-	deviceHWID: zod.string(),
 	deviceName: zod.string(),
 	deviceUser: zod.string(),
 
@@ -73,7 +72,7 @@ export const PairTokenOutSchema = zod.object({
 
 /** GET /drivers/pair-token — a new pair token, for `hio driver login`. */
 export type PairTokenOut = zod.infer<typeof PairTokenOutSchema>;
-/** POST /drivers/pair/:pairToken — the machine pairing: what it shows up as, and who it is. */
+/** POST /drivers/pair/:pairToken — the machine pairing: what it shows up as, and where it runs. */
 export type PairDriverIn = zod.infer<typeof PairDriverInSchema>;
 /** POST /drivers/pair/:pairToken — the paired driver's access and refresh tokens. */
 export type PairDriverOut = zod.infer<typeof PairDriverOutSchema>;

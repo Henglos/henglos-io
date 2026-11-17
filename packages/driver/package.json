@@ -49,7 +49,6 @@
     "daemonize-process": "^4.1.1",
     "dockerode": "^4.0.10",
     "hono": "^4.12.22",
-    "native-machine-id": "^0.3.11",
     "open": "^11.0.0",
     "p-queue": "^9.3.0",
     "pacote": "^21.5.0",
