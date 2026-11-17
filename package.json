@@ -12,7 +12,8 @@
     "lint": "turbo lint",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "changeset publish --no-git-tag"
+    "release": "changeset publish --no-git-tag",
+    "publish:dev": "node scripts/publish-dev.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "3.0.3",
