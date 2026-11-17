@@ -14,6 +14,7 @@ export const Default: StoryObj = {
 			<Progress.Root value={40} />
 			<Progress.Root value={70} size="md" label="Upload" showValue />
 			<Progress.Root value={100} label="Complete" showValue />
+			<Progress.Root indeterminate label="Building" />
 		</div>
 	),
 };

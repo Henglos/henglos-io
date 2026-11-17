@@ -9,6 +9,13 @@
 
 /* ---------- escala não-cor ---------- */
 @theme {
+	/* Progress.Root indeterminate: a segment sliding across the track, again and again. */
+	--animate-progress-slide: progress-slide 1.4s ease-in-out infinite;
+	@keyframes progress-slide {
+		0% { transform: translateX(-100%); }
+		100% { transform: translateX(250%); }
+	}
+
 	--spacing: 4px; /* grid de 8px: use só passos pares — p-2 = 8px, p-4 = 16px, h-8 = 32px. Ímpares/frações só p/ hairlines (<4px) */
 
 	--radius-sm: 3px; /* kbd, chips */
