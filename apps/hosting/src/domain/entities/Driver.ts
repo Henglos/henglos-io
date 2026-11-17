@@ -3,7 +3,6 @@ import { RequiredDriver } from '@/application/errors/entities/Driver.error';
 export type CreateDriverInput = {
 	userId: string;
 
-	deviceHWID: string;
 	deviceName: string;
 	deviceUser: string;
 
@@ -23,8 +22,6 @@ export class Driver {
 		public readonly id: string | undefined,
 		public readonly userId: string,
 
-		/** The machine's hardware id. */
-		public readonly deviceHWID: string,
 		/** The machine's hostname. */
 		public readonly deviceName: string,
 		/** The OS user the driver runs as. */
@@ -54,7 +51,6 @@ export class Driver {
 		return new Driver(
 			undefined,
 			input.userId,
-			input.deviceHWID,
 			input.deviceName,
 			input.deviceUser,
 			input.name ?? `${input.deviceUser}@${input.deviceName}`,

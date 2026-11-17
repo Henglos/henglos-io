@@ -145,7 +145,7 @@ export class DriverController {
 		@Body(new ZodValidationPipe(PairDriverInSchema)) body: PairDriverIn,
 	): Promise<PairDriverOut> {
 
-		const paired = await this.makeDriverPairUseCase.execute(pairToken, body.name, body.deviceHWID, body.deviceName, body.deviceUser);
+		const paired = await this.makeDriverPairUseCase.execute(pairToken, body.name, body.deviceName, body.deviceUser);
 		return {
 			token: paired.token,
 			refreshToken: paired.refreshToken

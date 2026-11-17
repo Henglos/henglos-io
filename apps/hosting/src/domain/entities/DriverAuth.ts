@@ -9,7 +9,6 @@ export class DriverAuth {
 		/** The driver's id. */
 		public readonly id: string,
 		public readonly userId: string,
-		public readonly deviceHWID: string,
 		public readonly deviceUser: string,
 		public readonly deviceName: string,
 	) {}

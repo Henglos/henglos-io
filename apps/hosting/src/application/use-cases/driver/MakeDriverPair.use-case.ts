@@ -34,10 +34,10 @@ export class MakeDriverPairUseCase {
 	/**
 	 * @param pairToken The pair token, as the user passed it.
 	 * @param name What the driver shows up as.
-	 * @param deviceHWID The machine's hardware id; `deviceName` its hostname; `deviceUser` the OS user.
+	 * @param deviceName The machine's hostname; `deviceUser` the OS user.
 	 * @throws WrongPairToken when it doesn't exist or has expired; UserNotFound.
 	 */
-	async execute(pairToken: string, name: string, deviceHWID: string, deviceName: string, deviceUser: string): Promise<MakeDriverPairOutput> {
+	async execute(pairToken: string, name: string, deviceName: string, deviceUser: string): Promise<MakeDriverPairOutput> {
 
 		const driverPairToken = await this.driverPairTokenRepository.findByPairToken(pairToken);
 		if (!driverPairToken || !driverPairToken.isValid()) throw new WrongPairToken;
@@ -45,7 +45,6 @@ export class MakeDriverPairUseCase {
 		if (!await this.userRepository.existsById(driverPairToken.userId)) throw new UserNotFound;
 
 		let driver = Driver.create({
-			deviceHWID,
 			deviceName,
 			deviceUser,
 			name,

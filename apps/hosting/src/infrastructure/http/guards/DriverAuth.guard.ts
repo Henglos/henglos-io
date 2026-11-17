@@ -21,7 +21,6 @@ export class DriverAuthGuard implements CanActivate {
 		const request = context.switchToHttp().getRequest<Request & {
 			userId: string;
 			driverId: string;
-			deviceHWID: string;
 			deviceUser: string;
 			deviceName: string;
 			token: string;
@@ -34,7 +33,6 @@ export class DriverAuthGuard implements CanActivate {
 
 		request.userId = authDriver.userId;
 		request.driverId = authDriver.id;
-		request.deviceHWID = authDriver.deviceHWID;
 		request.deviceUser = authDriver.deviceUser;
 		request.deviceName = authDriver.deviceName;
 		request.token = token;

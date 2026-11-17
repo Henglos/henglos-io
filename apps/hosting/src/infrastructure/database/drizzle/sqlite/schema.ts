@@ -185,7 +185,6 @@ export const drivers = sqliteTable('drivers', {
 	refreshToken: text('refresh_token', { length: 64 }).unique(),
 	refreshTokenExpiresAt: integer('refresh_token_expires_at', { mode: 'timestamp' }),
 
-	deviceHWID: text('device_hwid', { length: 128 }).notNull(),
 	deviceName: text('device_name', { length: 255 }),
 	deviceUser: text('device_user', { length: 255 }),
 

@@ -35,7 +35,6 @@ export class DriverAuthService {
 			sub: driver.id,
 			jti: randomUUID(),
 			userId: driver.userId,
-			deviceHWID: driver.deviceHWID,
 			deviceUser: driver.deviceUser,
 			deviceName: driver.deviceName,
 		};
@@ -78,7 +77,6 @@ export class DriverAuthService {
 					jti: randomUUID(),
 
 					userId: payload.userId,
-					deviceHWID: payload.deviceHWID,
 					deviceUser: payload.deviceUser,
 					deviceName: payload.deviceName,
 				},
@@ -114,7 +112,7 @@ export class DriverAuthService {
 			if (typeof(payload) === "string") throw new InvalidToken;
 			if (!payload.sub) throw new InvalidToken;
 
-			return new DriverAuth(payload.sub, payload.userId, payload.deviceHWID, payload.deviceUser, payload.deviceName);
+			return new DriverAuth(payload.sub, payload.userId, payload.deviceUser, payload.deviceName);
 
 		} catch {
 

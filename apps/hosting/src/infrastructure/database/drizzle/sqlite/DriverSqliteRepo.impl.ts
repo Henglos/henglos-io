@@ -15,7 +15,6 @@ export class DriverSqliteRepo implements IDriverRepository {
 		return new Driver(
 			row.id,
 			row.userId,
-			row.deviceHWID,
 			row.deviceName!,
 			row.deviceUser!,
 			row.name,
@@ -28,7 +27,6 @@ export class DriverSqliteRepo implements IDriverRepository {
 
 		const [_driver] = await this.database.connection((db) => db.insert(drivers).values({
 			userId: driver.userId,
-			deviceHWID: driver.deviceHWID,
 			deviceName: driver.deviceName,
 			deviceUser: driver.deviceUser,
 			name: driver.name,
@@ -55,13 +53,6 @@ export class DriverSqliteRepo implements IDriverRepository {
 	async findById(id: string): Promise<Driver | null> {
 
 		const row = await this.database.connection((db) => db.query.drivers.findFirst({ where: eq(drivers.id, id) }));
-		return row ? this.toDomain(row) : null;
-
-	}
-
-	async findByHWID(hwid: string): Promise<Driver | null> {
-
-		const row = await this.database.connection((db) => db.query.drivers.findFirst({ where: eq(drivers.deviceHWID, hwid) }));
 		return row ? this.toDomain(row) : null;
 
 	}

@@ -11,12 +11,11 @@ export const GetDriverAuth = createParamDecorator(
 			.getRequest<Request & {
 				userId: string;
 				driverId: string;
-				deviceHWID: string;
 				deviceUser: string;
 				deviceName: string;
 			}>();
 
-		return new DriverAuth(request.driverId, request.userId, request.deviceHWID, request.deviceUser, request.deviceName);
+		return new DriverAuth(request.driverId, request.userId, request.deviceUser, request.deviceName);
 
 	},
 );

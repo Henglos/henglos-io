@@ -6,7 +6,6 @@ import { Inject, Injectable } from "@nestjs/common";
 export interface DriverEntity  {
 	id: string | undefined;
 	userId: string;
-	deviceHWID: string,
 	deviceName: string,
 	deviceUser: string,
 	name: string;
