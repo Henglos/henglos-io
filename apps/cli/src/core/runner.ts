@@ -110,12 +110,18 @@ export async function loadBoardFirmware(board: BoardPackage): Promise<BoardFirmw
  *   the driver — which passes it on to the studio. A phase goes as one only to a
  *   driver that says it reads them (`HIO_RUNNER_PHASES=1`); to an older one, as
  *   a log line.
+ *   It goes with the session's token (`HIO_CALLBACK_TOKEN`), which the driver
+ *   requires.
  * - Without one (local mode): logs and phases go to stdout, errors to stderr.
  *
  * @param callbackUrl The driver's `HIO_CALLBACK_URL`, if any.
+ * @param token The driver's `HIO_CALLBACK_TOKEN` for this session.
  * @returns A function that sends one message.
  */
-export function createSend(callbackUrl: string | undefined): (payload: RunnerProtocol) => Promise<void> {
+export function createSend(
+	callbackUrl: string | undefined,
+	token: string | undefined = process.env["HIO_CALLBACK_TOKEN"],
+): (payload: RunnerProtocol) => Promise<void> {
 	const phaseLine = (phase: string) => `── ${phase} ──\n`;
 	if (!callbackUrl) {
 		return async (payload) => {
@@ -129,7 +135,7 @@ export function createSend(callbackUrl: string | undefined): (payload: RunnerPro
 		if (payload.type === "phase" && !phases) payload = { type: "data", data: phaseLine(payload.phase) };
 		await fetch(callbackUrl, {
 			method: "POST",
-			headers: { "Content-Type": "application/json" },
+			headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
 			body: JSON.stringify(payload),
 		});
 	};

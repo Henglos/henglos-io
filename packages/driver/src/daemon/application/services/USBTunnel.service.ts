@@ -86,20 +86,31 @@ type ActiveEntry = {
 /**
  * Lends a board's serial port to a build container: an RFC 2217 server on a local TCP port
  * that drives the real port — what esptool, inside the container, flashes through.
+ *
+ * RFC 2217 has no way to authenticate, so the server listens only where the
+ * containers reach the host (IContainerRuntime.hostAddress), and only while a
+ * flash needs it.
  */
 @injectable()
 export class USBTunnel {
 
 	private readonly active = new Map<string, ActiveEntry>();
+	private host: string | undefined;
 
-	initialize(): Promise<void> {
+	/** @param host The address to listen on — see IContainerRuntime.hostAddress. */
+	initialize(host: string): Promise<void> {
+		this.host = host;
 		return Promise.resolve();
 	}
 
 	async connect(serialPort: string, baudrate: number): Promise<number> {
+		if (!this.host) throw new Error("USBTunnel used before initialize().");
 		const serial  = await openPort(serialPort, baudrate);
 		const server  = new RFC2217Server(() => new SerialPortSession(serial, serialPort));
-		const tcpPort = await server.start(0);
+		const tcpPort = await server.start(0, this.host).catch(async (err: unknown) => {
+			await closePort(serial);
+			throw err;
+		});
 		this.active.set(serialPort, { server, tcpPort, serial });
 		return tcpPort;
 	}

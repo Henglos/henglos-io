@@ -154,7 +154,7 @@ export class CompileWorkflowUseCase {
 			Buffer.from(JSON.stringify(runnerMap, null, 2)),
 		);
 
-		const { sessionId, url } = this.containerTunnel.createSession(ctx.taskId, (payload) => {
+		const { sessionId, url, token } = this.containerTunnel.createSession(ctx.taskId, (payload) => {
 			if (payload.type === "data") ctx.log("stdout", payload.data);
 			else if (payload.type === "phase") ctx.progress(payload.phase);
 			else ctx.log("stderr", String(payload.data));
@@ -166,7 +166,7 @@ export class CompileWorkflowUseCase {
 			const command = await this.runnerHost.command(containerName, ["build", "--map", "runner.map.json", "."]);
 			const result = await this.containerService.execCommand(containerName, command, {
 				workingDir: "/workspace",
-				env: { HIO_CALLBACK_URL: url, HIO_RUNNER_PHASES: "1" },
+				env: { HIO_CALLBACK_URL: url, HIO_CALLBACK_TOKEN: token, HIO_RUNNER_PHASES: "1" },
 				signal: ctx.signal,
 				onLog: (data) => ctx.log("stdout", data),
 			});

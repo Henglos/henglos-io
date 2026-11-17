@@ -106,4 +106,9 @@ export abstract class IContainerRuntime {
 
 	// Networks
 	abstract ensureNetwork(name: string, options?: NetworkCreateOptions): Promise<void>;
+	/**
+	 * The host address the containers reach as `host.docker.internal` — what the
+	 * driver's tunnels listen on, so nothing else on the network reaches them.
+	 */
+	abstract hostAddress(): Promise<string>;
 }

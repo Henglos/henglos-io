@@ -24,12 +24,13 @@ export class RFC2217Server {
 	 * Starts listening.
 	 *
 	 * @param port The TCP port — 0 for any free one.
+	 * @param host The address to listen on — every interface when absent.
 	 * @returns The port it listens on.
 	 */
-	start(port: number): Promise<number> {
+	start(port: number, host?: string): Promise<number> {
 		return new Promise((resolve, reject) => {
 			this.server.once("error", reject);
-			this.server.listen(port, () => {
+			this.server.listen(port, host, () => {
 				const addr = this.server.address() as net.AddressInfo;
 				resolve(addr.port);
 			});

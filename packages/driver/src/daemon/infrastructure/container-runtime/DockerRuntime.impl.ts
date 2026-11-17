@@ -12,6 +12,8 @@ import type {
 } from "../../domain/interfaces/IContainerRuntime.interface.js";
 import { IContainerRuntime } from "../../domain/interfaces/IContainerRuntime.interface.js";
 
+const LOOPBACK = "127.0.0.1";
+
 /** IContainerRuntime on Docker (dockerode, the local daemon's socket). */
 @injectable()
 export class DockerRuntimeImpl extends IContainerRuntime {
@@ -231,6 +233,23 @@ export class DockerRuntimeImpl extends IContainerRuntime {
 				Internal: options?.internal ?? false,
 			});
 		}
+	}
+
+	// Docker Desktop (Windows, macOS, and Linux too) forwards host.docker.internal
+	// to the host's loopback. A native Linux engine maps it (host-gateway) to the
+	// default bridge's gateway — docker0, an address only containers are on.
+	// HIO_TUNNEL_HOST overrides it (a host-gateway-ip set in the daemon's config,
+	// a rootless engine).
+	async hostAddress(): Promise<string> {
+		const override = process.env["HIO_TUNNEL_HOST"];
+		if (override) return override;
+		if (process.platform !== "linux") return LOOPBACK;
+		const info = await this.docker.info() as { OperatingSystem?: string };
+		if (info.OperatingSystem?.includes("Docker Desktop")) return LOOPBACK;
+		const bridge = await this.docker.getNetwork("bridge").inspect() as { IPAM?: { Config?: Array<{ Gateway?: string }> } };
+		const gateway = bridge.IPAM?.Config?.find(config => config.Gateway && !config.Gateway.includes(":"))?.Gateway;
+		if (!gateway) throw new Error("Couldn't find the Docker bridge's gateway — set HIO_TUNNEL_HOST to the address containers reach the host on.");
+		return gateway;
 	}
 
 	private buildImageName(name: string, registry?: string): string {

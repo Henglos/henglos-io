@@ -113,8 +113,10 @@ export const runDaemon = async (): Promise<void> => {
 	await configStore.initialize();
 	await packageService.initialize();
 	await workflowService.initialize();
-	await usbTunnel.initialize();
-	await containerTunnel.initialize();
+	// The tunnels listen only where the containers reach the host.
+	const tunnelHost = await containerRuntime.hostAddress();
+	await usbTunnel.initialize(tunnelHost);
+	await containerTunnel.initialize(tunnelHost);
 	await containerRuntime.ensureNetwork("henglos-internal", {
 		internal: true,
 	});
