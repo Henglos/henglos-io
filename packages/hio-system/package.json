@@ -1,6 +1,6 @@
 {
 	"name": "@henglosio/hio-system",
-	"version": "1.4.1",
+	"version": "1.4.2",
 	"description": "HenglosIO runtime for MicroPython boards.",
 	"author": "Henglos",
 	"license": "SEE LICENSE IN LICENSE",

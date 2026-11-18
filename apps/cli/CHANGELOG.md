@@ -1,5 +1,16 @@
 # @henglosio/cli
 
+## 1.6.0
+
+### Minor Changes
+
+- 3babe84: Driver: pairing no longer reads the machine's hardware id — it was sent to the hosting and never checked — and the native `native-machine-id` dependency is gone (no more "Try run as admin" on `hio driver login`). Pairing needs a hosting that doesn't ask for it (this release on); one already paired keeps working with any.
+
+### Patch Changes
+
+- fdaaacc: Driver: the build containers' tunnels listen only where containers reach the host (the loopback on Docker Desktop, the Docker bridge's gateway on a native Linux engine; HIO_TUNNEL_HOST overrides it), not on every interface; a container's messages count only with its session's token (HIO_CALLBACK_TOKEN); the unused /serial-control endpoint is gone.
+- 0d05585: Driver: a workflow new to the driver synced with no packages (its folder was created without waiting), so compiling it said its board package wasn't installed; and one workflow failing to sync no longer stops the others. The driver answers a workflow sync once — its error, or whether every workflow synced — so the studio can show it.
+
 ## 1.5.0
 
 ### Minor Changes
