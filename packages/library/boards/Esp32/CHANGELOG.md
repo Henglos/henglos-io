@@ -1,5 +1,11 @@
 # @henglosio/board-esp32
 
+## 1.2.1
+
+### Patch Changes
+
+- The firmware builds in the port's default folder (ports/esp32/build-ESP32_GENERIC) instead of passing BUILD= to make: the variable reached the `make -C mpy-cross` that the port's CMake runs, which then compiled mpy-cross against the ESP32's qstr headers and failed with "unsigned conversion from 'int' to 'unsigned char'" (-Werror=overflow).
+
 ## 1.2.0
 
 ### Minor Changes

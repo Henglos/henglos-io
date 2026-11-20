@@ -76,9 +76,14 @@ export default {
 		await withIdf(ctx, idf, "make", ["-C", path.join(micropython, "mpy-cross"), jobs]);
 		await withIdf(ctx, idf, "make", ["-C", portDir, "BOARD=" + BOARD, "submodules"]);
 
+		// No BUILD= here: a variable on make's command line reaches every sub-make,
+		// and the port's CMake runs `make -C mpy-cross` — which would then build
+		// mpy-cross in the port's folder, against the port's qstr headers (2-byte
+		// hashes; mpy-cross's are 1-byte), and fail. The port's default,
+		// build-<BOARD>, sits in the checkout, which is per version already.
 		const boardDir = stageBoard(ctx.cache, ctx.micropython, path.join(portDir, "boards", BOARD));
-		const buildDir = path.join(ctx.cache, "build", "v" + ctx.micropython + "-" + PORT + "-" + BOARD);
-		await withIdf(ctx, idf, "make", ["-C", portDir, "BOARD_DIR=" + boardDir, "BUILD=" + buildDir, "FROZEN_MANIFEST=" + ctx.freezeManifest, jobs]);
+		const buildDir = path.join(portDir, "build-" + BOARD);
+		await withIdf(ctx, idf, "make", ["-C", portDir, "BOARD=" + BOARD, "BOARD_DIR=" + boardDir, "FROZEN_MANIFEST=" + ctx.freezeManifest, jobs]);
 
 		fs.copyFileSync(path.join(buildDir, "firmware.bin"), ctx.firmwareOutput);
 	},
