@@ -1,7 +1,8 @@
 name: Docker Build & Push
 
 # Reusable: builds one app's image and pushes it to Docker Hub (henglosio/<app>)
-# and to the GitHub Container Registry (ghcr.io/henglos/<app>).
+# and to the GitHub Container Registry (ghcr.io/henglos/henglosio/<app>: the
+# Henglos org's package henglosio/<app>).
 # Called by docker-hosting.yaml and docker-studio.yaml.
 #
 #   push to main  → :main, :sha-<short>       (the edge build)
@@ -28,7 +29,8 @@ on:
 
 env:
   DOCKERHUB_IMAGE: henglosio/${{ inputs.app }}
-  GHCR_IMAGE: ghcr.io/henglos/${{ inputs.app }}
+  # In the Henglos org, named henglosio/<app> — like on Docker Hub.
+  GHCR_IMAGE: ghcr.io/henglos/henglosio/${{ inputs.app }}
 
 jobs:
   build:
