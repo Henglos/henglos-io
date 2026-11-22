@@ -1,11 +1,11 @@
-import { useAtomValue } from "jotai";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useAtom, useAtomValue } from "jotai";
+import { useEffect, useMemo, useRef } from "react";
+import { Eraser } from "lucide-react";
 import type { TaskEvent } from "@henglosio/shared";
 import { Button, Text } from "@henglosio/ui";
-import { stopTask } from "@shared/api";
-import { ActiveTaskAtom, ActiveTaskIdAtom, TaskEventsAtom, isTerminalStatus } from "../../store/logs.store";
-import { DriverConnectionAtom } from "../../store/driver.store";
+import { ActiveTaskAtom, ActiveTaskIdAtom, LogsClearedAtom, TaskEventsAtom } from "../../store/logs.store";
 import { phaseLabel } from "../../lib/taskPhases";
+import { useStopActiveTask } from "../../hooks/useStopActiveTask";
 
 type Row =
 	| { _id: string; kind: "log"; stream: "stdout" | "stderr" | "info"; text: string }
@@ -62,15 +62,22 @@ export const LogsPanel = () => {
 	const events   = useAtomValue(TaskEventsAtom);
 	const taskId   = useAtomValue(ActiveTaskIdAtom);
 	const active   = useAtomValue(ActiveTaskAtom);
-	const driver   = useAtomValue(DriverConnectionAtom);
+	const [cleared, setCleared] = useAtom(LogsClearedAtom);
 
-	const [stopping, setStopping] = useState(false);
+	const { running, stopping, stop, canStop } = useStopActiveTask();
 
 	const bottomRef = useRef<HTMLDivElement>(null);
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const pinnedRef = useRef(true);
 
-	const rows = useMemo(() => toRows(events), [events]);
+	// What came after the last Clear — of this task; another one starts with all of its own.
+	const clearedSeq = cleared && cleared.taskId === taskId ? cleared.seq : -1;
+	const rows = useMemo(() => toRows(events.filter(event => event.seq > clearedSeq)), [events, clearedSeq]);
+
+	const onClear = () => {
+		const last = events[events.length - 1];
+		if (taskId && last) setCleared({ taskId, seq: last.seq });
+	};
 
 	useEffect(() => {
 		const el = scrollRef.current;
@@ -86,20 +93,6 @@ export const LogsPanel = () => {
 		if (pinnedRef.current) bottomRef.current?.scrollIntoView({ behavior: "instant" });
 	}, [rows]);
 
-	useEffect(() => { setStopping(false); }, [taskId]);
-
-	const running = active ? !isTerminalStatus(active.status) : false;
-
-	const onStop = async () => {
-		if (!driver || !taskId || !active) return;
-		setStopping(true);
-		try {
-			await stopTask(driver.id, active.type, taskId);
-		} catch {
-			setStopping(false);
-		}
-	};
-
 	return (
 		<div className="w-full h-full flex flex-col overflow-hidden">
 
@@ -108,18 +101,28 @@ export const LogsPanel = () => {
 					<Text variant="dim" size="md">Logs</Text>
 					{active && <Text variant="dim" size="md">{active.type} · {active.status}</Text>}
 				</div>
-				{running && (
-					<Button.Root variant="ghost" disabled={stopping} onClick={onStop}>
-						<Button.Label>{stopping ? "Stopping…" : "Stop"}</Button.Label>
+				<div className="flex items-center gap-1">
+					{running && canStop && (
+						<Button.Root variant="ghost" disabled={stopping} onClick={stop}>
+							<Button.Label>{stopping ? "Stopping…" : "Stop"}</Button.Label>
+						</Button.Root>
+					)}
+					<Button.Root variant="ghost" disabled={rows.length === 0} onClick={onClear} title="Clear the logs">
+						<Button.Icon><Eraser size={14} /></Button.Icon>
+						<Button.Label>Clear</Button.Label>
 					</Button.Root>
-				)}
+				</div>
 			</div>
 
 			<div ref={scrollRef} className="flex-1 overflow-y-auto py-2">
 				{rows.length === 0 ? (
 					<div className="flex items-center justify-center h-full">
 						<Text variant="low" size="md">
-							No logs yet. Run a compile, flash or record to start streaming.
+							{clearedSeq >= 0 && running
+								? "Cleared — new lines show up here."
+								: clearedSeq >= 0
+									? "Cleared."
+									: "No logs yet. Run a compile, flash or record to start streaming."}
 						</Text>
 					</div>
 				) : (

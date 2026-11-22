@@ -8,6 +8,7 @@ import { DebugSessionAtom } from "../../store/debug.store";
 import { DriverSyncAtom, type DriverSync } from "../../store/activity.store";
 import { phaseLabel } from "../../lib/taskPhases";
 import { useDriverSync } from "../../hooks/useDriverSync";
+import { useStopActiveTask } from "../../hooks/useStopActiveTask";
 
 /** One thing under way (or just ended), as a card shows it. */
 type Activity = {
@@ -19,6 +20,8 @@ type Activity = {
 	pct?: number;
 	/** When it started here, for the elapsed time. */
 	since?: number;
+	/** The active task's — it can be cancelled from its card. */
+	task?: boolean;
 };
 
 // How long an ended one stays: long enough to read, a failure longer.
@@ -59,6 +62,7 @@ function taskActivity(taskId: string | null, events: TaskEvent[], since: number 
 		key,
 		title: phaseLabel(last.phase),
 		state: "running",
+		task: true,
 		...(last.pct != null ? { pct: last.pct } : {}),
 		...(last.phase === "prepare" ? { detail: "The first build for this board fetches its toolchain — it takes a while, once." } : {}),
 		...(since != null ? { since } : {}),
@@ -79,7 +83,9 @@ function syncActivity(sync: DriverSync | null, now: number): Activity | null {
 	}
 }
 
-const ActivityCard: React.FC<{ activity: Activity; now: number; onDismiss: () => void }> = ({ activity, now, onDismiss }) => (
+type Cancel = { onCancel: () => void; cancelling: boolean };
+
+const ActivityCard: React.FC<{ activity: Activity; now: number; onDismiss: () => void; cancel?: Cancel }> = ({ activity, now, onDismiss, cancel }) => (
 	<div className="pointer-events-auto w-72 flex flex-col gap-2 bg-overlay border border-line rounded-lg p-3 shadow-lg">
 		<div className="flex items-center gap-2">
 			{activity.state === "running" && <Loader2 size={14} className="animate-spin text-fg-muted shrink-0" />}
@@ -105,6 +111,13 @@ const ActivityCard: React.FC<{ activity: Activity; now: number; onDismiss: () =>
 				{activity.detail}
 			</Text>
 		)}
+		{cancel && activity.state === "running" && (
+			<div className="flex justify-end">
+				<Button.Root variant="ghost" disabled={cancel.cancelling} onClick={cancel.onCancel}>
+					<Button.Label>{cancel.cancelling ? "Cancelling…" : "Cancel"}</Button.Label>
+				</Button.Root>
+			</div>
+		)}
 	</div>
 );
 
@@ -125,6 +138,7 @@ export const ActivityBox = () => {
 	const sync = useAtomValue(DriverSyncAtom);
 
 	const since = useAtomValue(ActiveTaskSinceAtom);
+	const { canStop, stopping, stop } = useStopActiveTask();
 	const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 	// The clock the elapsed times and the stale sync are read against — moved on each second while one runs.
 	const [now, setNow] = useState(() => Date.now());
@@ -162,7 +176,13 @@ export const ActivityBox = () => {
 	return (
 		<div className="pointer-events-none absolute right-0 bottom-0 m-4 z-10 flex flex-col gap-2 items-end">
 			{activities.map(activity => (
-				<ActivityCard key={activity.key} activity={activity} now={now} onDismiss={() => dismiss(activity.key)} />
+				<ActivityCard
+					key={activity.key}
+					activity={activity}
+					now={now}
+					onDismiss={() => dismiss(activity.key)}
+					{...(activity.task && canStop ? { cancel: { onCancel: stop, cancelling: stopping } } : {})}
+				/>
 			))}
 		</div>
 	);

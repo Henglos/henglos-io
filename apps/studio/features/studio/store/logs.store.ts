@@ -10,6 +10,11 @@ export const ActiveTaskSinceAtom = atom<number | null>(null);
 // Events for the active task, kept in `seq` order.
 export const TaskEventsAtom = atom<TaskEvent[]>([]);
 
+// The Logs panel's Clear: its events up to `seq` aren't shown. Only the view —
+// TaskEventsAtom keeps them (the activity card reads its phases from there),
+// and a new task starts with nothing cleared.
+export const LogsClearedAtom = atom<{ taskId: string; seq: number } | null>(null);
+
 // Derived-ish: last known status/record of the active task (updated by useTaskStream).
 export const ActiveTaskAtom = atom<Pick<TaskRecord, "id" | "type" | "status"> | null>(null);
 
