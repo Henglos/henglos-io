@@ -38,7 +38,7 @@ export const InspectorPanel = () => {
 const Columns: React.FC<{ component: IComponentRuntime; action: IActionRuntime }> = ({ component, action }) => {
 
 	const inspector = useInspector(component, action);
-	const { basic, advanced, advancedCount, renderFields, renderPassContext, renderSwitchCases, upstream, notes } = inspector;
+	const { basic, advanced, advancedCount, renderFields, renderPassContext, renderSwitchCases, isSwitch, upstream, notes } = inspector;
 	const [notesOpen, setNotesOpen] = useState(false);
 
 	return (
@@ -52,7 +52,7 @@ const Columns: React.FC<{ component: IComponentRuntime; action: IActionRuntime }
 			<div className="flex flex-col min-h-0 border-x border-line bg-raised">
 				<InspectorHeader inspector={inspector} notesOpen={notesOpen} onToggleNotes={() => setNotesOpen(!notesOpen)} />
 				<div className="flex flex-col gap-5 flex-1 min-h-0 overflow-y-auto px-5 py-4">
-					{basic.length > 0 ? renderFields(basic) : <Text variant="low" size="xs">No settings.</Text>}
+					{basic.length > 0 ? renderFields(basic) : !isSwitch && <Text variant="low" size="xs">No settings.</Text>}
 					{renderSwitchCases()}
 					{advancedCount > 0 && <Fold title={`Advanced (${advancedCount})`}>{renderFields(advanced)}{renderPassContext()}</Fold>}
 					{(notesOpen || notes) && (

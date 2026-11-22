@@ -90,9 +90,10 @@ export * from "./application/use-cases/workflow/SetActionConfigurationCode.use-c
 export * from "./application/use-cases/workflow/SetActionNotes.use-case.js";
 export * from "./application/use-cases/workflow/SetActionDisabled.use-case.js";
 export * from "./application/use-cases/workflow/PassContext.use-case.js";
-export { MAX_SWITCH_CASES, switchCaseCount, isSwitchAction } from "./application/use-cases/workflow/SwitchCases.js";
+export { MAX_SWITCH_CASES, CONFIGS_PER_SWITCH_CASE, switchCaseCount, isSwitchAction, caseNumber } from "./application/use-cases/workflow/SwitchCases.js";
 export * from "./application/use-cases/workflow/AddSwitchCase.use-case.js";
 export * from "./application/use-cases/workflow/RemoveSwitchCase.use-case.js";
+export * from "./application/use-cases/workflow/MoveSwitchCase.use-case.js";
 export * from "./application/use-cases/workflow/Capabilities.use-case.js";
 export * from "./domain/value-objects/Capabilities.js";
 export * from "./application/use-cases/workflow/WithoutDisabledActions.js";

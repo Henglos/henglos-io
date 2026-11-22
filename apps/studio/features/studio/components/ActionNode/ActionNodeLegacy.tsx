@@ -7,7 +7,7 @@ import { DebugBadges, debugCardClass, debugRootClass, useDebugMark } from "../No
 import { Eye, EyeOff, GitBranch, GripVertical, Info, Loader2, Play, Repeat, Split, Trash, X } from "lucide-react";
 import { Button, Tabs, Text, Textarea, Tooltip } from "@henglosio/ui";
 import { useAtom, useSetAtom } from "jotai";
-import { actionPassesContext, getActionOutputs, isLogicComponent, isSwitchAction, isTriggerAction, RemoveActionFromWorkflowComponent, shapeLabel, switchCaseCount } from "@henglosio/workflow";
+import { actionPassesContext, getActionOutputs, isLogicComponent, isSwitchAction, isTriggerAction, RemoveActionFromWorkflowComponent, shapeLabel } from "@henglosio/workflow";
 import type { IConfigurationRuntime } from "@henglosio/workflow";
 import clsx from "clsx";
 import { mergeConfigurations } from "./lib/mergeConfigurations";
@@ -21,7 +21,7 @@ import { OutputValue, RunSummary } from "./components/OutputValue.component";
 import { hasShapeFields, ShapeTree, shortShapeLabel } from "./components/ShapeTree.component";
 import { useDebugger } from "@/features/studio/hooks/useDebugger";
 import { PassContextField } from "@/features/studio/features/action-inspector/components/PassContextField.component";
-import { SwitchCasesField } from "@/features/studio/features/action-inspector/components/SwitchCasesField.component";
+import { isSwitchCaseConfig, SwitchCasesField } from "@/features/studio/features/action-inspector/components/SwitchCasesField.component";
 import { ActionIcon, nodeIcon } from "@/features/studio/components/ActionIcon/ActionIcon.component";
 
 const DEFAULT_INPUT = { id: "default", base: { id: "default", name: "in" } };
@@ -106,7 +106,9 @@ export const ActionNodeLegacy = ({ id, data, selected }: NodeProps<Node<ActionNo
 	// Visibility is evaluated over the whole list: a basic config may show/hide
 	// on an advanced one (displayOptions reference siblings by displayName).
 	const visibleConfigurations = actionConfigurations.filter(c => isConfigVisible(c, actionConfigurations));
-	const basicConfigurations = visibleConfigurations.filter(c => !c.base.advanced);
+	// A Switch case's configs show grouped by case (SwitchCasesField), not in the plain list.
+	const basicConfigurations = visibleConfigurations.filter(c => !c.base.advanced && !isSwitchCaseConfig(c));
+	const isSwitch = !!workflow && isSwitchAction(workflow.data, action.id);
 	const advancedConfigurations = visibleConfigurations.filter(c => c.base.advanced);
 	const outputSchema = action.base.outputSchema ?? [];
 	// Advanced › Pass Context — not on a trigger (nothing before it to pass on).
@@ -205,24 +207,26 @@ export const ActionNodeLegacy = ({ id, data, selected }: NodeProps<Node<ActionNo
 
 	// Tab switches change the node's height, which moves the bottom-pinned
 	// fallback handle — xyflow has to re-measure or edges point at the old spot.
-	const renderFields = (configurations: typeof visibleConfigurations, empty: string) =>
+	const renderField = (configuration: IConfigurationRuntime, compact = false) => board && (
+		<ConfigurationField
+			key={configuration.id}
+			compact={compact}
+			configuration={configuration}
+			component={component}
+			board={board}
+			actionId={action.id}
+			connections={workflow?.data.connections ?? []}
+			onChange={value => onChangeActionValue(configuration.id, value)}
+			onBindOutput={(sourceActionId, outputName) => onBindOutput(configuration.id, sourceActionId, outputName)}
+			onSetCode={code => onSetConfigurationCode(configuration.id, code)}
+			variables={workflow?.data.variables ?? []}
+			onBindVariable={variableId => onBindVariable(configuration.id, variableId)}
+		/>
+	);
+	const renderFields = (configurations: typeof visibleConfigurations, empty: string | null) =>
 		board && configurations.length > 0
-			? configurations.map(configuration => (
-				<ConfigurationField
-					key={configuration.id}
-					configuration={configuration}
-					component={component}
-					board={board}
-					actionId={action.id}
-					connections={workflow?.data.connections ?? []}
-					onChange={value => onChangeActionValue(configuration.id, value)}
-					onBindOutput={(sourceActionId, outputName) => onBindOutput(configuration.id, sourceActionId, outputName)}
-					onSetCode={code => onSetConfigurationCode(configuration.id, code)}
-					variables={workflow?.data.variables ?? []}
-					onBindVariable={variableId => onBindVariable(configuration.id, variableId)}
-				/>
-			))
-			: <Text variant="low" size="xs">{empty}</Text>;
+			? configurations.map(configuration => renderField(configuration))
+			: empty && <Text variant="low" size="xs">{empty}</Text>;
 
 	useEffect(() => {
 		updateNodeInternals(id);
@@ -281,12 +285,14 @@ export const ActionNodeLegacy = ({ id, data, selected }: NodeProps<Node<ActionNo
 					</Tabs.List>
 
 					<Tabs.Panel value="configuration" className="flex flex-col gap-4 px-4 py-4 max-h-72 overflow-auto nowheel">
-						{renderFields(basicConfigurations, "No configuration for this action.")}
-						{workflow && isSwitchAction(workflow.data, action.id) && (
+						{renderFields(basicConfigurations, isSwitch ? null : "No configuration for this action.")}
+						{isSwitch && (
 							<SwitchCasesField
-								count={switchCaseCount(action)}
+								configurations={actionConfigurations}
+								renderField={configuration => renderField(configuration, true)}
 								onAdd={() => mutate({ op: "add:switch-case", componentId: component.id, actionId: action.id })}
 								onRemove={n => mutate({ op: "remove:switch-case", componentId: component.id, actionId: action.id, case: n })}
+								onMove={(from, to) => mutate({ op: "move:switch-case", componentId: component.id, actionId: action.id, from, to })}
 							/>
 						)}
 					</Tabs.Panel>

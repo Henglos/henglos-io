@@ -51,9 +51,15 @@ type ConfigurationFieldProps = {
 	/** The workflow's variables — for variable bindings and "variable" configs. */
 	variables?: IVariableRuntime[];
 	onBindVariable?: (variableId: string) => void;
+	/**
+	 * No label: the field alone, filling its row — for fields laid out side by
+	 * side (Switch's cases). Its description shows on hover; "Define with
+	 * Python" moves to a button after the field.
+	 */
+	compact?: boolean;
 };
 
-export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configuration, component, board, actionId, onChange, onBindOutput, onSetCode, variables = [], onBindVariable }) => {
+export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configuration, component, board, actionId, onChange, onBindOutput, onSetCode, variables = [], onBindVariable, compact = false }) => {
 
 	const { base, value, binding } = configuration;
 	const [draft, setDraft] = useSyncedDraft(value, v => v);
@@ -142,8 +148,8 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 		});
 
 		return (
-			<div className="flex flex-col gap-2 nodrag">
-				<FieldLabel base={base} />
+			<div className={clsx("flex flex-col gap-2 nodrag", compact && "w-full min-w-0")} title={compact ? base.description : undefined}>
+				{!compact && <FieldLabel base={base} />}
 				<div className="flex items-center gap-2">
 					<button
 						type="button"
@@ -174,8 +180,8 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 		const variable = variables.find(v => v.id === binding.variableId);
 
 		return (
-			<div className="flex flex-col gap-2 nodrag" {...dropTarget}>
-				<FieldLabel base={base} />
+			<div className={clsx("flex flex-col gap-2 nodrag", compact && "w-full min-w-0")} title={compact ? base.description : undefined} {...dropTarget}>
+				{!compact && <FieldLabel base={base} />}
 				<div className="flex items-center gap-2">
 					<Badge
 						variant={variable ? "default" : "error"}
@@ -202,8 +208,8 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 		const isOutputBinding = "outputName" in binding;
 
 		return (
-			<div className="flex flex-col gap-2 nodrag" {...dropTarget}>
-				<FieldLabel base={base} />
+			<div className={clsx("flex flex-col gap-2 nodrag", compact && "w-full min-w-0")} title={compact ? base.description : undefined} {...dropTarget}>
+				{!compact && <FieldLabel base={base} />}
 				<div className="flex items-center gap-2">
 					<Badge
 						variant={isBindingBroken ? "error" : "default"}
@@ -273,17 +279,21 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 
 		<div
 			className={clsx(
-				"flex flex-col gap-2 w-fit nodrag rounded-sm transition-shadow",
+				"flex gap-2 nodrag rounded-sm transition-shadow",
+				compact ? "flex-row items-center w-full min-w-0" : "flex-col w-fit",
 			)}
+			title={compact ? base.description : undefined}
 			{...dropTarget}
 		>
 
-			<FieldLabel
-				base={base}
-				onEnableCode={onSetCode && CODE_ELIGIBLE_TYPES.has(base.type) ? openCodeMode : undefined}
-			/>
+			{!compact && (
+				<FieldLabel
+					base={base}
+					onEnableCode={onSetCode && CODE_ELIGIBLE_TYPES.has(base.type) ? openCodeMode : undefined}
+				/>
+			)}
 
-			<div className={clsx(dragRing, dragRing && "rounded-md")}>
+			<div className={clsx(dragRing, dragRing && "rounded-md", compact && "flex-1 min-w-0 [&>*]:w-full")}>
 
 				{base.type === "string" && (
 					<Input.Root className={clsx("nodrag", filterError && "ring-1 ring-danger rounded-md")} value={draft as string ?? ""}>
@@ -386,6 +396,7 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 						value={draft as string | undefined}
 						options={base.options}
 						onChange={commit}
+						className={compact ? "w-full" : undefined}
 					/>
 				)}
 
@@ -441,6 +452,17 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 				)}
 
 			</div>
+
+			{compact && onSetCode && CODE_ELIGIBLE_TYPES.has(base.type) && (
+				<button
+					type="button"
+					onClick={openCodeMode}
+					className="nodrag shrink-0 text-fg-secondary hover:text-accent-fg cursor-pointer"
+					title="Define with Python"
+				>
+					<Code2 size={11} />
+				</button>
+			)}
 
 			{filterError && (
 				<Text variant="low" size="xs" className="text-danger! max-w-56">{filterError}</Text>
@@ -541,18 +563,20 @@ type OptionsFieldProps = {
 	value: string | undefined;
 	options: IOptionEntrySchema[];
 	onChange: (value: string) => void;
+	/** Its width — 12rem when not given. */
+	className?: string;
 };
 
 // A real select — one of the declared options; categories group them. A
 // value that isn't one of them (an older workflow's) shows as it is until
 // another is picked.
-const OptionsField: React.FC<OptionsFieldProps> = ({ value, options, onChange }) => {
+const OptionsField: React.FC<OptionsFieldProps> = ({ value, options, onChange, className }) => {
 
 	const flat = flattenOptions(options);
 	const known = flat.some(option => option.value === value);
 
 	return (
-		<Select.Root value={known ? value : ""} onValueChange={onChange} className="nodrag w-48">
+		<Select.Root value={known ? value : ""} onValueChange={onChange} className={clsx("nodrag", className ?? "w-48")}>
 			<Select.Trigger placeholder={value && !known ? value : "Pick one"} />
 			<Select.Content>
 				{options.length === 0 && <Text variant="low" size="xs" className="px-2 py-1.5">No options</Text>}

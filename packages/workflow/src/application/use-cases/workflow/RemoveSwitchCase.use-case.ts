@@ -1,12 +1,12 @@
 import type { IWorkflowRuntime } from "../../../domain/entities/IWorkflow.runtime.js";
 import type { IConfigurationSchema } from "../../../domain/entities/IConfiguration.schema.js";
-import { caseConfig, caseNumber, switchCaseCount, withSwitch } from "./SwitchCases.js";
+import { caseNumber, renumberCaseConfig, switchCaseCount, withSwitch } from "./SwitchCases.js";
 
 /**
- * Removes Case `which` (the last one when not given) — its config, its output
- * and the wires leaving it — and moves the ones after it up a number: Case 4
- * is Case 3 now, with its value, its bind and its wires (they point at the
- * output's own id, which stays). A Switch keeps one case at least.
+ * Removes Case `which` (the last one when not given) — its configs, its
+ * output and the wires leaving it — and moves the ones after it up a number:
+ * Case 4 is Case 3 now, with its values, its binds and its wires (they point
+ * at the output's own id, which stays). A Switch keeps one case at least.
  */
 export class RemoveSwitchCase {
 	execute(workflow: IWorkflowRuntime, componentId: string, actionId: string, which?: number): IWorkflowRuntime {
@@ -18,10 +18,11 @@ export class RemoveSwitchCase {
 
 			removedHandle = action.outputs.find(handle => handle.base.id === `case_${n}`)?.id;
 
-			// Case k, past the removed one, as Case k - 1.
+			const removed = (config: IConfigurationSchema) => caseNumber(config.displayName) === n;
+			// A config of Case k, past the removed one, as Case k - 1's.
 			const shiftConfig = <T extends IConfigurationSchema>(config: T): T => {
 				const k = caseNumber(config.displayName);
-				return k !== undefined && k > n ? { ...config, displayName: `Case ${k - 1}`, description: caseConfig(k - 1).description } : config;
+				return k !== undefined && k > n ? renumberCaseConfig(config, k - 1) : config;
 			};
 			const shiftOutput = (handle: { id: string; name: string }) => {
 				const k = /^case_(\d+)$/.exec(handle.id);
@@ -33,11 +34,11 @@ export class RemoveSwitchCase {
 				...action,
 				base: {
 					...action.base,
-					configurations: (action.base.configurations ?? []).filter(config => config.displayName !== `Case ${n}`).map(shiftConfig),
+					configurations: (action.base.configurations ?? []).filter(config => !removed(config)).map(shiftConfig),
 					outputs: (action.base.outputs ?? []).filter(handle => handle.id !== `case_${n}`).map(shiftOutput),
 				},
 				configurations: action.configurations
-					.filter(config => config.base.displayName !== `Case ${n}`)
+					.filter(config => !removed(config.base))
 					.map(config => ({ ...config, base: shiftConfig(config.base) })),
 				outputs: action.outputs
 					.filter(handle => handle.base.id !== `case_${n}`)

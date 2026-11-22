@@ -8,7 +8,7 @@ from ..services.PacketCodec import CommandId, OutputId
 from ..services.ProgramStorage import ProgramStorage
 from ..packets.ExecutePacket import ExecutePacket
 from ..packets.RecordPacket import RecordPacket
-from .ExecuteCommand import BUILTIN_ACTION_IDS
+from ..builtin import FLOW_ACTION_IDS
 
 if TYPE_CHECKING:
 	from ..services.ControlPlane import ControlPlane
@@ -43,7 +43,7 @@ class RecordCommand(ICommand):
 		# chain of instances) — refused now instead, while the host is
 		# listening. Typically: components added to the workflow after the
 		# last flash.
-		if packet.action_id not in BUILTIN_ACTION_IDS and registry.find(packet.action_id) is None:
+		if packet.action_id not in FLOW_ACTION_IDS and registry.find(packet.action_id) is None:
 			respond(transport, packet.frame_id, CommandId.RECORD, OutputId.ACTION_NOT_FOUND)
 			return
 

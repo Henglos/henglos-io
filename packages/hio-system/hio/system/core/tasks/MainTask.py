@@ -5,7 +5,7 @@ from ..services.CommandIngress import CommandIngress
 from ..services.ControlPlane import ControlPlane
 from ..services.FrameReader import FrameReader
 from ..services.ProgramStorage import ProgramStorage
-from ..commands.ExecuteCommand import START_ACTION_ID
+from ..builtin import Start
 
 # Pause after an update that found nothing to run, so an idle loop lets the
 # other tasks run instead of spinning.
@@ -84,7 +84,7 @@ class MainTask:
 			# trigger of the program is armed first.
 			self._stop_branches()
 			execute.restart()
-			if not storage.index(execute.triggers.is_trigger, START_ACTION_ID):
+			if not storage.index(execute.triggers.is_trigger, Start.ACTION_ID):
 				return False
 			for offset in storage.triggers:
 				frame = storage.frame_at_offset(offset)

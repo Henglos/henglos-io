@@ -1,11 +1,12 @@
 from henglosio.sdk.core import registry
 from henglosio.sdk.core.action import HIOAction, SUCCESS, FALLBACK
 from henglosio.sdk.core.identifier import generate_id
-from ..Context import ActionContext, ScriptContext, PipelineContext, ConversionError, coerce, decode_value, encode_value
+from ..Context import ActionContext, ScriptContext, PipelineContext, ConversionError, coerce, decode_value
 from ..GlobalVariables import GlobalVariables
-from .. import Logic
 from .. import memory
 from .. import builtin            # registers the built-in actions (Variables)
+from ..builtin import Start, flow
+from ..builtin.Start import FlowMode
 from ..interfaces.ICommand import ICommand
 from ..interfaces.IConfig import IConfig
 from ..interfaces.ITransport import ITransport
@@ -19,71 +20,14 @@ from ..packets.RunPacket import RunPacket
 from ..services.BatchStream import BatchStream
 from ..services.TriggerService import TriggerService
 
-# "core/start": the program's entry, handled here — no installed action behind it.
-START_ACTION_ID = generate_id("core/start")
-_START_ACTION_ID = START_ACTION_ID
-_START_MODE_ID = generate_id("start/mode")
-
 # Pass Context (an action's Advanced option): a flag among its configs, taken
 # out before they reach the pipeline. Without it, the next action is handed
 # only what this one published; with it, also everything this one was handed.
 _PASS_CONTEXT_ID = generate_id("context/pass")
 
-# The built-in Variables component (Set, Append, Set Field, Clear, Remove) is
-# made of ordinary actions — builtin/variables, registered like any installed
-# component's when this module loads.
-
-# The built-in Logic component (LogicComponent.ts): If, Switch and Repeat —
-# handled here too, they only steer the flow. Their configs, by CONFIG_ID
-# (generate_id("<action>/<config>")), and the outputs they go out on
-# (generate_id(<handle id>)).
-IF_ACTION_ID = generate_id("logic/if")
-SWITCH_ACTION_ID = generate_id("logic/switch")
-REPEAT_ACTION_ID = generate_id("logic/repeat")
-
-_IF_CONDITIONS = (
-	(generate_id("if/value"), generate_id("if/condition"), generate_id("if/compare to")),
-	(generate_id("if/value 2"), generate_id("if/condition 2"), generate_id("if/compare to 2")),
-)
-_IF_COMBINE_ID = generate_id("if/combine")
-_IF_TRUE = generate_id("true")
-_IF_FALSE = generate_id("false")
-
-_SWITCH_VALUE_ID = generate_id("switch/value")
-_SWITCH_MATCH_ID = generate_id("switch/match")
-# Case 1…N, each a config and the output it goes out on — as many as the
-# node has (the studio adds them: SwitchCases.use-case.ts); one it wasn't sent
-# never matches.
-_MAX_SWITCH_CASES = 16
-_SWITCH_CASES = tuple(
-	(generate_id("switch/case %d" % n), generate_id("case_%d" % n)) for n in range(1, _MAX_SWITCH_CASES + 1)
-)
-_SWITCH_OTHERWISE = generate_id("otherwise")
-
-_REPEAT_TIMES_ID = generate_id("repeat/times")
-_REPEAT_ITERATION_ID = generate_id("iteration")
-_REPEAT_LOOP = generate_id("loop")
-_REPEAT_DONE = generate_id("done")
-
-# Every config each Logic action reads — dropped from the pipeline before it
-# runs, so one it wasn't sent (an empty case) can't be another node's leftover.
-_LOGIC_CONFIG_IDS = {
-	IF_ACTION_ID: tuple(config_id for condition in _IF_CONDITIONS for config_id in condition) + (_IF_COMBINE_ID,),
-	SWITCH_ACTION_ID: (_SWITCH_VALUE_ID, _SWITCH_MATCH_ID) + tuple(case for case, _ in _SWITCH_CASES),
-	REPEAT_ACTION_ID: (_REPEAT_TIMES_ID,),
-}
-
-# Actions handled here, with no action class behind them (the built-in ones
-# that are classes — builtin/ — are in the registry like any other).
-BUILTIN_ACTION_IDS = (START_ACTION_ID, IF_ACTION_ID, SWITCH_ACTION_ID, REPEAT_ACTION_ID)
-
-
-class FlowMode:
-	# How the stored program runs Start's branch: over and over (LOOP), or a
-	# single time (ONCE). UNKNOWN until its Start says.
-	UNKNOWN = 0
-	LOOP = 1
-	ONCE = 2
+# The built-in components live in builtin/: Variables (ordinary actions,
+# registered when it loads), Start and Flow (If, Switch, Repeat) — those two
+# steer the flow, so they're run here rather than through the registry.
 
 
 def _output_id(result) -> int:
@@ -198,7 +142,7 @@ class ExecuteCommand(ICommand):
 		# there — needed only when the action reads STREAM configs (see
 		# BatchStream). None for a frame of the stored program.
 
-		if packet.action_id == _START_ACTION_ID:
+		if packet.action_id == Start.ACTION_ID:
 			self._start(packet, transport)
 			return
 
@@ -220,7 +164,7 @@ class ExecuteCommand(ICommand):
 		# an EXECUTE (output + what it published), under COMMAND_ID RUN.
 		#
 		# "core/start" only seeds the variables here: no mode, no flow.
-		if packet.action_id == _START_ACTION_ID:
+		if packet.action_id == Start.ACTION_ID:
 			self._initialize_variables(packet, transport)
 			respond(transport, packet.frame_id, CommandId.RUN, OutputId.SUCCESS)
 			return
@@ -235,8 +179,9 @@ class ExecuteCommand(ICommand):
 		# What EXECUTE and RUN share past their own checks. `sequence`: the
 		# action is a step of the flow — its output picks the next instance.
 
-		if packet.action_id in _LOGIC_CONFIG_IDS:
-			self._logic(packet, transport, command_id, sequence)
+		step = flow.ACTIONS.get(packet.action_id)
+		if step is not None:
+			self._logic(step, packet, transport, command_id, sequence)
 			return
 
 		action = self._instance(packet.action_id, transport)
@@ -414,34 +359,27 @@ class ExecuteCommand(ICommand):
 
 	def _configure(self, packet: ExecutePacket) -> None:
 		# "start/mode" config: "once" or "loop". Absent -> mode unchanged.
-		for config in packet.configs:
-			if config.config_id == _START_MODE_ID:
-				mode = bytes(config.data[:4])
-				if mode == b"once":
-					self._flow_mode = FlowMode.ONCE
-				elif mode == b"loop":
-					self._flow_mode = FlowMode.LOOP
-				else:
-					self._flow_mode = FlowMode.UNKNOWN
-				return
+		mode = Start.mode(packet.configs)
+		if mode is not None:
+			self._flow_mode = mode
 
 	def _initialize_variables(self, packet: ExecutePacket, transport: "ITransport | None") -> None:
 		# Every other literal of "core/start" is a variable's initial value,
 		# CONFIG_ID = its VARIABLE_ID. Only an unset variable takes it: a loop
 		# back to the start keeps what the program wrote.
 		for config in packet.configs:
-			if config.config_id == _START_MODE_ID:
+			if config.config_id == Start.MODE_ID:
 				continue
 			if not self._variables.initialize(config.config_id, config):
 				debug(transport, DebugLevel.WARN, "[Variable] 0x%04x not initialized: no room" % config.config_id)
 
-	def _logic(self, packet: "ExecutePacket | RunPacket", transport: "ITransport | None", command_id: int, sequence: bool) -> None:
-		# "logic/if", "logic/switch", "logic/repeat": their configs resolved
-		# like any action's (literal, BIND, VARIABLE, CODE), then the output
-		# they go out on picked here.
+	def _logic(self, step, packet: "ExecutePacket | RunPacket", transport: "ITransport | None", command_id: int, sequence: bool) -> None:
+		# "logic/if", "logic/switch", "logic/repeat" (builtin/flow): their
+		# configs resolved like any action's (literal, BIND, VARIABLE, CODE),
+		# then `step` picks the output they go out on.
 
 		pipeline = self._context
-		for config_id in _LOGIC_CONFIG_IDS[packet.action_id]:
+		for config_id in step.CONFIG_IDS:
 			pipeline.remove(config_id)
 		context = self._prepare(packet, transport, None)
 		if context.failed:
@@ -452,13 +390,9 @@ class ExecuteCommand(ICommand):
 			config = pipeline.find(config_id)
 			return None if config is None else decode_value(config)
 
-		results = None
-		if packet.action_id == IF_ACTION_ID:
-			output_id = self._if(read)
-		elif packet.action_id == SWITCH_ACTION_ID:
-			output_id = self._switch(read)
-		else:
-			output_id, results = self._repeat(packet.instance_id, read, sequence)
+		output_id, results = step.evaluate(read, packet.instance_id, self._repeats, sequence)
+		for result in results or ():
+			pipeline.merge(result)
 
 		debug(transport, DebugLevel.INFO, "[Logic] actionId=0x%04x -> output=0x%04x" % (packet.action_id, output_id))
 
@@ -466,54 +400,6 @@ class ExecuteCommand(ICommand):
 			self._hand_on(context, results)
 			self._advance(_next_instance(packet.outputs, output_id))
 		respond(transport, packet.frame_id, command_id, output_id, results)
-
-	@staticmethod
-	def _if(read) -> int:
-		# True when the condition holds — or both / either, with Combine.
-		def holds(condition_ids) -> bool:
-			value_id, condition_id, compare_id = condition_ids
-			condition = Logic.text(read(condition_id)) or "eq"
-			return Logic.evaluate(condition, read(value_id), None if condition in Logic.UNARY else read(compare_id))
-
-		combine = Logic.text(read(_IF_COMBINE_ID)) or "none"
-		result = holds(_IF_CONDITIONS[0])
-		if combine == "and":
-			result = result and holds(_IF_CONDITIONS[1])
-		elif combine == "or":
-			result = result or holds(_IF_CONDITIONS[1])
-		return _IF_TRUE if result else _IF_FALSE
-
-	@staticmethod
-	def _switch(read) -> int:
-		# The first case Value matches; an empty case never does.
-		value = read(_SWITCH_VALUE_ID)
-		match = Logic.text(read(_SWITCH_MATCH_ID)) or "eq"
-		for case_id, output_id in _SWITCH_CASES:
-			case = read(case_id)
-			if Logic.text(case) in (None, ""):
-				continue
-			if Logic.evaluate(match, value, case):
-				return output_id
-		return _SWITCH_OTHERWISE
-
-	def _repeat(self, instance_id: int, read, sequence: bool):
-		# Loop `times` times — publishing which time round it is — then Done,
-		# back to zero for the next time the flow gets here. A RUN (outside
-		# the flow) only says what the next step would be: nothing counted.
-		times = Logic.number(read(_REPEAT_TIMES_ID))
-		times = 0 if times is None else int(times)
-
-		count = self._repeats.get(instance_id, 0) + 1
-		if count > times:
-			if sequence:
-				self._repeats.pop(instance_id, None)
-			return _REPEAT_DONE, None
-
-		if sequence:
-			self._repeats[instance_id] = count
-		iteration = encode_value(_REPEAT_ITERATION_ID, count)
-		self._context.merge(iteration)
-		return _REPEAT_LOOP, [iteration]
 
 	def _instance(self, action_id: int, transport: "ITransport | None") -> "HIOAction | None":
 		action = self._actions.get(action_id)

@@ -1,6 +1,6 @@
 # Lists and objects end to end: an action publishes one (DataType.LIST / OBJECT), a
-# script or a bound config reads it back as a list / dict, and the Variables
-# component's Append / Set Field / Clear keep one in a workflow variable.
+# script or a bound config reads it back as a list / dict, and a workflow
+# variable holds one (Append / Set Field / Clear: test/builtin).
 
 import asyncio
 import json
@@ -14,7 +14,7 @@ from hio.system.core.Context import decode_value, encode_value
 from hio.system.core.packets.ActionBody import decode_action_body, encode_action_body
 from hio.system.core.packets.ExecutePacket import ExecutePacket
 from hio.system.core.services.PacketCodec import (
-	CodeLink, Config, DataType, MAX_DATA_BUFFER, OutputId, VariableLink,
+	CodeLink, Config, DataType, VariableLink,
 )
 
 
@@ -48,10 +48,6 @@ def _json(config_id: int, value) -> Config:
 
 def _int(config_id: int, value: int) -> Config:
 	return Config(config_id, DataType.INTEGER, struct.pack("<i", value))
-
-
-def _history(host_response) -> list:
-	return json.loads(host_response.configs[generate_id("history")])
 
 
 def test_lists_and_dicts_encode_as_json_and_bytes_stay_bytes():
@@ -95,73 +91,6 @@ def test_a_script_returns_a_list():
 			code = CodeLink(generate_id("j/items"), DataType.LIST, b"return [n * 2 for n in range(3)]")
 			host.send(_execute(1, "j/scan", codes=[code]))
 			assert json.loads((await host.response(1)).configs[generate_id("given")]) == [0, 2, 4]
-
-	asyncio.run(go())
-
-
-def test_append_keeps_a_history_and_max_items_keeps_the_newest():
-	async def go():
-		async with Host() as host:
-			for i, reading in enumerate([10, 20, 30, 40], start=1):
-				host.send(_execute(i, "variables/append", configs=[
-					_target("append", "history"), _int(generate_id("append/value"), reading), _int(generate_id("append/max items"), 3),
-				]))
-				assert (await host.response(i)).id == OutputId.SUCCESS
-			host.send(_execute(9, "j/scan"))
-			assert _history(await host.response(9)) == [20, 30, 40]
-
-	asyncio.run(go())
-
-
-def test_append_takes_text_and_objects_and_drops_the_oldest_past_the_size_limit():
-	async def go():
-		async with Host() as host:
-			big = "x" * (MAX_DATA_BUFFER // 3)
-			for i in range(1, 6):
-				host.send(_execute(i, "variables/append", configs=[
-					_target("append", "history"), Config(generate_id("append/value"), DataType.STRING, ("%d" % i + big).encode()),
-				]))
-				assert (await host.response(i)).id == OutputId.SUCCESS
-			host.send(_execute(9, "j/scan"))
-			history = _history(await host.response(9))
-			assert history[-1].startswith("5") and len(json.dumps(history)) <= MAX_DATA_BUFFER
-			assert len(history) < 5                                         # the oldest went
-
-			host.send(_execute(10, "variables/append", configs=[_target("append", "points"), _json(generate_id("append/value"), {"x": 1, "y": 2})]))
-			assert (await host.response(10)).id == OutputId.SUCCESS
-
-	asyncio.run(go())
-
-
-def test_set_field_and_clear():
-	async def go():
-		async with Host() as host:
-			host.send(_execute(1, "variables/set field", configs=[
-				_target("set field", "history"),
-				Config(generate_id("set field/field"), DataType.STRING, b"temp"),
-				Config(generate_id("set field/value"), DataType.FLOAT, struct.pack("<f", 21.5)),
-			]))
-			assert (await host.response(1)).id == OutputId.SUCCESS
-			host.send(_execute(2, "j/scan"))
-			assert _history(await host.response(2)) == {"temp": 21.5}
-
-			host.send(_execute(3, "variables/clear", configs=[_target("clear", "history")]))
-			assert (await host.response(3)).id == OutputId.SUCCESS
-			host.send(_execute(4, "j/scan"))
-			assert _history(await host.response(4)) == {}
-
-	asyncio.run(go())
-
-
-def test_operations_without_a_variable_or_a_value_go_out_fallback():
-	async def go():
-		async with Host() as host:
-			host.send(_execute(1, "variables/append", configs=[_int(generate_id("append/value"), 1)]))
-			assert (await host.response(1)).id == OutputId.FALLBACK
-			host.send(_execute(2, "variables/append", configs=[_target("append", "history")]))
-			assert (await host.response(2)).id == OutputId.FALLBACK
-			host.send(_execute(3, "variables/set field", configs=[_target("set field", "h"), _int(generate_id("set field/value"), 1)]))
-			assert (await host.response(3)).id == OutputId.FALLBACK                # no field name
 
 	asyncio.run(go())
 

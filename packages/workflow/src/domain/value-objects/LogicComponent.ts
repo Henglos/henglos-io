@@ -1,6 +1,6 @@
 import type { IComponentSchema } from "../entities/IComponent.schema.js";
 import type { IComponentRuntime } from "../entities/IComponent.runtime.js";
-import type { IOptionEntrySchema } from "../entities/IConfiguration.schema.js";
+import type { IConfigurationSchema, IOptionEntrySchema } from "../entities/IConfiguration.schema.js";
 import { VARIABLES_PACKAGE_ID } from "./VariablesComponent.js";
 
 // The built-in "Logic" component: If, Switch and Repeat — the flow's
@@ -64,6 +64,76 @@ const CONDITIONS: IOptionEntrySchema[] = [
 
 const OPERAND = "A literal, or bind it to an output, a variable or a script.";
 
+// Switch's operations, grouped by the type Value is read as (n8n style):
+// "<type>:<operation>". The board converts both sides to that type before
+// comparing (see builtin/flow/operators.py).
+const operations = (type: string, entries: [string, string][]): IOptionEntrySchema => ({
+	categoryName: type[0]!.toUpperCase() + type.slice(1),
+	options: entries.map(([value, displayName]) => ({ displayName, value: `${type}:${value}` })),
+});
+
+const PRESENCE: [string, string][] = [["exists", "exists"], ["not_exists", "does not exist"]];
+const EMPTINESS: [string, string][] = [["is_empty", "is empty"], ["is_not_empty", "is not empty"]];
+
+export const SWITCH_OPERATIONS: IOptionEntrySchema[] = [
+	operations("string", [
+		...PRESENCE, ...EMPTINESS,
+		["equals", "is equal to"], ["not_equals", "is not equal to"],
+		["contains", "contains"], ["not_contains", "does not contain"],
+		["starts_with", "starts with"], ["not_starts_with", "does not start with"],
+		["ends_with", "ends with"], ["not_ends_with", "does not end with"],
+		["regex", "matches regex"], ["not_regex", "does not match regex"],
+	]),
+	operations("number", [
+		...PRESENCE,
+		["equals", "is equal to"], ["not_equals", "is not equal to"],
+		["gt", "is greater than"], ["lt", "is less than"],
+		["gte", "is greater than or equal to"], ["lte", "is less than or equal to"],
+	]),
+	operations("boolean", [
+		...PRESENCE,
+		["is_true", "is true"], ["is_false", "is false"],
+		["equals", "is equal to"], ["not_equals", "is not equal to"],
+	]),
+	operations("array", [
+		...PRESENCE, ...EMPTINESS,
+		["contains", "contains"], ["not_contains", "does not contain"],
+		["length_equals", "length equal to"], ["length_not_equals", "length not equal to"],
+		["length_gt", "length greater than"], ["length_lt", "length less than"],
+		["length_gte", "length greater than or equal to"], ["length_lte", "length less than or equal to"],
+	]),
+	operations("object", [...PRESENCE, ...EMPTINESS]),
+];
+
+/** Switch operations that only look at Value — no Compare to. */
+export const SWITCH_UNARY_OPERATIONS = SWITCH_OPERATIONS.flatMap(entry => "options" in entry ? entry.options : [entry])
+	.map(option => option.value)
+	.filter(value => /:(exists|not_exists|is_empty|is_not_empty|is_true|is_false)$/.test(value));
+
+/** Case `n` of a Switch: what it tests, how, and against what — it goes out Case `n` when that holds. */
+export const switchCaseConfigs = (n: number): IConfigurationSchema[] => [
+	{
+		displayName: `Case ${n} value`,
+		description: `What Case ${n} tests. ${OPERAND}`,
+		type: "string",
+		placeholder: "e.g. bind mode",
+	},
+	{
+		displayName: `Case ${n} operation`,
+		description: `How Case ${n} tests its value — grouped by the type it's read as.`,
+		type: "options",
+		defaultValue: "string:equals",
+		options: SWITCH_OPERATIONS,
+	},
+	{
+		displayName: `Case ${n} compare to`,
+		description: `What Case ${n}'s value is compared with. ${OPERAND}`,
+		type: "string",
+		placeholder: "e.g. 1",
+		displayOptions: { hide: { [`Case ${n} operation`]: SWITCH_UNARY_OPERATIONS } },
+	},
+];
+
 /** The built-in Logic component: If, Switch and Repeat. */
 export const LogicComponentSchema: IComponentSchema = {
 	displayName: "Logic",
@@ -122,20 +192,16 @@ export const LogicComponentSchema: IComponentSchema = {
 		},
 		{
 			displayName: "Switch",
-			description: "Routes the flow by value: out the first case that matches, or Default when none does.",
+			description: "Routes the flow: out the first case whose condition holds, or Default when none does.",
 			script: "",
 			outputs: [
 				{ id: "case_1", name: "Case 1" },
 				{ id: "case_2", name: "Case 2" },
-				{ id: "case_3", name: "Case 3" },
 				{ id: "otherwise", name: "Default" },
 			],
 			configurations: [
-				{ displayName: "Value", description: `What to route on. ${OPERAND}`, type: "string", placeholder: "e.g. bind mode" },
-				{ displayName: "Match", description: "How Value is matched against each case.", type: "options", defaultValue: "eq", options: COMPARISONS },
-				{ displayName: "Case 1", description: "Out Case 1 when Value matches this. Empty: never.", type: "string", placeholder: "e.g. 1" },
-				{ displayName: "Case 2", description: "Out Case 2 when Value matches this. Empty: never.", type: "string" },
-				{ displayName: "Case 3", description: "Out Case 3 when Value matches this. Empty: never.", type: "string" },
+				...switchCaseConfigs(1),
+				...switchCaseConfigs(2),
 			],
 		},
 		{

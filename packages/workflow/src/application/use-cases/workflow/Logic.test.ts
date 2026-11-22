@@ -117,7 +117,7 @@ describe("the built-in Logic component", () => {
 	it("fits Switch's outputs in what a board takes, and names Repeat's", () => {
 		const { action: switchAction } = addLogic(baseWorkflow(), "Switch");
 		const real = getActionOutputs(switchAction).filter(output => output.base.id !== "fallback");
-		expect(real.map(output => output.base.id)).toEqual(["case_1", "case_2", "case_3", "otherwise"]);
+		expect(real.map(output => output.base.id)).toEqual(["case_1", "case_2", "otherwise"]);
 
 		const { workflow, action: repeat } = addLogic(baseWorkflow(), "Repeat");
 		const payload = new GenerateExecuteCommand().execute(workflow, repeat.id)!;

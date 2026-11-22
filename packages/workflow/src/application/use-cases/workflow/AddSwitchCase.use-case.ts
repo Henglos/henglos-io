@@ -1,9 +1,9 @@
 import { v4 } from "uuid";
 import type { IWorkflowRuntime } from "../../../domain/entities/IWorkflow.runtime.js";
 import { CreateConfiguration } from "../configurations/CreateConfiguration.js";
-import { caseConfig, MAX_SWITCH_CASES, OTHERWISE, switchCaseCount, withSwitch } from "./SwitchCases.js";
+import { caseConfigs, MAX_SWITCH_CASES, OTHERWISE, switchCaseCount, withSwitch } from "./SwitchCases.js";
 
-/** Adds Case N+1 — its config, and its output before Default. */
+/** Adds Case N+1 — its configs (value, operation, compare to), and its output before Default. */
 export class AddSwitchCase {
 	private createConfiguration = new CreateConfiguration();
 
@@ -12,7 +12,7 @@ export class AddSwitchCase {
 			const n = switchCaseCount(action) + 1;
 			if (n > MAX_SWITCH_CASES) return null;
 
-			const config = caseConfig(n);
+			const configs = caseConfigs(n);
 			const output = { id: `case_${n}`, name: `Case ${n}` };
 			const baseOutputs = action.base.outputs ?? [];
 			const at = baseOutputs.findIndex(handle => handle.id === OTHERWISE);
@@ -23,10 +23,10 @@ export class AddSwitchCase {
 				...action,
 				base: {
 					...action.base,
-					configurations: [...(action.base.configurations ?? []), config],
+					configurations: [...(action.base.configurations ?? []), ...configs],
 					outputs: insert(baseOutputs, at, output),
 				},
-				configurations: [...action.configurations, this.createConfiguration.execute(config)],
+				configurations: [...action.configurations, ...configs.map(config => this.createConfiguration.execute(config))],
 				outputs: insert(action.outputs, runtimeAt, { id: v4(), base: output }),
 			};
 		});

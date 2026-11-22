@@ -162,6 +162,15 @@ export const RemoveSwitchCaseOperationSchema = OperationSchema.extend({
 	case: zod.number().int().positive().optional(),
 });
 
+/** Moves one of a Switch's cases to another position — the ones in between shift a number. */
+export const MoveSwitchCaseOperationSchema = OperationSchema.extend({
+	op: zod.literal("move:switch-case"),
+	componentId: zod.string(),
+	actionId: zod.string(),
+	from: zod.number().int().positive(),
+	to: zod.number().int().positive(),
+});
+
 // Workflow variables — see @henglosio/workflow's WorkflowVariables.ts.
 export const AddVariableOperationSchema = OperationSchema.extend({
 	op: zod.literal("add:variable"),
@@ -240,6 +249,7 @@ export const WorkflowPatchSchema = zod.discriminatedUnion("op", [
 	SetActionPassContextOperationSchema,
 	AddSwitchCaseOperationSchema,
 	RemoveSwitchCaseOperationSchema,
+	MoveSwitchCaseOperationSchema,
 	AddVariableOperationSchema,
 	UpdateVariableOperationSchema,
 	RemoveVariableOperationSchema,

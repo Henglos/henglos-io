@@ -33,7 +33,7 @@ export const ActionInspector = () => {
 const SidebarInspector: React.FC<{ component: IComponentRuntime; action: IActionRuntime }> = ({ component, action }) => {
 
 	const inspector = useInspector(component, action);
-	const { basic, advanced, advancedCount, renderFields, renderPassContext, renderSwitchCases, upstream, shown, notes } = inspector;
+	const { basic, advanced, advancedCount, renderFields, renderPassContext, renderSwitchCases, isSwitch, upstream, shown, notes } = inspector;
 	const [tab, setTab] = useState<InspectorTab>("settings");
 
 	// A new result (a ▶, a debug step) brings its values into view — adjusted
@@ -62,7 +62,7 @@ const SidebarInspector: React.FC<{ component: IComponentRuntime; action: IAction
 				{/* Settings: how it runs — and, right under, the data it can be fed from. */}
 				<Tabs.Panel value="settings" className="flex-1 min-h-0 overflow-y-auto">
 					<Block icon={SlidersHorizontal} title="Settings" hint="Set a value, or drag data onto a field — from Input, the canvas, or a variable">
-						{basic.length > 0 ? renderFields(basic) : <Text variant="low" size="xs">No settings.</Text>}
+						{basic.length > 0 ? renderFields(basic) : !isSwitch && <Text variant="low" size="xs">No settings.</Text>}
 						{renderSwitchCases()}
 						{advancedCount > 0 && <Fold title={`Advanced (${advancedCount})`}>{renderFields(advanced)}{renderPassContext()}</Fold>}
 					</Block>

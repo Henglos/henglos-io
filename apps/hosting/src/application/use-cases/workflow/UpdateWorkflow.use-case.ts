@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { type IBoardSchema, type IComponentSchema, type IWorkflowRuntime, AddComponentToWorkflow, RemoveComponentFromWorkflow, AddActionToWorkflowComponent, RemoveActionFromWorkflowComponent, UpdateWorkflowActionConfiguration, BindWorkflowActionConfigurationOutput, SetWorkflowActionConfigurationCode, SetWorkflowActionNotes, SetWorkflowActionDisabled, SetWorkflowActionPassContext, AddSwitchCase, RemoveSwitchCase, SetPlatformSetting, SetBoardOption, AddWorkflowVariable, UpdateWorkflowVariable, RemoveWorkflowVariable, BindWorkflowActionConfigurationVariable } from '@henglosio/workflow';
+import { type IBoardSchema, type IComponentSchema, type IWorkflowRuntime, AddComponentToWorkflow, RemoveComponentFromWorkflow, AddActionToWorkflowComponent, RemoveActionFromWorkflowComponent, UpdateWorkflowActionConfiguration, BindWorkflowActionConfigurationOutput, SetWorkflowActionConfigurationCode, SetWorkflowActionNotes, SetWorkflowActionDisabled, SetWorkflowActionPassContext, AddSwitchCase, RemoveSwitchCase, MoveSwitchCase, SetPlatformSetting, SetBoardOption, AddWorkflowVariable, UpdateWorkflowVariable, RemoveWorkflowVariable, BindWorkflowActionConfigurationVariable } from '@henglosio/workflow';
 import { CreateBoard, findAddableComponent, findNodeSchema } from '@henglosio/workflow';
 import { hmutate } from 'hmutate';
 import {
@@ -23,6 +23,7 @@ import {
 	SetActionPassContextOperationSchema,
 	AddSwitchCaseOperationSchema,
 	RemoveSwitchCaseOperationSchema,
+	MoveSwitchCaseOperationSchema,
 	AddVariableOperationSchema,
 	UpdateVariableOperationSchema,
 	RemoveVariableOperationSchema,
@@ -77,6 +78,7 @@ export class UpdateWorkflowUseCase {
 	private readonly setWorkflowActionPassContext = new SetWorkflowActionPassContext();
 	private readonly addSwitchCase = new AddSwitchCase();
 	private readonly removeSwitchCase = new RemoveSwitchCase();
+	private readonly moveSwitchCase = new MoveSwitchCase();
 	private readonly setPlatformSetting = new SetPlatformSetting();
 	private readonly setBoardOption = new SetBoardOption();
 	private readonly addWorkflowVariable = new AddWorkflowVariable();
@@ -327,6 +329,11 @@ export class UpdateWorkflowUseCase {
 		mutate.operator(RemoveSwitchCaseOperationSchema, (ctx) => {
 			const runtime = ctx.target as unknown as IWorkflowRuntime;
 			return this.removeSwitchCase.execute(runtime, ctx.patch.componentId, ctx.patch.actionId, ctx.patch.case) as unknown;
+		});
+
+		mutate.operator(MoveSwitchCaseOperationSchema, (ctx) => {
+			const runtime = ctx.target as unknown as IWorkflowRuntime;
+			return this.moveSwitchCase.execute(runtime, ctx.patch.componentId, ctx.patch.actionId, ctx.patch.from, ctx.patch.to) as unknown;
 		});
 
 		mutate.operator(SetPlatformSettingOperationSchema, (ctx) => {
