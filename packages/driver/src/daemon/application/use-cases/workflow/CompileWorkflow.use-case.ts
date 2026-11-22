@@ -68,6 +68,11 @@ export class CompileWorkflowUseCase {
 			});
 		}
 
+		// A cancel only reaches the build once it runs in the container (its exec
+		// takes the signal): the steps before it — sync, image pull — check it in
+		// between, so a cancelled compile doesn't go on to build.
+		ctx.signal.throwIfAborted();
+
 		if (!await this.workflowService.exists(workflowId)) {
 			throw new Error("Workflow not found.");
 		}
@@ -117,6 +122,7 @@ export class CompileWorkflowUseCase {
 			ctx.info(`Building in ${image.name}, with ${board.name}'s ${board.firmware.script}.`);
 			if (!await this.containerService.imageExists(image.name, {})) {
 				await this.containerService.pullImage(image.name, {}, (msg) => ctx.info(msg));
+				ctx.signal.throwIfAborted();
 			}
 
 			const volumes: VolumeBind[] = [
@@ -137,6 +143,7 @@ export class CompileWorkflowUseCase {
 			});
 		}
 
+		ctx.signal.throwIfAborted();
 		await this.containerService.startContainer(containerName);
 
 		const runnerMap = {
