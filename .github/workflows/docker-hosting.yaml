@@ -1,0 +1,35 @@
+name: Docker · hosting
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+    # Path filters only apply to branch pushes; a tag always builds.
+    paths:
+      - "apps/hosting/**"
+      - "packages/**"
+      - "deploy/docker/images/hosting/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".dockerignore"
+      - ".github/workflows/docker-hosting.yaml"
+      - ".github/workflows/docker-build-push.yaml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    uses: ./.github/workflows/docker-build-push.yaml
+    with:
+      app: hosting
+    secrets: inherit

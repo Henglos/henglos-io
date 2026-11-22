@@ -1,0 +1,168 @@
+name: Docker Build & Push
+
+# Reusable: builds one app's image and pushes it to Docker Hub (henglosio/<app>)
+# and to the GitHub Container Registry (ghcr.io/henglos/<app>).
+# Called by docker-hosting.yaml and docker-studio.yaml.
+#
+#   push to main  → :main, :sha-<short>       (the edge build)
+#   tag v1.2.3    → :1.2.3, :1.2, :1, :latest  (a release — what get-hio.sh pulls)
+#
+# Each architecture builds on its own native runner (no emulation) and is pushed
+# by digest only; the merge job then tags the multi-arch manifest.
+#
+# Needs the repository secrets DOCKERHUB_USERNAME and DOCKERHUB_TOKEN
+# (a Docker Hub access token with read & write on the henglosio namespace).
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        description: The app to build — its Dockerfile is deploy/docker/images/<app>/Dockerfile.
+        required: true
+        type: string
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+
+env:
+  DOCKERHUB_IMAGE: henglosio/${{ inputs.app }}
+  GHCR_IMAGE: ghcr.io/henglos/${{ inputs.app }}
+
+jobs:
+  build:
+    name: build (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Only the labels here — the tags go on the manifest, in the merge job.
+      - name: Image labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.DOCKERHUB_IMAGE }}
+            ${{ env.GHCR_IMAGE }}
+          labels: |
+            org.opencontainers.image.title=Henglos IO ${{ inputs.app }}
+            org.opencontainers.image.licenses=SUL-1.0
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/docker/images/${{ inputs.app }}/Dockerfile
+          platforms: linux/${{ matrix.arch }}
+          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ${{ env.DOCKERHUB_IMAGE }}
+            ${{ env.GHCR_IMAGE }}
+          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ inputs.app }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.app }}-${{ matrix.arch }}
+
+      - name: Export digest
+        run: |
+          mkdir -p "${{ runner.temp }}/digests"
+          digest="${{ steps.build.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ inputs.app }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: publish
+    runs-on: ubuntu-24.04
+    needs: build
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ inputs.app }}-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.DOCKERHUB_IMAGE }}
+            ${{ env.GHCR_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
+          flavor: |
+            latest=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') }}
+
+      # The per-arch images were pushed to both registries; one manifest list,
+      # built from the Docker Hub digests, gets every tag in both.
+      - name: Create and push the multi-arch manifest
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.DOCKERHUB_IMAGE }}@sha256:%s ' *)
+
+      - name: Inspect
+        run: docker buildx imagetools inspect ${{ env.DOCKERHUB_IMAGE }}:${{ steps.meta.outputs.version }}
