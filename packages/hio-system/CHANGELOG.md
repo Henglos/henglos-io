@@ -1,8 +1,8 @@
 # @henglosio/hio-system
 
-## 1.5.1
+## 1.5.0
 
-### Patch Changes
+### Minor Changes
 
 - Switch cases carry their own condition (n8n style): each case has a value, an operation ("<type>:<operation>" — string, number, boolean, array or object, e.g. "string:equals", "number:gt", "array:length_gte") and a compare-to, and the Switch goes out the first case whose condition holds, or Default. Cases can be added, removed and reordered (`move:switch-case`). The node's single Value / Match configs are gone, and the configs go on the wire under new ids ("switch/case N value", "switch/case N operation", "switch/case N compare to"): the studio and the board must be updated together — a board on platform < 1.5.0 always goes out Default. On the board, Start and the flow actions (If, Switch, Repeat) moved to `builtin/` (`builtin/Start.py`, `builtin/flow/`).
 
