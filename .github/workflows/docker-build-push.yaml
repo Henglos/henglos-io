@@ -13,6 +13,7 @@ name: Docker Build & Push
 #
 # Needs the repository secrets DOCKERHUB_USERNAME and DOCKERHUB_TOKEN
 # (a Docker Hub access token with read & write on the henglosio namespace).
+# GHCR goes with GITHUB_TOKEN — or GHCR_TOKEN / GHCR_USERNAME when set.
 
 on:
   workflow_call:
@@ -26,6 +27,12 @@ on:
         required: true
       DOCKERHUB_TOKEN:
         required: true
+      # Optional: a personal access token (classic, write:packages) for GHCR,
+      # and the account it belongs to — used instead of GITHUB_TOKEN when set.
+      GHCR_TOKEN:
+        required: false
+      GHCR_USERNAME:
+        required: false
 
 env:
   DOCKERHUB_IMAGE: henglosio/${{ inputs.app }}
@@ -65,8 +72,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.GHCR_USERNAME || github.actor }}
+          password: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
 
       # Only the labels here — the tags go on the manifest, in the merge job.
       - name: Image labels
@@ -138,8 +145,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.GHCR_USERNAME || github.actor }}
+          password: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Image tags
         id: meta
