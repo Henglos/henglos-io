@@ -1,7 +1,7 @@
 from henglosio.sdk.core import registry
 from henglosio.sdk.core.action import HIOAction, SUCCESS, FALLBACK
 from henglosio.sdk.core.identifier import generate_id
-from ..Context import ActionContext, ScriptContext, PipelineContext, ConversionError, coerce, decode_value
+from ..Context import ActionContext, ScriptContext, PipelineContext, ConversionError, coerce, decode_value, lookup
 from ..GlobalVariables import GlobalVariables
 from .. import memory
 from .. import builtin            # registers the built-in actions (Variables)
@@ -390,7 +390,11 @@ class ExecuteCommand(ICommand):
 			config = pipeline.find(config_id)
 			return None if config is None else decode_value(config)
 
-		output_id, results = step.evaluate(read, packet.instance_id, self._repeats, sequence)
+		# "{{ name }}" in a condition: what ctx.get(name) would read.
+		def find(name: str):
+			return lookup(pipeline, self._variables, name)
+
+		output_id, results = step.evaluate(read, packet.instance_id, self._repeats, sequence, find)
 		for result in results or ():
 			pipeline.merge(result)
 

@@ -40,7 +40,8 @@ def boolean(config: str, value: bool) -> Config:
 
 def json_value(config: str, value) -> Config:
 	kind = DataType.LIST if isinstance(value, list) else DataType.OBJECT
-	return Config(generate_id(config), kind, json.dumps(value).encode())
+	# Compact, as the studio sends it (encodeJson).
+	return Config(generate_id(config), kind, json.dumps(value, separators=(",", ":")).encode())
 
 
 def target(action_name: str, variable: str) -> Config:

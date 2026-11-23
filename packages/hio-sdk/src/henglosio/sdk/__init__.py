@@ -9,3 +9,5 @@ from .core.trigger import HIOTrigger
 from .core.registry import action, trigger
 from .core.clock import sleep_ms, ticks_ms, ticks_diff
 from .core.board import board_option
+from .core.conditions import evaluate as condition
+from .core.filter import matches

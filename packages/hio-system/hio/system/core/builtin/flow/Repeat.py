@@ -12,7 +12,7 @@ _DONE = generate_id("done")
 CONFIG_IDS = (_TIMES_ID,)
 
 
-def evaluate(read, instance_id: int, repeats: dict, sequence: bool):
+def evaluate(read, instance_id: int, repeats: dict, sequence: bool, lookup=None):
 	# Loop `times` times — publishing which time round it is — then Done,
 	# back to zero for the next time the flow gets here. `repeats`: the
 	# branch's count by INSTANCE_ID. A RUN (outside the flow, `sequence`

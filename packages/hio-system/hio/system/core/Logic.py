@@ -9,50 +9,9 @@
 # operand (None: unbound, or its source never ran) is empty, and fails every
 # comparison.
 
-# float32 round trip: a bound 0.1 is 0.10000000149 — equal to a typed "0.1".
-_TOLERANCE = 1e-6
+from henglosio.sdk.core.conditions import equal as _equal, number, text  # noqa: F401 — the same rules as the conditions'
 
 UNARY = ("is_true", "is_false", "is_empty", "is_not_empty")
-
-
-def text(value) -> "str | None":
-	# An operand as text: bools as "true"/"false", whole floats without ".0",
-	# bytes decoded. None when it's missing or isn't text.
-	if value is None:
-		return None
-	if isinstance(value, str):
-		return value
-	if isinstance(value, bool):
-		return "true" if value else "false"
-	if isinstance(value, float):
-		return str(int(value)) if value == int(value) else repr(value)
-	if isinstance(value, int):
-		return str(value)
-	try:
-		return bytes(value).decode()
-	except Exception:
-		return None
-
-
-def number(value) -> "float | None":
-	# An operand as a number: bools as 1/0, text parsed ("10", " 2.5 "). None
-	# when it's missing or doesn't read as one.
-	if value is None:
-		return None
-	if isinstance(value, bool):
-		return 1.0 if value else 0.0
-	if isinstance(value, (int, float)):
-		return float(value)
-	raw = text(value)
-	if raw is None:
-		return None
-	raw = raw.strip()
-	if not raw:
-		return None
-	try:
-		return float(raw)
-	except ValueError:
-		return None
 
 
 def truthy(value) -> bool:
@@ -64,15 +23,6 @@ def truthy(value) -> bool:
 		return value != 0
 	raw = text(value)
 	return raw is not None and raw.strip().lower() in ("true", "1", "yes", "on", "high")
-
-
-def _equal(a, b) -> bool:
-	# Equal as numbers (within _TOLERANCE) when both read as one, as text otherwise.
-	x, y = number(a), number(b)
-	if x is not None and y is not None:
-		return abs(x - y) <= _TOLERANCE * max(1.0, abs(x), abs(y))
-	ta, tb = text(a), text(b)
-	return ta is not None and tb is not None and ta == tb
 
 
 def evaluate(condition: str, a, b=None) -> bool:

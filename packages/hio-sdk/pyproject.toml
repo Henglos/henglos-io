@@ -1,6 +1,6 @@
 [project]
 name = "hio-sdk"
-version = "1.1.0"
+version = "1.2.0"
 description = "SDK for writing HenglosIO component actions and triggers in MicroPython."
 readme = "README.md"
 license-files = ["LICENSE"]

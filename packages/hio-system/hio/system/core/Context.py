@@ -272,7 +272,7 @@ def _variable(variables: GlobalVariables, name: str):
 	return None if config is None else decode_value(config)
 
 
-def _get(pipeline: PipelineContext, variables: GlobalVariables, name: str):
+def lookup(pipeline: PipelineContext, variables: GlobalVariables, name: str):
 	# One lookup for whatever `name` is: a config or output of the run first —
 	# a bound config already holds its variable's value there — then a
 	# workflow variable by that name. The action's code doesn't need to know
@@ -293,7 +293,7 @@ class ScriptContext:
 		self._variables = variables
 
 	def get(self, name: str):
-		return _get(self._pipeline, self._variables, name)
+		return lookup(self._pipeline, self._variables, name)
 
 	def var(self, name: str):
 		# A workflow variable — None while it has no value.
@@ -318,7 +318,7 @@ class ActionContext(HIOContext):
 		self.failed = False
 
 	def get(self, name: str):
-		return _get(self._pipeline, self._variables, name)
+		return lookup(self._pipeline, self._variables, name)
 
 	def set(self, name: str, value) -> None:
 		config = encode_value(generate_id(name), value)

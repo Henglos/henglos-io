@@ -1,34 +1,31 @@
 from henglosio.sdk.core.identifier import generate_id
-from . import operators
+from henglosio.sdk.core.filter import matches
 
 ACTION_ID = generate_id("logic/switch")
 
-# Case 1…N (n8n style), each its own condition — "Case N value", "Case N
-# operation" ("<type>:<operation>", see operators.py) and "Case N compare to"
-# — and the output it goes out on. As many as the node has (the studio adds
-# them: SwitchCases.ts); one it wasn't sent never matches.
-_MAX_CASES = 16
-_CASES = tuple(
-	(
-		generate_id("switch/case %d value" % n),
-		generate_id("switch/case %d operation" % n),
-		generate_id("switch/case %d compare to" % n),
-		generate_id("case_%d" % n),
-	)
-	for n in range(1, _MAX_CASES + 1)
-)
+# Its Routing Rules (LogicComponent.ts): a fixedCollection — {"values": [rule…]},
+# each rule {"conditions": <filter>, "outputKey"} — rule N going out "case_N"
+# (the studio's dynamicOutputs), the first whose conditions hold; Default when
+# none does. A rule's conditions are evaluated as any filter (henglosio.sdk's
+# matches); one without any never holds.
+_RULES_ID = generate_id("switch/routing rules")
 _OTHERWISE = generate_id("otherwise")
 
-CONFIG_IDS = tuple(config_id for case in _CASES for config_id in case[:3])
+CONFIG_IDS = (_RULES_ID,)
 
 
-def evaluate(read, instance_id: int, repeats: dict, sequence: bool):
-	# The first case whose condition holds; one without an operation (not
-	# sent: the node doesn't have it) never does.
-	for value_id, operation_id, compare_id, output_id in _CASES:
-		operation = read(operation_id)
-		if not isinstance(operation, str) or not operation:
-			continue
-		if operators.evaluate(operation, read(value_id), read(compare_id)):
-			return output_id, None
+def _holds(conditions, lookup) -> bool:
+	if not isinstance(conditions, dict):
+		return False
+	if not any(isinstance(c, dict) and c.get("operator") for c in (conditions.get("conditions") or [])):
+		return False
+	return matches(conditions, lookup)
+
+
+def evaluate(read, instance_id: int, repeats: dict, sequence: bool, lookup=None):
+	rules = read(_RULES_ID)
+	values = rules.get("values") if isinstance(rules, dict) else None
+	for index, rule in enumerate(values if isinstance(values, list) else []):
+		if isinstance(rule, dict) and _holds(rule.get("conditions"), lookup):
+			return generate_id("case_%d" % (index + 1)), None
 	return _OTHERWISE, None
