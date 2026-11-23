@@ -103,15 +103,8 @@ describe("the built-in Logic component", () => {
 			{ outputId: generateId("true"), target: computeWireInstanceId(writes[0]!) },
 			{ outputId: generateId("false"), target: computeWireInstanceId(writes[1]!) },
 		]);
-		// The defaults go out: Condition (eq) and Combine (none).
-		expect(literalConfigIds(payload)).toEqual(expect.arrayContaining([generateId("if/condition"), generateId("if/combine")]));
-		// Condition 2 has a default too, but Combine "none" hides it: hidden configs aren't sent.
-		expect(literalConfigIds(payload)).not.toContain(generateId("if/condition 2"));
-
-		// Combine "and" shows it, and it goes out.
-		const combine = ifAction.configurations.find(c => c.base.displayName === "Combine")!;
-		const shown = new UpdateWorkflowActionConfiguration().execute(workflow, LOGIC_COMPONENT_ID, ifAction.id, combine.id, "and");
-		expect(literalConfigIds(new GenerateExecuteCommand().execute(shown, ifAction.id)!)).toContain(generateId("if/condition 2"));
+		// Its Conditions — a filter, one config: what the board evaluates.
+		expect(literalConfigIds(payload)).toEqual(expect.arrayContaining([generateId("if/conditions")]));
 	});
 
 	it("fits Switch's outputs in what a board takes, and names Repeat's", () => {
@@ -126,16 +119,16 @@ describe("the built-in Logic component", () => {
 		expect(literalConfigIds(payload)).toEqual([generateId("repeat/times"), generateId("context/pass")]);
 	});
 
-	it("keeps what a Code operand returns its own type (RESULT TYPE AUTO), not text", () => {
+	it("takes If's Conditions from a script — an object (the filter) it returns", () => {
 		const { workflow, action: ifAction } = addLogic(baseWorkflow(), "If");
-		const value = ifAction.configurations.find(c => c.base.displayName === "Value")!;
-		const coded = new SetWorkflowActionConfigurationCode().execute(workflow, LOGIC_COMPONENT_ID, ifAction.id, value.id, 'return ctx.get("result")["status"]');
+		const conditions = ifAction.configurations.find(c => c.base.displayName === "Conditions")!;
+		const coded = new SetWorkflowActionConfigurationCode().execute(workflow, LOGIC_COMPONENT_ID, ifAction.id, conditions.id, 'return {"conditions": []}');
 		const payload = new GenerateExecuteCommand().execute(coded, ifAction.id)!;
 		// The CODE entry: CONFIG_ID(16) VALUE_TYPE CODE(0x02) RESULT_TYPE.
-		const id = generateId("if/value");
+		const id = generateId("if/conditions");
 		const at = payload.findIndex((_, i) => payload[i] === (id & 0xff) && payload[i + 1] === id >> 8 && payload[i + 2] === 0x02);
 		expect(at).toBeGreaterThan(0);
-		expect(payload[at + 3]).toBe(DataType.AUTO);
+		expect(payload[at + 3]).toBe(DataType.OBJECT);
 	});
 
 });

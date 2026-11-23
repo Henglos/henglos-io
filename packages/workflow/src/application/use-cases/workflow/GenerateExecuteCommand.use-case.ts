@@ -1,6 +1,7 @@
 import type { IWorkflowRuntime } from "../../../domain/entities/IWorkflow.runtime.js";
 import type { IConfigurationRuntime } from "../../../domain/entities/IConfiguration.runtime.js";
-import type { IBindingSchema, IOutputBindingSchema, IAnyValueSchema, IFileValueSchema, ICredentialValueSchema } from "../../../domain/entities/IConfiguration.schema.js";
+import type { IBindingSchema, IOutputBindingSchema, IAnyValueSchema, IFileValueSchema, ICredentialValueSchema, IAssignmentCollectionValueSchema, IFilterValueSchema, IConfigurationSchema } from "../../../domain/entities/IConfiguration.schema.js";
+import { nestedProperties, propertyKey } from "../../../domain/entities/IConfiguration.schema.js";
 import { credentialBoardPath, fileBoardPath } from "./ResolveBoardInstall.use-case.js";
 import type { IPinSchema } from "../../../domain/entities/IPin.schema.js";
 import { Color } from "../../../domain/value-objects/Color.js";
@@ -46,11 +47,95 @@ const VALUE_TYPE_VARIABLE = 0x04;
 // for the callers that always imported them from this module.
 export { MAX_CODE_BUFFER, MAX_DATA_BUFFER, PROTOCOL_LIMIT_DEFAULTS, protocolLimits, type ProtocolLimits } from "../../../domain/value-objects/ProtocolLimits.js";
 
-// A number config's typed-in value (a math expression is fine) as its number.
+// A number config's typed-in value (a math expression is fine) as its number
+// — within its minValue / maxValue, when it sets them.
 function evaluateNumber(config: IConfigurationRuntime): number {
 	const [, result, matched] = ConfigurationParser.parse(String(config.value), ConfigurationParser.pipesFor(config.base));
 	if (!matched) throw new Error(`Não foi possível calcular a expressão da configuração "${config.base.displayName}": ${config.value}`);
-	return result as number;
+	const value = result as number;
+	if (config.base.type === "integer" || config.base.type === "float") {
+		const { minValue, maxValue } = config.base;
+		if (minValue !== undefined && value < minValue) throw new Error(`"${config.base.displayName}" is ${value} — at least ${minValue}`);
+		if (maxValue !== undefined && value > maxValue) throw new Error(`"${config.base.displayName}" is ${value} — at most ${maxValue}`);
+	}
+	return value;
+}
+
+// An assignmentCollection's pairs as the object the action reads: each value
+// as its type (a number, a bool, a parsed list / object) — unnamed ones left out.
+function assignmentsObject(value: IAssignmentCollectionValueSchema | undefined): Record<string, unknown> {
+	const object: Record<string, unknown> = {};
+	for (const { name, type, value: raw } of value?.assignments ?? []) {
+		if (!name.trim()) continue;
+		const text = typeof raw === "string" ? raw : JSON.stringify(raw ?? "");
+		try {
+			switch (type) {
+				case "number": object[name] = typeof raw === "number" ? raw : Number(text); break;
+				case "boolean": object[name] = typeof raw === "boolean" ? raw : ["true", "1", "yes", "on"].includes(text.trim().toLowerCase()); break;
+				case "array":
+				case "object": object[name] = typeof raw === "string" ? JSON.parse(raw || (type === "array" ? "[]" : "{}")) : raw; break;
+				default: object[name] = typeof raw === "string" ? raw : text;
+			}
+		} catch {
+			throw new Error(`"${name}" isn't a valid ${type}: ${text}`);
+		}
+	}
+	return object;
+}
+
+// A filter's conditions as the action reads them (henglosio.sdk's filter): without the studio's ids.
+// A filter's conditions as the action reads them (henglosio.sdk's matches):
+// without the studio's ids — a value is at most MAX_DATA_BUFFER bytes, and a
+// Switch's rules are many filters in one — caseSensitive only when it's off.
+function filterObject(value: IFilterValueSchema | undefined, caseSensitive = true): Record<string, unknown> {
+	return {
+		combinator: value?.combinator ?? "and",
+		conditions: (value?.conditions ?? []).map(({ leftValue, operator, rightValue }) =>
+			rightValue === undefined || rightValue === null || rightValue === "" ? { leftValue, operator } : { leftValue, operator, rightValue }),
+		...(caseSensitive ? {} : { caseSensitive: false }),
+	};
+}
+
+// A value of n8n's types as it goes to the board — a collection's / a group's
+// fields each as its own type goes (a filter without its ids, pairs as an
+// object, JSON parsed), the rest as it is.
+function wireValue(base: IConfigurationSchema, value: unknown): unknown {
+	if (value === undefined || value === null) return value;
+	switch (base.type) {
+		case "filter": return filterObject(value as IFilterValueSchema, base.caseSensitive ?? true);
+		case "assignmentCollection": return assignmentsObject(value as IAssignmentCollectionValueSchema);
+		case "json": {
+			if (typeof value !== "string") return value;
+			if (value.trim() === "") return null;
+			try {
+				return JSON.parse(value);
+			} catch {
+				throw new Error(`"${base.displayName}" isn't valid JSON`);
+			}
+		}
+		case "collection": {
+			const fields = nestedProperties(base);
+			return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([key, held]) => {
+				const field = fields.find(found => propertyKey(found) === key);
+				return [key, field ? wireValue(field, held) : held];
+			}));
+		}
+		case "fixedCollection": {
+			const row = (fields: IConfigurationSchema[], held: unknown) => held && typeof held === "object" && !Array.isArray(held)
+				? Object.fromEntries(Object.entries(held as Record<string, unknown>).map(([key, cell]) => {
+					const field = fields.find(found => propertyKey(found) === key);
+					return [key, field ? wireValue(field, cell) : cell];
+				}))
+				: held;
+			return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([name, held]) => {
+				const group = base.options.find(found => found.name === name);
+				if (!group) return [name, held];
+				const fields = nestedProperties(group);
+				return [name, Array.isArray(held) ? held.map(cell => row(fields, cell)) : row(fields, held)];
+			}));
+		}
+		default: return value;
+	}
 }
 
 function encodeConfigurationValue(config: IConfigurationRuntime): EncodedValue {
@@ -80,7 +165,7 @@ function encodeConfigurationValue(config: IConfigurationRuntime): EncodedValue {
 			return encodeInteger((config.value as IPinSchema).gpio);
 
 		case "any": {
-			// An integer, a float or a bool typed in — see AnyValueSchema.
+			// A value of the kind it was typed in as — see AnyValueSchema.
 			const anyValue = config.value as IAnyValueSchema;
 			return encodeValue(anyValue.kind, anyValue.value);
 		}
@@ -101,8 +186,18 @@ function encodeConfigurationValue(config: IConfigurationRuntime): EncodedValue {
 
 		case "list":
 		case "object":
+		case "multiOptions":
 			return encodeJson(config.value);
 
+		// Typed as the studio keeps them, sent as the action reads them (see wireValue).
+		case "collection":
+		case "fixedCollection":
+		case "filter":
+		case "assignmentCollection":
+		case "json":
+			return encodeJson(wireValue(config.base, config.value));
+
+		case "dateTime":
 		case "string":
 		case "password":
 		case "options":
@@ -180,8 +275,18 @@ function resolveExpectedType(config: IConfigurationRuntime): number | undefined 
 		case "bytes":
 		case "color":
 			return DataType.BYTES;
-		case "list": return DataType.LIST;
-		case "object": return DataType.OBJECT;
+		case "dateTime": return DataType.STRING;
+		case "list":
+		case "multiOptions":
+			return DataType.LIST;
+		case "object":
+		case "collection":
+		case "fixedCollection":
+		case "filter":
+		case "assignmentCollection":
+			return DataType.OBJECT;
+		// A list or an object, whichever its JSON is.
+		case "json": return DataType.AUTO;
 		case "any": return DataType.AUTO;
 		default: return undefined;
 	}
@@ -395,6 +500,10 @@ export class GenerateExecuteCommand {
 		// A config its displayOptions hide doesn't apply — not sent, so it
 		// takes no room (e.g. LCD's parallel pins while it's on I2C).
 		const configEntries = configurations
+			// A notice is only text in the node — nothing to send. A JSON field
+			// left empty has no value (the action reads None), like an unset one.
+			.filter(c => c.base.type !== "notice")
+			.filter(c => !(c.base.type === "json" && !c.binding && typeof c.value === "string" && c.value.trim() === ""))
 			.filter(c => isConfigurationVisible(c, configurations))
 			.filter(c => c.binding !== null || (c.value !== undefined && c.value !== null))
 			.map(c => buildConfigEntry(workflow, action.base.displayName, c, componentName === LogicComponentSchema.displayName))

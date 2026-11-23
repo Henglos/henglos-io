@@ -93,6 +93,9 @@ export class ConfigurationParser {
 				const result = evaluateMath(value.trim());
 				if (result === null) return "Not a number or expression.";
 				if (base.type === "integer" && !Number.isInteger(result)) return "Must be a whole number.";
+				// n8n's typeOptions.minValue / maxValue.
+				if (base.minValue !== undefined && result < base.minValue) return `At least ${base.minValue}.`;
+				if (base.maxValue !== undefined && result > base.maxValue) return `At most ${base.maxValue}.`;
 				return checkPatterns(String(result), base.patterns, base.patternMatch);
 			}
 

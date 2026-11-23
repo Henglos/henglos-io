@@ -3,6 +3,7 @@ import { Hocuspocus } from '@hocuspocus/server';
 import * as Y from 'yjs';
 import {
 	type IWorkflowRuntime,
+	migrateLegacyLogic,
 	readWorkflowDoc,
 	reconcileWorkflowDoc,
 	WorkflowRuntime,
@@ -75,7 +76,9 @@ export class WorkflowCollabService implements OnModuleDestroy {
 				if (!workflow) throw new Error('workflow not found');
 
 				if (state) Y.applyUpdate(document, state);
-				reconcileWorkflowDoc(document, workflow.data);
+				// If / Switch nodes of the old shape move to rows here, once — the doc
+				// carries them to every client, and the next store writes them back.
+				reconcileWorkflowDoc(document, migrateLegacyLogic(workflow.data));
 
 				return document;
 			},

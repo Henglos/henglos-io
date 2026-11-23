@@ -134,6 +134,49 @@ describe("workflow variables", () => {
 		expect(configEntries(generate.execute(workflow, set.id)!).map(e => e.configId)).not.toContain(generateId("set/variable"));
 	});
 
+	it("sends Set's Value as any value type — a string, a list, an object — not only a number or a bool", () => {
+
+		let workflow = new AddWorkflowVariable().execute(baseWorkflow(), { name: "greeting", type: "string", initial: null }).workflow;
+		const variables = workflow.components.find(isVariablesComponent)!;
+		workflow = new AddActionToWorkflowComponent().execute(workflow, variables.id, variables.base.actions![0]!).workflow;
+		const set = workflow.components.find(isVariablesComponent)!.actions[0]!;
+		const valueConfig = set.configurations.find(c => c.base.displayName === "Value")!;
+		expect(valueConfig.base.type === "any" && valueConfig.base.availables).toEqual(["integer", "float", "bool", "string", "list", "object"]);
+
+		// The Value literal: its DATA_TYPE and its bytes.
+		const sent = (value: unknown) => {
+			const typed = new UpdateWorkflowActionConfiguration().execute(workflow, variables.id, set.id, valueConfig.id, value as never);
+			const payload = new GenerateExecuteCommand().execute(typed, set.id)!;
+			const view = new DataView(payload.buffer);
+			let index = 6 + payload[5]! * 4;
+			while (index < payload.length) {
+				const configId = view.getUint16(index, true);
+				const dataType = payload[index + 3]!;
+				const sized = isSizedDataType(dataType);
+				const size = sized ? view.getUint16(index + 4, true) : dataType === DataType.BOOL ? 1 : 4;
+				const start = index + 4 + (sized ? 2 : 0);
+				if (configId === generateId("set/value")) return { dataType, text: new TextDecoder().decode(payload.slice(start, start + size)) };
+				index = start + size;
+			}
+			return undefined;
+		};
+
+		expect(sent({ kind: "string", value: "oi" })).toEqual({ dataType: DataType.STRING, text: "oi" });
+		expect(sent({ kind: "list", value: [1, "a"] })).toEqual({ dataType: DataType.LIST, text: '[1,"a"]' });
+		expect(sent({ kind: "object", value: { t: 21.5 } })).toEqual({ dataType: DataType.OBJECT, text: '{"t":21.5}' });
+	});
+
+	it("takes an any value only when it is of its kind", async () => {
+		const { AnyValueSchema } = await import("../../../domain/entities/IConfiguration.schema.js");
+		expect(AnyValueSchema.safeParse({ kind: "string", value: "x" }).success).toBe(true);
+		expect(AnyValueSchema.safeParse({ kind: "list", value: [1] }).success).toBe(true);
+		expect(AnyValueSchema.safeParse({ kind: "object", value: { a: 1 } }).success).toBe(true);
+		expect(AnyValueSchema.safeParse({ kind: "integer", value: 1.5 }).success).toBe(false);
+		expect(AnyValueSchema.safeParse({ kind: "string", value: 1 }).success).toBe(false);
+		expect(AnyValueSchema.safeParse({ kind: "list", value: { a: 1 } }).success).toBe(false);
+		expect(AnyValueSchema.safeParse({ kind: "object", value: [1] }).success).toBe(false);
+	});
+
 	it("round-trips through the collab doc, and leaves older workflows without the map", () => {
 		const workflow = new AddWorkflowVariable().execute(baseWorkflow(), { name: "a", type: "integer", initial: 7 }).workflow;
 

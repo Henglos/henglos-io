@@ -1,4 +1,5 @@
 import type { IComponentSchema } from "../entities/IComponent.schema.js";
+import { VALUE_TYPES } from "../wire/DataType.js";
 
 // The built-in "Variables" component: its actions read and write the
 // workflow's variables on the board. Like Start and Logic it has no package —
@@ -37,9 +38,9 @@ export const VariablesComponentSchema: IComponentSchema = {
 				},
 				{
 					displayName: "Value",
-					description: "What to store — a literal, or bind it to an output, another variable or a script.",
+					description: "What to store — typed in as the variable's type, or bind it to an output, another variable or a script.",
 					type: "any",
-					availables: ["integer", "float", "bool"],
+					availables: [...VALUE_TYPES],
 					defaultValue: { kind: "integer", value: 0 },
 				},
 			],
@@ -53,9 +54,9 @@ export const VariablesComponentSchema: IComponentSchema = {
 				{ displayName: "Variable", description: "The list variable to add to.", type: "variable", required: true },
 				{
 					displayName: "Value",
-					description: "The item — bind it to an output (a number, a string, an object…), a variable or a script, or type a number.",
+					description: "The item — a number, a string, a list, an object… typed in, or bind it to an output, a variable or a script.",
 					type: "any",
-					availables: ["integer", "float", "bool"],
+					availables: [...VALUE_TYPES],
 					defaultValue: { kind: "float", value: 0 },
 				},
 				{
@@ -78,7 +79,7 @@ export const VariablesComponentSchema: IComponentSchema = {
 					displayName: "Value",
 					description: "Its value — a literal, or bind it to an output, a variable or a script.",
 					type: "any",
-					availables: ["integer", "float", "bool"],
+					availables: [...VALUE_TYPES],
 					defaultValue: { kind: "float", value: 0 },
 				},
 			],

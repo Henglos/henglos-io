@@ -2,7 +2,8 @@
 import zod from "zod";
 import { isValidRegex, PARAM_PATTERN_NAMES, SIMPLE_PATTERN_NAMES } from "../../patterns/registry.js";
 import { PinSchema } from "./IPin.schema.js";
-import { KSchemaKindSchema, ShapeSchema } from "../schemas/ISchema.schema.js";
+import { ShapeSchema } from "../schemas/ISchema.schema.js";
+import { VALUE_TYPES } from "../wire/DataType.js";
 
 /** A config bound to another action's config, by name. */
 export const BindingSchema = zod.object({
@@ -58,11 +59,22 @@ export const PatternSchema = zod.union([
 // How a config's filters combine: every one must pass (default), or any one.
 export const PatternMatchSchema = zod.enum(["all", "any"]);
 
+/** A property's identifier (n8n's `name`): what displayOptions and a collection's value key it by. */
+export const PropertyNameSchema = zod.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/, "an identifier: letters, digits and _");
+
 const BaseConfigurationSchema = zod.object({
 	id: zod.number().optional(),
 
 	displayName: zod.string().min(1),
-	description: zod.string(),
+	// n8n's `name` — optional: without one a config is known by its displayName
+	// (what its wire id is made of either way, see computeWireConfigId).
+	name: PropertyNameSchema.optional(),
+	description: zod.string().default(""),
+	// A line under the field (n8n's parameter hint).
+	hint: zod.string().optional(),
+	// The section it shows in — "Pins", "Metadata"…: the configs of a category
+	// together, under its title. Only how the studio lays them out.
+	category: zod.string().min(1).optional(),
 
 	defaultValue: zod.any().optional(),
 	required: zod.boolean().optional(),
@@ -106,6 +118,8 @@ export const StringInputSchema = BaseConfigurationSchema.extend({
 	defaultValue: zod.string().optional(),
 
 	placeholder: zod.string().optional(),
+	// Lines shown — a multi-line text box past 1 (n8n's typeOptions.rows).
+	rows: zod.number().int().positive().optional(),
 	patterns: zod.array(PatternSchema).optional(),
 	patternMatch: PatternMatchSchema.optional(),
 }).strict();
@@ -138,6 +152,11 @@ const numberInput = <T extends "integer" | "float">(type: T) => BaseConfiguratio
 	placeholder: zod.string().optional(),
 	patterns: zod.array(PatternSchema).optional(),
 	patternMatch: PatternMatchSchema.optional(),
+
+	// n8n's typeOptions: the range it takes, and the decimals it shows.
+	minValue: zod.number().optional(),
+	maxValue: zod.number().optional(),
+	numberPrecision: zod.number().int().min(0).optional(),
 
 }).strict();
 
@@ -225,15 +244,31 @@ export const BytesInputSchema = BaseConfigurationSchema.extend({
 	defaultValue: zod.array(zod.number().int().min(0).max(255)).optional(),
 }).strict();
 
-// The types an "any" value can be typed in as — integer, float or bool (see
-// SCALAR_KINDS).
-export const AnyValueKindSchema = KSchemaKindSchema;
+// The types an "any" value can be typed in as — a value type, like a
+// variable's (VALUE_TYPES): integer, float, bool, string, list or object. A
+// field lists the ones it takes (`availables`).
+export const AnyValueKindSchema = zod.enum(VALUE_TYPES);
+
+/** Why `value` isn't a value of `kind`, or null when it is. */
+const anyValueError = (kind: zod.infer<typeof AnyValueKindSchema>, value: unknown): string | null => {
+	switch (kind) {
+		case "integer": return Number.isInteger(value) ? null : "Expected an integer.";
+		case "float": return typeof value === "number" && Number.isFinite(value) ? null : "Expected a number.";
+		case "bool": return typeof value === "boolean" ? null : "Expected true or false.";
+		case "string": return typeof value === "string" ? null : "Expected a string.";
+		case "list": return Array.isArray(value) ? null : "Expected a list.";
+		case "object": return value !== null && typeof value === "object" && !Array.isArray(value) ? null : "Expected an object.";
+	}
+};
 
 /** A value of an `any` field: its kind and the value. */
 export const AnyValueSchema = zod.object({
 	kind: AnyValueKindSchema,
-	value: zod.union([zod.number(), zod.boolean()]),
-}).strict();
+	value: zod.union([zod.number(), zod.boolean(), zod.string(), zod.array(zod.unknown()), zod.record(zod.string(), zod.unknown())]),
+}).strict().superRefine((any, ctx) => {
+	const error = anyValueError(any.kind, any.value);
+	if (error) ctx.addIssue({ code: "custom", path: ["value"], message: error });
+});
 
 /** A field that takes a value of any of the kinds it lists. */
 export const AnySchema = BaseConfigurationSchema.extend({
@@ -321,8 +356,206 @@ export const CredentialValueSchema = zod.object({
 	credentialId: zod.string().min(1),
 }).strict();
 
-/** A config as a manifest declares it — told apart by `type`. */
-export const ConfigurationSchema = zod.discriminatedUnion("type", [
+// ─── n8n's other property types ─────────────────────────────────────────────
+
+/** A date and time picker — its value an ISO 8601 text ("2026-11-23T14:00"), as text on the board. */
+export const DateTimeInputSchema = BaseConfigurationSchema.extend({
+	type: zod.literal("dateTime"),
+	defaultValue: zod.string().optional(),
+	placeholder: zod.string().optional(),
+}).strict();
+
+/** Several choices at once — its value the chosen values' list, a list on the board. */
+export const MultiOptionsSchema = BaseConfigurationSchema.extend({
+	type: zod.literal("multiOptions"),
+	defaultValue: zod.array(zod.string()).optional(),
+	options: zod.array(OptionEntrySchema).min(1),
+}).strict();
+
+/** JSON typed in an editor — a list or an object on the board (sent parsed). */
+export const JsonInputSchema = BaseConfigurationSchema.extend({
+	type: zod.literal("json"),
+	defaultValue: zod.string().optional(),
+	rows: zod.number().int().positive().optional(),
+}).strict();
+
+/** A note in the node (its displayName is the text) — no value, nothing sent. */
+export const NoticeSchema = BaseConfigurationSchema.extend({
+	type: zod.literal("notice"),
+	tone: zod.enum(["info", "warning", "danger"]).optional(),
+}).strict();
+
+/**
+ * Optional fields, added one by one ("Add option") — its value an object of
+ * the ones added, keyed by their name (or displayName). Literal values only:
+ * the collection as a whole binds to an output, a variable or a script.
+ */
+// A collection's / a group's fields: configs themselves — validated as such
+// (lazily: they're of this same schema), typed loosely to keep the type from
+// referencing itself; nestedProperties() reads them typed.
+const NestedPropertiesSchema = zod.array(zod.lazy((): zod.ZodType<unknown> => ConfigurationSchema)).min(1);
+
+export const CollectionSchema = BaseConfigurationSchema.extend({
+	type: zod.literal("collection"),
+	placeholder: zod.string().optional(),
+	defaultValue: zod.record(zod.string(), zod.unknown()).optional(),
+	options: NestedPropertiesSchema,
+}).strict();
+
+/** One group of a fixedCollection: its fields. */
+export const FixedCollectionGroupSchema = zod.object({
+	name: PropertyNameSchema,
+	displayName: zod.string().min(1),
+	values: NestedPropertiesSchema,
+}).strict();
+
+/**
+ * Groups of fields — with `multipleValues`, rows of them, added and removed
+ * (n8n's fixedCollection). Its value: { <group name>: <row> } — or a list of
+ * rows with `multipleValues`. Literal values only, like a collection.
+ */
+export const FixedCollectionSchema = BaseConfigurationSchema.extend({
+	type: zod.literal("fixedCollection"),
+	placeholder: zod.string().optional(),
+	multipleValues: zod.boolean().optional(),
+	sortable: zod.boolean().optional(),
+	defaultValue: zod.record(zod.string(), zod.unknown()).optional(),
+	options: zod.array(FixedCollectionGroupSchema).min(1),
+}).strict();
+
+/** One condition of a filter: a value, how it's tested ("<type>:<operation>", see LOGIC_OPERATIONS) and against what. */
+export const FilterConditionSchema = zod.object({
+	id: zod.string(),
+	leftValue: zod.string().default(""),
+	operator: zod.string().min(1),
+	rightValue: zod.string().optional(),
+}).strict();
+
+/** A filter's value: its conditions, joined by AND or OR. */
+export const FilterValueSchema = zod.object({
+	combinator: zod.enum(["and", "or"]).default("and"),
+	conditions: zod.array(FilterConditionSchema).default([]),
+}).strict();
+
+/** Conditions, joined by AND / OR — the action evaluates them on the board (henglosio.sdk's filter). */
+export const FilterSchema = BaseConfigurationSchema.extend({
+	type: zod.literal("filter"),
+	placeholder: zod.string().optional(),
+	caseSensitive: zod.boolean().optional(),
+	defaultValue: FilterValueSchema.optional(),
+}).strict();
+
+/** The types an assignment's value can be. */
+export const AssignmentTypeSchema = zod.enum(["string", "number", "boolean", "array", "object"]);
+
+/** One name / value pair of an assignmentCollection. */
+export const AssignmentSchema = zod.object({
+	id: zod.string(),
+	name: zod.string(),
+	type: AssignmentTypeSchema.default("string"),
+	value: zod.unknown(),
+}).strict();
+
+/** An assignmentCollection's value. */
+export const AssignmentCollectionValueSchema = zod.object({
+	assignments: zod.array(AssignmentSchema).default([]),
+}).strict();
+
+/** Name / value pairs, each of its type (n8n's Edit Fields) — an object on the board. */
+export const AssignmentCollectionSchema = BaseConfigurationSchema.extend({
+	type: zod.literal("assignmentCollection"),
+	defaultValue: AssignmentCollectionValueSchema.optional(),
+}).strict();
+
+// The editors n8n's typeOptions.editor names, as the code editor's language.
+const EDITOR_LANGUAGE: Record<string, string> = {
+	htmlEditor: "html",
+	cssEditor: "css",
+	jsEditor: "javascript",
+	codeNodeEditor: "python",
+	sqlEditor: "sql",
+	jsonEditor: "json",
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+	!!value && typeof value === "object" && !Array.isArray(value);
+
+// n8n's option entries ({ name, value, description }) as ours ({ displayName, value }).
+const normalizeOption = (entry: unknown): unknown => {
+	if (!isRecord(entry)) return entry;
+	// A category: its options, the same way.
+	if ("categoryName" in entry) return Array.isArray(entry.options) ? { ...entry, options: entry.options.map(normalizeOption) } : entry;
+	const { name, displayName, value, description: _description, action: _action, ...rest } = entry;
+	return { ...rest, displayName: displayName ?? name, value: typeof value === "string" ? value : String(value) };
+};
+
+/**
+ * A property as n8n writes it (`name`, `default`, `typeOptions`, `boolean`,
+ * `number`, `string` with `password` / `editor` / `rows`, options of
+ * `{ name, value }`) in this schema's terms — the old types (toggle, integer,
+ * float, password, code…) stay as they are, so a manifest may use either.
+ */
+export const normalizeProperty = (raw: unknown): unknown => {
+	if (!isRecord(raw)) return raw;
+	const { default: fallback, typeOptions, noDataExpression: _noDataExpression, requiresDataPath: _requiresDataPath, ...rest } = raw;
+	const property: Record<string, unknown> = { ...rest };
+	if (fallback !== undefined && property.defaultValue === undefined) property.defaultValue = fallback;
+	const options = isRecord(typeOptions) ? typeOptions : {};
+
+	switch (property.type) {
+		case "boolean":
+			property.type = "toggle";
+			break;
+		case "number": {
+			property.type = options.numberPrecision === 0 ? "integer" : "float";
+			for (const key of ["minValue", "maxValue", "numberPrecision"] as const) {
+				if (typeof options[key] === "number" && property[key] === undefined) property[key] = options[key];
+			}
+			// A number field holds its value as typed (it may be an expression).
+			if (typeof property.defaultValue === "number") property.defaultValue = String(property.defaultValue);
+			break;
+		}
+		case "string":
+			if (options.password === true) property.type = "password";
+			else if (typeof options.editor === "string") {
+				property.type = "code";
+				property.language ??= EDITOR_LANGUAGE[options.editor] ?? "plaintext";
+			} else if (typeof options.rows === "number" && property.rows === undefined) property.rows = options.rows;
+			break;
+		case "json":
+			if (typeof options.rows === "number" && property.rows === undefined) property.rows = options.rows;
+			if (property.defaultValue !== undefined && typeof property.defaultValue !== "string") property.defaultValue = JSON.stringify(property.defaultValue);
+			break;
+		case "fixedCollection":
+			if (typeof options.multipleValues === "boolean" && property.multipleValues === undefined) property.multipleValues = options.multipleValues;
+			if (typeof options.sortable === "boolean" && property.sortable === undefined) property.sortable = options.sortable;
+			// n8n's default "" for "no rows yet".
+			if (property.defaultValue === "") delete property.defaultValue;
+			break;
+		case "filter": {
+			const filter = isRecord(options.filter) ? options.filter : {};
+			if (typeof filter.caseSensitive === "boolean" && property.caseSensitive === undefined) property.caseSensitive = filter.caseSensitive;
+			if (isRecord(property.defaultValue) && Object.keys(property.defaultValue).length === 0) delete property.defaultValue;
+			break;
+		}
+		case "assignmentCollection":
+		case "collection":
+			if (isRecord(property.defaultValue) && Object.keys(property.defaultValue).length === 0) delete property.defaultValue;
+			break;
+		case "notice":
+			delete property.defaultValue;
+			break;
+	}
+
+	if ((property.type === "options" || property.type === "multiOptions") && Array.isArray(property.options)) {
+		property.options = property.options.map(normalizeOption);
+		if (property.type === "options" && property.defaultValue !== undefined && typeof property.defaultValue !== "string") property.defaultValue = String(property.defaultValue);
+	}
+
+	return property;
+};
+
+const ConfigurationTypesSchema = zod.discriminatedUnion("type", [
 	StringInputSchema,
 	PasswordInputSchema,
 	ToggleInputSchema,
@@ -339,7 +572,18 @@ export const ConfigurationSchema = zod.discriminatedUnion("type", [
 	CredentialInputSchema,
 	ListInputSchema,
 	ObjectInputSchema,
+	DateTimeInputSchema,
+	MultiOptionsSchema,
+	JsonInputSchema,
+	NoticeSchema,
+	CollectionSchema,
+	FixedCollectionSchema,
+	FilterSchema,
+	AssignmentCollectionSchema,
 ]);
+
+/** A config as a manifest declares it — told apart by `type`; n8n's way of writing one is read too (normalizeProperty). */
+export const ConfigurationSchema = zod.preprocess(normalizeProperty, ConfigurationTypesSchema);
 
 /** Any config's value. */
 export const ConfigurationValueSchema = zod
@@ -372,13 +616,29 @@ export type IOutputBindingSchema = zod.infer<typeof OutputBindingSchema>;
 export type IOptionValueSchema = zod.infer<typeof OptionValueSchema>;
 /** One entry of an options field: a choice, or a category of them. */
 export type IOptionEntrySchema = zod.infer<typeof OptionEntrySchema>;
-// The types an "any" value can be typed in as — integer, float or bool (see
-// SCALAR_KINDS).
+// The types an "any" value can be typed in as — see AnyValueKindSchema.
 export type IAnyValueKindSchema = zod.infer<typeof AnyValueKindSchema>;
 /** A value of an `any` field: its kind and the value. */
 export type IAnyValueSchema = zod.infer<typeof AnyValueSchema>;
 /** A config as a manifest declares it — told apart by `type`. */
-export type IConfigurationSchema = zod.infer<typeof ConfigurationSchema>;
+export type IConfigurationSchema = zod.infer<typeof ConfigurationTypesSchema>;
+/** One condition of a filter config. */
+export type IFilterConditionSchema = zod.infer<typeof FilterConditionSchema>;
+/** A filter config's value. */
+export type IFilterValueSchema = zod.infer<typeof FilterValueSchema>;
+/** One name / value pair of an assignmentCollection. */
+export type IAssignmentSchema = zod.infer<typeof AssignmentSchema>;
+/** An assignmentCollection's value. */
+export type IAssignmentCollectionValueSchema = zod.infer<typeof AssignmentCollectionValueSchema>;
+/** One group of a fixedCollection. */
+export type IFixedCollectionGroupSchema = zod.infer<typeof FixedCollectionGroupSchema>;
+
+/** The fields a collection or a fixedCollection's group holds — configs. */
+export const nestedProperties = (holder: { options: unknown[] } | { values: unknown[] }): IConfigurationSchema[] =>
+	("options" in holder ? holder.options : holder.values) as IConfigurationSchema[];
+
+/** The key a nested field's value is kept under in its collection's value: its name, or its displayName. */
+export const propertyKey = (property: Pick<IConfigurationSchema, "name" | "displayName">): string => property.name ?? property.displayName;
 // One input filter of a string/password/integer/float config — see patterns/registry.ts
 // for the names and what each checks:
 //   - Email                                   a named filter

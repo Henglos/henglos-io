@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { type IBoardSchema, type IComponentSchema, type IWorkflowRuntime, AddComponentToWorkflow, RemoveComponentFromWorkflow, AddActionToWorkflowComponent, RemoveActionFromWorkflowComponent, UpdateWorkflowActionConfiguration, BindWorkflowActionConfigurationOutput, SetWorkflowActionConfigurationCode, SetWorkflowActionNotes, SetWorkflowActionDisabled, SetWorkflowActionPassContext, AddSwitchCase, RemoveSwitchCase, MoveSwitchCase, SetPlatformSetting, SetBoardOption, AddWorkflowVariable, UpdateWorkflowVariable, RemoveWorkflowVariable, BindWorkflowActionConfigurationVariable } from '@henglosio/workflow';
+import { type IBoardSchema, type IComponentSchema, type IWorkflowRuntime, AddComponentToWorkflow, RemoveComponentFromWorkflow, AddActionToWorkflowComponent, RemoveActionFromWorkflowComponent, UpdateWorkflowActionConfiguration, BindWorkflowActionConfigurationOutput, SetWorkflowActionConfigurationCode, SetWorkflowActionNotes, RenameWorkflowAction, SetWorkflowActionDisabled, SetWorkflowActionPassContext, SetPlatformSetting, SetBoardOption, AddWorkflowVariable, UpdateWorkflowVariable, RemoveWorkflowVariable, BindWorkflowActionConfigurationVariable } from '@henglosio/workflow';
 import { CreateBoard, findAddableComponent, findNodeSchema } from '@henglosio/workflow';
 import { hmutate } from 'hmutate';
 import {
@@ -19,11 +19,9 @@ import {
 	BindActionConfigurationOutputOperationSchema,
 	SetActionConfigurationCodeOperationSchema,
 	SetActionNotesOperationSchema,
+	RenameActionOperationSchema,
 	SetActionDisabledOperationSchema,
 	SetActionPassContextOperationSchema,
-	AddSwitchCaseOperationSchema,
-	RemoveSwitchCaseOperationSchema,
-	MoveSwitchCaseOperationSchema,
 	AddVariableOperationSchema,
 	UpdateVariableOperationSchema,
 	RemoveVariableOperationSchema,
@@ -74,11 +72,9 @@ export class UpdateWorkflowUseCase {
 	private readonly bindWorkflowActionConfigurationOutput = new BindWorkflowActionConfigurationOutput();
 	private readonly setWorkflowActionConfigurationCode = new SetWorkflowActionConfigurationCode();
 	private readonly setWorkflowActionNotes = new SetWorkflowActionNotes();
+	private readonly renameWorkflowAction = new RenameWorkflowAction();
 	private readonly setWorkflowActionDisabled = new SetWorkflowActionDisabled();
 	private readonly setWorkflowActionPassContext = new SetWorkflowActionPassContext();
-	private readonly addSwitchCase = new AddSwitchCase();
-	private readonly removeSwitchCase = new RemoveSwitchCase();
-	private readonly moveSwitchCase = new MoveSwitchCase();
 	private readonly setPlatformSetting = new SetPlatformSetting();
 	private readonly setBoardOption = new SetBoardOption();
 	private readonly addWorkflowVariable = new AddWorkflowVariable();
@@ -301,6 +297,11 @@ export class UpdateWorkflowUseCase {
 			return updated as unknown;
 		});
 
+		mutate.operator(RenameActionOperationSchema, (ctx) => {
+			const runtime = ctx.target as unknown as IWorkflowRuntime;
+			return this.renameWorkflowAction.execute(runtime, ctx.patch.componentId, ctx.patch.actionId, ctx.patch.alias) as unknown;
+		});
+
 		mutate.operator(SetActionDisabledOperationSchema, (ctx) => {
 			const runtime = ctx.target as unknown as IWorkflowRuntime;
 			return this.setWorkflowActionDisabled.execute(
@@ -319,21 +320,6 @@ export class UpdateWorkflowUseCase {
 				ctx.patch.actionId,
 				ctx.patch.passContext,
 			) as unknown;
-		});
-
-		mutate.operator(AddSwitchCaseOperationSchema, (ctx) => {
-			const runtime = ctx.target as unknown as IWorkflowRuntime;
-			return this.addSwitchCase.execute(runtime, ctx.patch.componentId, ctx.patch.actionId) as unknown;
-		});
-
-		mutate.operator(RemoveSwitchCaseOperationSchema, (ctx) => {
-			const runtime = ctx.target as unknown as IWorkflowRuntime;
-			return this.removeSwitchCase.execute(runtime, ctx.patch.componentId, ctx.patch.actionId, ctx.patch.case) as unknown;
-		});
-
-		mutate.operator(MoveSwitchCaseOperationSchema, (ctx) => {
-			const runtime = ctx.target as unknown as IWorkflowRuntime;
-			return this.moveSwitchCase.execute(runtime, ctx.patch.componentId, ctx.patch.actionId, ctx.patch.from, ctx.patch.to) as unknown;
 		});
 
 		mutate.operator(SetPlatformSettingOperationSchema, (ctx) => {

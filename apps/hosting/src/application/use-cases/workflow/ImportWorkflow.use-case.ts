@@ -12,7 +12,7 @@ import {
 	type HioPackageRef,
 	type ImportWorkflowOut,
 } from "@henglosio/shared";
-import { LOGIC_PACKAGE_ID, LogicComponentSchema, mapWorkflowCredentialValues, mapWorkflowFileValues, VARIABLES_PACKAGE_ID, VariablesComponentSchema, workflowCredentialIds, workflowFileValues, WorkflowRuntime, type IBoardSchema, type IComponentSchema } from "@henglosio/workflow";
+import { LOGIC_PACKAGE_ID, LogicComponentSchema, mapWorkflowCredentialValues, migrateLegacyLogic, mapWorkflowFileValues, VARIABLES_PACKAGE_ID, VariablesComponentSchema, workflowCredentialIds, workflowFileValues, WorkflowRuntime, type IBoardSchema, type IComponentSchema } from "@henglosio/workflow";
 import { CredentialService } from "@/application/services/Credential.service";
 import { type IWorkflowFileRepository } from "@/domain/repositories/IWorkflowFileRepository.repo";
 import { WORKFLOW_FILE_MAX_BYTES } from "@/domain/entities/WorkflowFile";
@@ -109,7 +109,8 @@ export class ImportWorkflowUseCase {
 		const name = await this.freeName(userId, manifest.name.trim() || parsed.data.name || "Imported workflow");
 		// Credentials travel as references only — the ones that aren't the
 		// importer's (another account's, or deleted) leave their configs empty.
-		const named = { ...parsed.data, name };
+		// An archive from before If / Switch had rows: its nodes moved to them.
+		const named = { ...migrateLegacyLogic(parsed.data), name };
 		const owned = new Set<string>();
 		for (const id of workflowCredentialIds(named)) {
 			if (await this.credentials.owns(userId, id)) owned.add(id);

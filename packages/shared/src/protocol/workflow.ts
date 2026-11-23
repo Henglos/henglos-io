@@ -129,6 +129,14 @@ export const SetActionNotesOperationSchema = OperationSchema.extend({
 	notes: zod.string(),
 });
 
+/** Renames a node — empty: back to its action's own name. */
+export const RenameActionOperationSchema = OperationSchema.extend({
+	op: zod.literal("update:action-alias"),
+	componentId: zod.string(),
+	actionId: zod.string(),
+	alias: zod.string().max(64),
+});
+
 // Switches an action off (skipped when the flow runs — see
 // @henglosio/workflow's withoutDisabledActions) or back on.
 export const SetActionDisabledOperationSchema = OperationSchema.extend({
@@ -144,31 +152,6 @@ export const SetActionPassContextOperationSchema = OperationSchema.extend({
 	componentId: zod.string(),
 	actionId: zod.string(),
 	passContext: zod.boolean(),
-});
-
-// Switch's cases, added / removed at the end — see @henglosio/workflow's SwitchCases.use-case.ts.
-export const AddSwitchCaseOperationSchema = OperationSchema.extend({
-	op: zod.literal("add:switch-case"),
-	componentId: zod.string(),
-	actionId: zod.string(),
-});
-
-/** Removes one of a Switch's cases. */
-export const RemoveSwitchCaseOperationSchema = OperationSchema.extend({
-	op: zod.literal("remove:switch-case"),
-	componentId: zod.string(),
-	actionId: zod.string(),
-	// Which case (Case N) — the last one when absent. The ones after it move up a number.
-	case: zod.number().int().positive().optional(),
-});
-
-/** Moves one of a Switch's cases to another position — the ones in between shift a number. */
-export const MoveSwitchCaseOperationSchema = OperationSchema.extend({
-	op: zod.literal("move:switch-case"),
-	componentId: zod.string(),
-	actionId: zod.string(),
-	from: zod.number().int().positive(),
-	to: zod.number().int().positive(),
 });
 
 // Workflow variables — see @henglosio/workflow's WorkflowVariables.ts.
@@ -245,11 +228,9 @@ export const WorkflowPatchSchema = zod.discriminatedUnion("op", [
 	BindActionConfigurationOutputOperationSchema,
 	SetActionConfigurationCodeOperationSchema,
 	SetActionNotesOperationSchema,
+	RenameActionOperationSchema,
 	SetActionDisabledOperationSchema,
 	SetActionPassContextOperationSchema,
-	AddSwitchCaseOperationSchema,
-	RemoveSwitchCaseOperationSchema,
-	MoveSwitchCaseOperationSchema,
 	AddVariableOperationSchema,
 	UpdateVariableOperationSchema,
 	RemoveVariableOperationSchema,

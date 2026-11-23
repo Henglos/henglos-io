@@ -2,6 +2,7 @@ import type { IWorkflowRuntime } from "../../../domain/entities/IWorkflow.runtim
 import type { IConfigurationRuntime } from "../../../domain/entities/IConfiguration.runtime.js";
 import { UpdateComponentActionConfiguration } from "../component/UpdateActionConfiguration.use-case.js";
 import { UpdateActionConfiguration } from "../actions/UpdateActionConfiguration.js";
+import { withDynamicOutputs } from "./DynamicOutputs.js";
 
 /** Sets a node's config to a value. */
 export class UpdateWorkflowActionConfiguration {
@@ -23,6 +24,7 @@ export class UpdateWorkflowActionConfiguration {
 		if (componentIdx === -1) return workflow;
 		const components = [...workflow.components];
 		components[componentIdx] = this.updateAction.execute(components[componentIdx]!, actionId, configId, value);
-		return { ...workflow, components };
+		// Rows that are outputs (a Switch's rules): the outputs follow them.
+		return withDynamicOutputs({ ...workflow, components }, componentId, actionId);
 	}
 }

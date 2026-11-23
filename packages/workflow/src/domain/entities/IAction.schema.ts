@@ -23,6 +23,20 @@ export const ActionSchema = zod.object({
 	inputs: zod.array(HandlerSchema).optional(),
 	outputs: zod.array(HandlerSchema).optional(),
 
+	// Outputs that come from a fixedCollection's rows — one per row, before the
+	// fixed `outputs` (a Switch's rules, then its Default): "<idPrefix>_<n>",
+	// named by the row's `labelField` when it's set, "<namePrefix> <n>" when
+	// not. They follow the rows as the config changes (DynamicOutputs.ts).
+	dynamicOutputs: zod.object({
+		// The fixedCollection, by its name (or displayName).
+		property: zod.string().min(1),
+		// The group of it whose rows are outputs.
+		group: zod.string().min(1),
+		labelField: zod.string().optional(),
+		idPrefix: zod.string().regex(/^[a-z][a-z0-9]*$/).default("output"),
+		namePrefix: zod.string().default("Output"),
+	}).optional(),
+
 	configurations: zod.array(ConfigurationSchema).optional(),
 
 	// Path (relative to the component package's root) to this

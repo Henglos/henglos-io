@@ -15,58 +15,18 @@ import { VARIABLES_PACKAGE_ID } from "./VariablesComponent.js";
 // adding one of its actions adds the component first (see withLogicComponent),
 // so a workflow that never branches doesn't carry it.
 //
-// The operands are "string" configs, so each can be typed or bound (an
-// output, a variable, Python) — the board compares what it gets: as numbers
-// when both sides read as numbers, as text otherwise (see Logic.py).
+// Their conditions (If's, each Switch case's) are a value, an operation and
+// a compare-to (n8n style): the value is a "string" config, so it can be typed
+// or bound (an output, a variable, Python); the operation, "<type>:<operation>",
+// says which type both sides are read as on the board (builtin/flow/operators.py).
 
 export const LOGIC_PACKAGE_ID = "core:logic";
 /** The Logic component's id in a workflow. */
 export const LOGIC_COMPONENT_ID = "core:logic";
 
-// Conditions that don't look at a second operand.
-export const UNARY_CONDITIONS = ["is_true", "is_false", "is_empty", "is_not_empty"];
-
-const COMPARISONS: IOptionEntrySchema[] = [
-	{
-		categoryName: "Compare",
-		options: [
-			{ displayName: "is equal to", value: "eq" },
-			{ displayName: "is not equal to", value: "ne" },
-			{ displayName: "is greater than", value: "gt" },
-			{ displayName: "is greater than or equal to", value: "gte" },
-			{ displayName: "is less than", value: "lt" },
-			{ displayName: "is less than or equal to", value: "lte" },
-		],
-	},
-	{
-		categoryName: "Text",
-		options: [
-			{ displayName: "contains", value: "contains" },
-			{ displayName: "does not contain", value: "not_contains" },
-			{ displayName: "starts with", value: "starts_with" },
-			{ displayName: "ends with", value: "ends_with" },
-		],
-	},
-];
-
-const CONDITIONS: IOptionEntrySchema[] = [
-	...COMPARISONS,
-	{
-		categoryName: "State",
-		options: [
-			{ displayName: "is true", value: "is_true" },
-			{ displayName: "is false", value: "is_false" },
-			{ displayName: "is empty", value: "is_empty" },
-			{ displayName: "is not empty", value: "is_not_empty" },
-		],
-	},
-];
-
 const OPERAND = "A literal, or bind it to an output, a variable or a script.";
 
-// Switch's operations, grouped by the type Value is read as (n8n style):
-// "<type>:<operation>". The board converts both sides to that type before
-// comparing (see builtin/flow/operators.py).
+// The operations, grouped by the type the value is read as: "<type>:<operation>".
 const operations = (type: string, entries: [string, string][]): IOptionEntrySchema => ({
 	categoryName: type[0]!.toUpperCase() + type.slice(1),
 	options: entries.map(([value, displayName]) => ({ displayName, value: `${type}:${value}` })),
@@ -75,7 +35,8 @@ const operations = (type: string, entries: [string, string][]): IOptionEntrySche
 const PRESENCE: [string, string][] = [["exists", "exists"], ["not_exists", "does not exist"]];
 const EMPTINESS: [string, string][] = [["is_empty", "is empty"], ["is_not_empty", "is not empty"]];
 
-export const SWITCH_OPERATIONS: IOptionEntrySchema[] = [
+/** What a condition (If's, a Switch case's) can test. */
+export const LOGIC_OPERATIONS: IOptionEntrySchema[] = [
 	operations("string", [
 		...PRESENCE, ...EMPTINESS,
 		["equals", "is equal to"], ["not_equals", "is not equal to"],
@@ -105,34 +66,49 @@ export const SWITCH_OPERATIONS: IOptionEntrySchema[] = [
 	operations("object", [...PRESENCE, ...EMPTINESS]),
 ];
 
-/** Switch operations that only look at Value — no Compare to. */
-export const SWITCH_UNARY_OPERATIONS = SWITCH_OPERATIONS.flatMap(entry => "options" in entry ? entry.options : [entry])
+/** Operations that only look at the value — no compare-to. */
+export const LOGIC_UNARY_OPERATIONS = LOGIC_OPERATIONS.flatMap(entry => "options" in entry ? entry.options : [entry])
 	.map(option => option.value)
 	.filter(value => /:(exists|not_exists|is_empty|is_not_empty|is_true|is_false)$/.test(value));
 
-/** Case `n` of a Switch: what it tests, how, and against what — it goes out Case `n` when that holds. */
-export const switchCaseConfigs = (n: number): IConfigurationSchema[] => [
-	{
-		displayName: `Case ${n} value`,
-		description: `What Case ${n} tests. ${OPERAND}`,
-		type: "string",
-		placeholder: "e.g. bind mode",
-	},
-	{
-		displayName: `Case ${n} operation`,
-		description: `How Case ${n} tests its value — grouped by the type it's read as.`,
-		type: "options",
-		defaultValue: "string:equals",
-		options: SWITCH_OPERATIONS,
-	},
-	{
-		displayName: `Case ${n} compare to`,
-		description: `What Case ${n}'s value is compared with. ${OPERAND}`,
-		type: "string",
-		placeholder: "e.g. 1",
-		displayOptions: { hide: { [`Case ${n} operation`]: SWITCH_UNARY_OPERATIONS } },
-	},
-];
+/** @deprecated The same as LOGIC_OPERATIONS — Switch's and If's. */
+export const SWITCH_OPERATIONS = LOGIC_OPERATIONS;
+/** @deprecated The same as LOGIC_UNARY_OPERATIONS. */
+export const SWITCH_UNARY_OPERATIONS = LOGIC_UNARY_OPERATIONS;
+
+/** A filter with one empty condition — what If's Conditions and each Switch rule start with. */
+const oneCondition = () => ({
+	combinator: "and" as const,
+	conditions: [{ id: "c1", leftValue: "", operator: "string:equals", rightValue: "" }],
+});
+
+/** If's conditions: a filter — n8n's If. */
+const IF_CONDITIONS: IConfigurationSchema = {
+	displayName: "Conditions",
+	name: "conditions",
+	description: "What has to hold for True — drag an output or a variable onto a value to use it.",
+	type: "filter",
+	defaultValue: oneCondition(),
+};
+
+/** Switch's rules: a row each — its conditions, and its output's name — n8n's Switch. */
+const SWITCH_RULES: IConfigurationSchema = {
+	displayName: "Routing Rules",
+	name: "rules",
+	description: "Out the first rule whose conditions hold — each rule its own output, then Default.",
+	type: "fixedCollection",
+	placeholder: "Add Routing Rule",
+	multipleValues: true,
+	defaultValue: { values: [{ conditions: oneCondition(), outputKey: "" }, { conditions: oneCondition(), outputKey: "" }] },
+	options: [{
+		name: "values",
+		displayName: "Rule",
+		values: [
+			{ displayName: "Conditions", name: "conditions", description: "", type: "filter", defaultValue: oneCondition() },
+			{ displayName: "Output Name", name: "outputKey", description: "The output's name — Case N when empty.", type: "string", placeholder: "Case N" },
+		],
+	}],
+};
 
 /** The built-in Logic component: If, Switch and Repeat. */
 export const LogicComponentSchema: IComponentSchema = {
@@ -141,68 +117,22 @@ export const LogicComponentSchema: IComponentSchema = {
 	actions: [
 		{
 			displayName: "If",
-			description: "Goes out True or False, depending on a condition — or on two, joined with AND / OR.",
+			description: "Goes out True when its conditions hold — all of them (AND) or any one (OR) — and False otherwise.",
 			script: "",
 			outputs: [
 				{ id: "true", name: "True" },
 				{ id: "false", name: "False" },
 			],
-			configurations: [
-				{ displayName: "Value", description: `What to test. ${OPERAND}`, type: "string", placeholder: "e.g. bind distance" },
-				{ displayName: "Condition", description: "How to test it.", type: "options", defaultValue: "eq", options: CONDITIONS },
-				{
-					displayName: "Compare to",
-					description: `What Value is compared with. ${OPERAND}`,
-					type: "string",
-					placeholder: "e.g. 10",
-					displayOptions: { hide: { Condition: UNARY_CONDITIONS } },
-				},
-				{
-					displayName: "Combine",
-					description: "Add a second condition: both must hold (AND), or either one (OR).",
-					type: "options",
-					defaultValue: "none",
-					options: [
-						{ displayName: "Single condition", value: "none" },
-						{ displayName: "AND", value: "and" },
-						{ displayName: "OR", value: "or" },
-					],
-				},
-				{
-					displayName: "Value 2",
-					description: `What the second condition tests. ${OPERAND}`,
-					type: "string",
-					displayOptions: { show: { Combine: ["and", "or"] } },
-				},
-				{
-					displayName: "Condition 2",
-					description: "How to test Value 2.",
-					type: "options",
-					defaultValue: "eq",
-					options: CONDITIONS,
-					displayOptions: { show: { Combine: ["and", "or"] } },
-				},
-				{
-					displayName: "Compare to 2",
-					description: `What Value 2 is compared with. ${OPERAND}`,
-					type: "string",
-					displayOptions: { show: { Combine: ["and", "or"] }, hide: { "Condition 2": UNARY_CONDITIONS } },
-				},
-			],
+			configurations: [IF_CONDITIONS],
 		},
 		{
 			displayName: "Switch",
-			description: "Routes the flow: out the first case whose condition holds, or Default when none does.",
+			description: "Routes the flow: out the first rule whose conditions hold, or Default when none does.",
 			script: "",
-			outputs: [
-				{ id: "case_1", name: "Case 1" },
-				{ id: "case_2", name: "Case 2" },
-				{ id: "otherwise", name: "Default" },
-			],
-			configurations: [
-				...switchCaseConfigs(1),
-				...switchCaseConfigs(2),
-			],
+			// An output per rule (case_1, case_2…), then Default.
+			outputs: [{ id: "otherwise", name: "Default" }],
+			dynamicOutputs: { property: "rules", group: "values", labelField: "outputKey", idPrefix: "case", namePrefix: "Case" },
+			configurations: [SWITCH_RULES],
 		},
 		{
 			displayName: "Repeat",

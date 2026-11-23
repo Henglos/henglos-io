@@ -1,11 +1,10 @@
 import type { IConfigurationRuntime } from "../../domain/entities/IConfiguration.runtime.js";
 
 // displayOptions.show/hide are keyed by a sibling config's displayName (the
-// same identifier component authors already use to write manifest.yaml's
-// `schema` key, and the same one computeWireConfigId keys off of when no
-// explicit id is set — see IConfiguration.schema.ts).
+// same identifier computeWireConfigId keys off of when no explicit id is set
+// — see IConfiguration.schema.ts) or, written n8n's way, by its `name`.
 const siblingValue = (all: IConfigurationRuntime[], key: string): unknown =>
-	all.find(c => c.base.displayName === key)?.value;
+	all.find(c => c.base.name === key || c.base.displayName === key)?.value;
 
 /**
  * Whether `configuration` applies, given its siblings' values — what the
