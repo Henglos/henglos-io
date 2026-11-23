@@ -1,4 +1,5 @@
-import { useCallback, useRef, useState } from "react";
+import { useState } from "react";
+import { ResizeHandle, useResizable } from "../components/ResizeHandle/ResizeHandle.component";
 import { useAtomValue } from "jotai";
 import { LogsButton } from "../panels/Logs/LogsButton.component";
 import { LogsPanel } from "../panels/Logs/LogsPanel.component";
@@ -25,45 +26,13 @@ const MAX_HEIGHT     = 600;
 // The inspector's columns need room: opening it raises the panel to this.
 const INSPECTOR_HEIGHT = 320;
 
-// ─── resize hook ──────────────────────────────────────────────────────────────
-
-function useResizeHandle(panelHeight: number, setPanelHeight: (h: number) => void) {
-
-	const dragRef = useRef<{ startY: number; startHeight: number } | null>(null);
-
-	const onMouseDown = useCallback((e: React.MouseEvent) => {
-
-		e.preventDefault();
-		dragRef.current = { startY: e.clientY, startHeight: panelHeight };
-
-		const onMove = (e: MouseEvent) => {
-			if (!dragRef.current) return;
-			// dragging up (smaller Y) → a bigger panel
-			const next = dragRef.current.startHeight + (dragRef.current.startY - e.clientY);
-			setPanelHeight(Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, next)));
-		};
-
-		const onUp = () => {
-			dragRef.current = null;
-			document.removeEventListener("mousemove", onMove);
-			document.removeEventListener("mouseup", onUp);
-		};
-
-		document.addEventListener("mousemove", onMove);
-		document.addEventListener("mouseup", onUp);
-
-	}, [panelHeight, setPanelHeight]);
-
-	return onMouseDown;
-
-}
-
 // ─── layout ───────────────────────────────────────────────────────────────────
 
 export const BottomBarLayout = () => {
 
 	const [activePanel, setActivePanel] = useState<ActivePanel>(null);
-	const [panelHeight, setPanelHeight] = useState(DEFAULT_HEIGHT);
+	// Its height — dragged by its top edge, kept in this browser.
+	const { size: panelHeight, setSize: setPanelHeight } = useResizable({ storageKey: "studio.bottomPanel.height", initial: DEFAULT_HEIGHT, min: MIN_HEIGHT, max: MAX_HEIGHT });
 
 	// A task's log comes up when it starts — unless the inspector is open:
 	// a ▶ from it shows its result right there.
@@ -91,8 +60,6 @@ export const BottomBarLayout = () => {
 		}
 	}
 
-	const onResizeStart = useResizeHandle(panelHeight, setPanelHeight);
-
 	const toggle = (panel: ActivePanel) =>
 		setActivePanel(prev => (prev === panel ? null : panel));
 
@@ -100,22 +67,15 @@ export const BottomBarLayout = () => {
 
 		<aside className="w-full flex flex-col bg-chrome border-t border-line">
 
-			{/* drag handle — dragging up expands it, down shrinks it */}
-			{activePanel && (
-				<div
-					onMouseDown={onResizeStart}
-					className="h-2 w-full shrink-0 cursor-ns-resize group"
-				>
-					<div className="h-full w-full bg-transparent group-hover:bg-line transition-colors" />
-				</div>
-			)}
-
 			{/* the panel's content — always mounted: the REPL keeps its session and
-			    history while another tab (or none) is open */}
+			    history while another tab (or none) is open. Its top edge resizes it
+			    (dragging up grows it) — over the border, taking no room. */}
 			<div
 				style={{ height: panelHeight }}
-				className={clsx("w-full overflow-hidden border-b border-line shrink-0", !activePanel && "hidden")}
+				className={clsx("relative w-full border-b border-line shrink-0", !activePanel && "hidden")}
 			>
+				{activePanel && <ResizeHandle edge="top" size={panelHeight} onResize={(height, done) => setPanelHeight(height, done)} />}
+				<div className="w-full h-full overflow-hidden">
 				{activePanel === "logs" && <LogsPanel />}
 				{activePanel === "inspector" && <InspectorPanel />}
 				<div className={clsx("w-full h-full", activePanel !== "repl" && "hidden")}>
@@ -123,6 +83,7 @@ export const BottomBarLayout = () => {
 				</div>
 				<div className={clsx("w-full h-full", activePanel !== "files" && "hidden")}>
 					<FilesPanel visible={activePanel === "files"} />
+				</div>
 				</div>
 			</div>
 

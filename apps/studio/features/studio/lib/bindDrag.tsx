@@ -1,5 +1,5 @@
 import { DndContext, DragOverlay, PointerSensor, pointerWithin, useDraggable, useDroppable, useSensor, useSensors } from "@dnd-kit/core";
-import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import type { CollisionDetection, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { Variable } from "lucide-react";
 
@@ -49,6 +49,16 @@ export const dragExpression = (drag: BindDrag): string =>
 	: `ctx.get(${JSON.stringify(drag.outputName.toLowerCase())})`
 		+ (drag.kind === "field" ? pathSuffix(drag.path, step => `[${step}]`, step => `[${JSON.stringify(step)}]`) : "");
 
+// The targets under the pointer, the innermost first — a condition's value
+// inside a filter config, not the config around it.
+const innermostUnderPointer: CollisionDetection = args => {
+	const area = (id: string | number) => {
+		const rect = args.droppableRects.get(id);
+		return rect ? rect.width * rect.height : Infinity;
+	};
+	return [...pointerWithin(args)].sort((a, b) => area(a.id) - area(b.id));
+};
+
 export const BindDragProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 	const [drag, setDrag] = useAtom(BindDragAtom);
@@ -70,7 +80,7 @@ export const BindDragProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 	};
 
 	return (
-		<DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDrag(null)}>
+		<DndContext sensors={sensors} collisionDetection={innermostUnderPointer} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDrag(null)}>
 			{children}
 			<DragOverlay dropAnimation={null}>
 				{drag && (

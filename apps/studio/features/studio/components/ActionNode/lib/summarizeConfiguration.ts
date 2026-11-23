@@ -32,6 +32,8 @@ const optionLabel = (entries: IOptionEntrySchema[], value: string): string | und
 const isEmpty = (value: unknown) =>
 	value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0);
 
+const plural = (count: number, one: string, many = `${one}s`) => `${count} ${count === 1 ? one : many}`;
+
 export function summarizeConfiguration(configuration: IConfigurationRuntime, variables: IVariableRuntime[]): ConfigurationSummary {
 
 	const { base, value, binding } = configuration;
@@ -59,7 +61,30 @@ export function summarizeConfiguration(configuration: IConfigurationRuntime, var
 			case "code": return "script";
 			case "list": return `${(value as unknown[]).length} items`;
 			case "object": return `${Object.keys(value as object).length} fields`;
-			case "any": return String((value as { value?: unknown }).value ?? value);
+			case "any": {
+				const any = value as { kind?: string; value?: unknown };
+				if (any.kind === "list" && Array.isArray(any.value)) return `${any.value.length} items`;
+				if (any.kind === "object" && any.value && typeof any.value === "object") return `${Object.keys(any.value).length} fields`;
+				if (any.kind === "string") return `"${String(any.value)}"`;
+				return String(any.value ?? value);
+			}
+			// n8n's types.
+			case "dateTime": return String(value).replace("T", " ");
+			case "json": return "JSON";
+			case "multiOptions": {
+				const picked = value as string[];
+				return picked.length === 1 ? optionLabel(base.options, picked[0]!) ?? picked[0]! : `${picked.length} selected`;
+			}
+			case "collection": return plural(Object.keys(value as object).length, "option");
+			case "fixedCollection": {
+				const rows = Object.values(value as Record<string, unknown>).reduce<number>((count, held) => count + (Array.isArray(held) ? held.length : 1), 0);
+				return plural(rows, "entry", "entries");
+			}
+			case "filter": {
+				const { conditions = [], combinator } = value as { conditions?: unknown[]; combinator?: string };
+				return conditions.length > 1 ? `${conditions.length} conditions · ${combinator === "or" ? "OR" : "AND"}` : plural(conditions.length, "condition");
+			}
+			case "assignmentCollection": return plural((value as { assignments?: unknown[] }).assignments?.length ?? 0, "field");
 			default: return typeof value === "object" ? JSON.stringify(value) : String(value);
 		}
 	})();

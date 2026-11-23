@@ -118,7 +118,7 @@ export const ActionNode = ({ id, data, selected }: NodeProps<Node<ActionNodeData
 						{logic && <ActionIcon icon={nodeIcon(component, action)} fallback={<LogicIcon action={action.base.displayName} />} className="shrink-0 text-accent-fg" />}
 						{trigger && <TriggerMark><ActionIcon icon={nodeIcon(component, action)} fallback={<Radio size={13} />} size={13} /></TriggerMark>}
 						{!logic && !trigger && <ActionIcon icon={nodeIcon(component, action)} fallback={null} className="shrink-0 text-fg-muted" />}
-						<Text variant="high" font="mono" size="sm" className={clsx("truncate flex-1", disabled && "line-through decoration-fg-muted")}>{action.alias}</Text>
+						<Text variant="high" font="mono" size="sm" className={clsx("nopan truncate flex-1", disabled && "line-through decoration-fg-muted")} editable dbClick value={action.alias} onChange={alias => mutate({ op: "update:action-alias", componentId: component.id, actionId: action.id, alias })} placeholder={action.base.displayName} inputClassName="nodrag nopan font-mono" />
 						{runner.running && <Loader2 size={12} className="shrink-0 animate-spin text-fg-muted" />}
 						{disabled && <EyeOff size={12} className="shrink-0 text-fg-muted" aria-label="Disabled — the flow skips it" />}
 						{trigger && <TriggerTag />}

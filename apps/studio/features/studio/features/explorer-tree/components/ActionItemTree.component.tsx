@@ -50,11 +50,18 @@ export const ActionTreeItem: React.FC<ActionTreeItemProps> = ({ data, selected }
 					<ActionIcon icon={nodeIcon(component, data)} fallback={<Zap size={14} />} />
 				</Tree.Icon>
 
-				<Text variant="dim" size="sm" editable dbClick>{data.alias}</Text>
+				{/* One line: a long name ends in "…" — the whole of it on hover. */}
+				<Text
+					variant="dim" size="sm"
+					className="flex-1 min-w-0 truncate"
+					title={data.alias}
+					editable dbClick value={data.alias} placeholder={data.base.displayName}
+					onChange={alias => mutate({ op: "update:action-alias", componentId: data.componentId, actionId: data.id, alias })}
+				/>
 
 				<Button.Root
 					variant="ghost"
-					className="ml-auto p-2! opacity-0 group-hover/row:opacity-100 transition-opacity duration-100"
+					className="ml-auto shrink-0 p-2! opacity-0 group-hover/row:opacity-100 transition-opacity duration-100"
 					onClick={e => { e.stopPropagation(); onDelete(); }}
 				>
 					<Button.Icon>

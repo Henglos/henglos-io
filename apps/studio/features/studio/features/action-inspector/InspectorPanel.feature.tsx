@@ -9,6 +9,10 @@ import { InspectorHeader } from "./components/InspectorHeader.component";
 import { UpstreamData } from "./components/UpstreamData.component";
 import { ActionOutputs } from "./components/ActionOutputs.component";
 import { Fold } from "./components/Fold.component";
+import { ResizeHandle, useResizable } from "@/features/studio/components/ResizeHandle/ResizeHandle.component";
+
+// The side columns' widths — each dragged by the edge it shares with Settings, kept in this browser.
+const SIDE_WIDTH = { initial: 300, min: 160, max: 640 };
 
 // The inspector in the bottom panel (NODE_LAYOUT "panel"), n8n-style: the
 // way data goes through the action, left to right, with the canvas still in
@@ -38,22 +42,24 @@ export const InspectorPanel = () => {
 const Columns: React.FC<{ component: IComponentRuntime; action: IActionRuntime }> = ({ component, action }) => {
 
 	const inspector = useInspector(component, action);
-	const { basic, advanced, advancedCount, renderFields, renderPassContext, renderSwitchCases, isSwitch, upstream, notes } = inspector;
+	const { basic, advanced, advancedCount, renderFields, renderPassContext, upstream, notes } = inspector;
 	const [notesOpen, setNotesOpen] = useState(false);
+	const input = useResizable({ storageKey: "studio.inspector.inputWidth", ...SIDE_WIDTH });
+	const output = useResizable({ storageKey: "studio.inspector.outputWidth", ...SIDE_WIDTH });
 
 	return (
 
-		<div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)] h-full min-h-0">
+		<div className="flex h-full min-h-0">
 
-			<Column icon={ArrowDownToLine} title="Input" hint="Data from earlier actions — drag it onto a setting" count={upstream.length}>
+			<Column icon={ArrowDownToLine} title="Input" hint="Data from earlier actions — drag it onto a setting" count={upstream.length} width={input.size}
+				handle={<ResizeHandle edge="right" size={input.size} onResize={(width, done) => input.setSize(width, done)} />}>
 				<UpstreamData upstream={upstream} withValues />
 			</Column>
 
-			<div className="flex flex-col min-h-0 border-x border-line bg-raised">
+			<div className="flex flex-col flex-1 min-w-48 min-h-0 border-x border-line bg-raised">
 				<InspectorHeader inspector={inspector} notesOpen={notesOpen} onToggleNotes={() => setNotesOpen(!notesOpen)} />
 				<div className="flex flex-col gap-5 flex-1 min-h-0 overflow-y-auto px-5 py-4">
-					{basic.length > 0 ? renderFields(basic) : !isSwitch && <Text variant="low" size="xs">No settings.</Text>}
-					{renderSwitchCases()}
+					{basic.length > 0 ? renderFields(basic) : <Text variant="low" size="xs">No settings.</Text>}
 					{advancedCount > 0 && <Fold title={`Advanced (${advancedCount})`}>{renderFields(advanced)}{renderPassContext()}</Fold>}
 					{(notesOpen || notes) && (
 						<div className="flex flex-col gap-1.5 pt-3 border-t border-line-subtle">
@@ -72,7 +78,8 @@ const Columns: React.FC<{ component: IComponentRuntime; action: IActionRuntime }
 				</div>
 			</div>
 
-			<Column icon={ArrowUpFromLine} title="Output" hint="What it hands the next actions — drag it into the code editor">
+			<Column icon={ArrowUpFromLine} title="Output" hint="What it hands the next actions — drag it into the code editor" width={output.size}
+				handle={<ResizeHandle edge="left" size={output.size} onResize={(width, done) => output.setSize(width, done)} />}>
 				<ActionOutputs inspector={inspector} />
 			</Column>
 
@@ -87,12 +94,17 @@ type ColumnProps = {
 	title: string;
 	hint: string;
 	count?: number;
+	/** Its width (px). */
+	width: number;
+	/** What resizes it, on the edge it shares with Settings. */
+	handle?: React.ReactNode;
 	children: React.ReactNode;
 };
 
 // A side column: its name (what it's for on hover), its content scrolling on its own.
-const Column: React.FC<ColumnProps> = ({ icon: Icon, title, hint, count, children }) => (
-	<div className="flex flex-col min-h-0 min-w-0">
+const Column: React.FC<ColumnProps> = ({ icon: Icon, title, hint, count, width, handle, children }) => (
+	<div className="relative flex flex-col min-h-0 min-w-0 shrink-0" style={{ width }}>
+		{handle}
 		<div className="flex items-center gap-2 h-9 px-4 shrink-0 border-b border-line-subtle" title={hint}>
 			<Icon size={13} className="text-fg-muted" />
 			<Text variant="dim" size="xs" className="font-medium">{title}</Text>

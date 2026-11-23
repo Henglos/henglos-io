@@ -7,10 +7,11 @@ import { DebugBadges, debugCardClass, debugRootClass, useDebugMark } from "../No
 import { Eye, EyeOff, GitBranch, GripVertical, Info, Loader2, Play, Repeat, Split, Trash, X } from "lucide-react";
 import { Button, Tabs, Text, Textarea, Tooltip } from "@henglosio/ui";
 import { useAtom, useSetAtom } from "jotai";
-import { actionPassesContext, getActionOutputs, isLogicComponent, isSwitchAction, isTriggerAction, RemoveActionFromWorkflowComponent, shapeLabel } from "@henglosio/workflow";
+import { actionPassesContext, getActionOutputs, isLogicComponent, isTriggerAction, RemoveActionFromWorkflowComponent, shapeLabel } from "@henglosio/workflow";
 import type { IConfigurationRuntime } from "@henglosio/workflow";
 import clsx from "clsx";
 import { mergeConfigurations } from "./lib/mergeConfigurations";
+import { CategorizedFields } from "./components/CategorizedFields.component";
 import { isConfigVisible } from "./lib/isConfigVisible";
 import { useBindDraggable } from "@/features/studio/lib/bindDrag";
 import { ConfigurationField } from "./components/ConfigurationField.component";
@@ -21,7 +22,6 @@ import { OutputValue, RunSummary } from "./components/OutputValue.component";
 import { hasShapeFields, ShapeTree, shortShapeLabel } from "./components/ShapeTree.component";
 import { useDebugger } from "@/features/studio/hooks/useDebugger";
 import { PassContextField } from "@/features/studio/features/action-inspector/components/PassContextField.component";
-import { isSwitchCaseConfig, SwitchCasesField } from "@/features/studio/features/action-inspector/components/SwitchCasesField.component";
 import { ActionIcon, nodeIcon } from "@/features/studio/components/ActionIcon/ActionIcon.component";
 
 const DEFAULT_INPUT = { id: "default", base: { id: "default", name: "in" } };
@@ -106,9 +106,7 @@ export const ActionNodeLegacy = ({ id, data, selected }: NodeProps<Node<ActionNo
 	// Visibility is evaluated over the whole list: a basic config may show/hide
 	// on an advanced one (displayOptions reference siblings by displayName).
 	const visibleConfigurations = actionConfigurations.filter(c => isConfigVisible(c, actionConfigurations));
-	// A Switch case's configs show grouped by case (SwitchCasesField), not in the plain list.
-	const basicConfigurations = visibleConfigurations.filter(c => !c.base.advanced && !isSwitchCaseConfig(c));
-	const isSwitch = !!workflow && isSwitchAction(workflow.data, action.id);
+	const basicConfigurations = visibleConfigurations.filter(c => !c.base.advanced);
 	const advancedConfigurations = visibleConfigurations.filter(c => c.base.advanced);
 	const outputSchema = action.base.outputSchema ?? [];
 	// Advanced › Pass Context — not on a trigger (nothing before it to pass on).
@@ -225,7 +223,7 @@ export const ActionNodeLegacy = ({ id, data, selected }: NodeProps<Node<ActionNo
 	);
 	const renderFields = (configurations: typeof visibleConfigurations, empty: string | null) =>
 		board && configurations.length > 0
-			? configurations.map(configuration => renderField(configuration))
+			? <CategorizedFields configurations={configurations} renderField={configuration => renderField(configuration)} />
 			: empty && <Text variant="low" size="xs">{empty}</Text>;
 
 	useEffect(() => {
@@ -259,7 +257,7 @@ export const ActionNodeLegacy = ({ id, data, selected }: NodeProps<Node<ActionNo
 				<div className="flex gap-2 items-center h-fit px-2 py-2">
 
 					<ActionIcon icon={nodeIcon(component, action)} fallback={isLogicComponent(component) ? <LogicIcon action={action.base.displayName} /> : null} className="shrink-0 text-accent-fg" />
-					<Text variant="high" font="mono" size="lg" className={clsx(disabled && "line-through decoration-fg-muted")}>{action.alias}</Text>
+					<Text variant="high" font="mono" size="lg" className={clsx("nopan", disabled && "line-through decoration-fg-muted")} editable dbClick value={action.alias} onChange={alias => mutate({ op: "update:action-alias", componentId: component.id, actionId: action.id, alias })} placeholder={action.base.displayName} inputClassName="nodrag nopan font-mono" />
 					<Text variant="low" size="sm">•</Text>
 					<Text variant="low" size="sm">{component.alias}</Text>
 
@@ -285,16 +283,7 @@ export const ActionNodeLegacy = ({ id, data, selected }: NodeProps<Node<ActionNo
 					</Tabs.List>
 
 					<Tabs.Panel value="configuration" className="flex flex-col gap-4 px-4 py-4 max-h-72 overflow-auto nowheel">
-						{renderFields(basicConfigurations, isSwitch ? null : "No configuration for this action.")}
-						{isSwitch && (
-							<SwitchCasesField
-								configurations={actionConfigurations}
-								renderField={configuration => renderField(configuration, true)}
-								onAdd={() => mutate({ op: "add:switch-case", componentId: component.id, actionId: action.id })}
-								onRemove={n => mutate({ op: "remove:switch-case", componentId: component.id, actionId: action.id, case: n })}
-								onMove={(from, to) => mutate({ op: "move:switch-case", componentId: component.id, actionId: action.id, from, to })}
-							/>
-						)}
+						{renderFields(basicConfigurations, "No configuration for this action.")}
 					</Tabs.Panel>
 
 					<Tabs.Panel value="advanced" className="flex flex-col gap-4 px-4 py-4 max-h-72 overflow-auto nowheel">

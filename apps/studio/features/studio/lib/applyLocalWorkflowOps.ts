@@ -4,11 +4,9 @@ import {
 	RemoveActionFromWorkflowComponent,
 	SetWorkflowActionConfigurationCode,
 	SetWorkflowActionNotes,
+	RenameWorkflowAction,
 	SetWorkflowActionDisabled,
 	SetWorkflowActionPassContext,
-	AddSwitchCase,
-	RemoveSwitchCase,
-	MoveSwitchCase,
 	SetPlatformSetting,
 	SetBoardOption,
 	AddWorkflowVariable,
@@ -37,11 +35,9 @@ const LOCAL_OPS = new Set<WorkflowPatchInput["op"]>([
 	"bind:configuration-output",
 	"bind:configuration-code",
 	"update:action-notes",
+	"update:action-alias",
 	"update:action-disabled",
 	"update:action-pass-context",
-	"add:switch-case",
-	"remove:switch-case",
-	"move:switch-case",
 	"update:platform-setting",
 	"update:board-option",
 	"add:variable",
@@ -60,11 +56,9 @@ const updateConfiguration = new UpdateWorkflowActionConfiguration();
 const bindOutput = new BindWorkflowActionConfigurationOutput();
 const setCode = new SetWorkflowActionConfigurationCode();
 const setNotes = new SetWorkflowActionNotes();
+const renameAction = new RenameWorkflowAction();
 const setDisabled = new SetWorkflowActionDisabled();
 const setPassContext = new SetWorkflowActionPassContext();
-const addSwitchCase = new AddSwitchCase();
-const removeSwitchCase = new RemoveSwitchCase();
-const moveSwitchCase = new MoveSwitchCase();
 const setPlatformSetting = new SetPlatformSetting();
 const setBoardOption = new SetBoardOption();
 const addVariable = new AddWorkflowVariable();
@@ -92,16 +86,12 @@ const applyOne = (runtime: IWorkflowRuntime, op: WorkflowPatchInput): IWorkflowR
 			return setCode.execute(runtime, op.componentId, op.actionId, op.configurationId, op.code);
 		case "update:action-notes":
 			return setNotes.execute(runtime, op.componentId, op.actionId, op.notes);
+		case "update:action-alias":
+			return renameAction.execute(runtime, op.componentId, op.actionId, op.alias);
 		case "update:action-disabled":
 			return setDisabled.execute(runtime, op.componentId, op.actionId, op.disabled);
 		case "update:action-pass-context":
 			return setPassContext.execute(runtime, op.componentId, op.actionId, op.passContext);
-		case "add:switch-case":
-			return addSwitchCase.execute(runtime, op.componentId, op.actionId);
-		case "remove:switch-case":
-			return removeSwitchCase.execute(runtime, op.componentId, op.actionId, op.case);
-		case "move:switch-case":
-			return moveSwitchCase.execute(runtime, op.componentId, op.actionId, op.from, op.to);
 		case "update:platform-setting":
 			return setPlatformSetting.execute(runtime, op.key, op.value);
 		case "update:board-option":

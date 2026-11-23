@@ -69,21 +69,21 @@ export const VariableItemTree: React.FC<VariableItemTreeProps> = ({ variable, wo
 				<Icon size={14} />
 			</Tree.Icon>
 
-			<Text variant="dim" size="sm" font="mono" className="truncate">{variable.name}</Text>
+			<Text variant="dim" size="sm" font="mono" className="min-w-0 shrink truncate" title={variable.name}>{variable.name}</Text>
 
 			{variable.initial !== null && (
 				<Text
 					variant="low"
 					size="xs"
 					font="mono"
-					className={tooLong ? "truncate text-danger!" : "truncate"}
+					className={tooLong ? "min-w-0 flex-1 truncate text-danger!" : "min-w-0 flex-1 truncate"}
 					title={tooLong ? `Longer than the board's ${maxText}-byte config value size — edit it or raise the limit in Platform settings` : undefined}
 				>
 					= {formatInitial(variable)}
 				</Text>
 			)}
 
-			<div className="ml-auto flex items-center gap-0.5">
+			<div className="ml-auto shrink-0 flex items-center gap-0.5">
 
 				<div className="flex gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity duration-100">
 					<Button.Root variant="ghost" className="p-2!" onClick={e => { e.stopPropagation(); onEdit(anchorOf(e.currentTarget.closest<HTMLElement>("[role=button]") ?? e.currentTarget)); }}>

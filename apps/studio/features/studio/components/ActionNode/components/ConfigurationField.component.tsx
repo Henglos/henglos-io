@@ -1,13 +1,15 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAtom, useAtomValue } from "jotai";
-import { Badge, Button, Dropdown, Input, Select, Switch, Text, Tooltip } from "@henglosio/ui";
-import { ConfigurationParser, contextSourcesOf, emptyShapeValue, outputReaches, isJsonShape, isShapeCompatible, resolveWorkflowAction } from "@henglosio/workflow";
-import type { IAnyValueKindSchema, IAnyValueSchema, IBoardRuntime, IComponentRuntime, IConfigurationRuntime, IConfigurationSchema, IConnectionRuntime, ICredentialValueSchema, IFileValueSchema, IOptionEntrySchema, IOptionValueSchema, IPinSchema, IShape, IVariableRuntime, IWorkflowRuntime } from "@henglosio/workflow";
+import { Badge, Button, Dropdown, Input, Select, Switch, Text, ToggleGroup, Tooltip } from "@henglosio/ui";
+import { ConfigurationParser, contextSourcesOf, emptyShapeValue, outputReaches, isJsonShape, isShapeCompatible, isVariablesComponent, resolveWorkflowAction } from "@henglosio/workflow";
+import type { IAnyValueKindSchema, IAnyValueSchema, IAssignmentCollectionValueSchema, IFilterValueSchema, IBoardRuntime, IComponentRuntime, IConfigurationRuntime, IConfigurationSchema, IConnectionRuntime, ICredentialValueSchema, IFileValueSchema, IOptionEntrySchema, IOptionValueSchema, IPinSchema, IShape, IVariableRuntime, IWorkflowRuntime } from "@henglosio/workflow";
 import { FileField } from "./FileField.component";
 import { CredentialField } from "./CredentialField.component";
+import { OptionsField } from "./OptionsField.component";
+import { AssignmentCollectionField, CollectionField, DateTimeField, FilterField, FixedCollectionField, JsonField, MultiOptionsField, NoticeField, TextValueField } from "./properties/PropertyEditors.component";
 import { ShapeValueEditor } from "@/features/studio/components/ShapeEditor/ShapeValueEditor.component";
 import { WorkflowAtom } from "@/features/studio/store/workflow.store";
-import { ChevronDown, Code2, Info, Variable, X } from "lucide-react";
+import { Check, ChevronDown, CircleHelp, Code2, Info, Variable, X } from "lucide-react";
 import clsx from "clsx";
 import { useSyncedDraft } from "@/features/studio/lib/useSyncedDraft";
 import { dragExpression, useBindDroppable } from "@/features/studio/lib/bindDrag";
@@ -23,9 +25,20 @@ import { CodeEditorTargetAtom } from "@/features/studio/store/canvas.store";
 // on a type resolveExpectedType doesn't cover would let the user write a
 // script that silently gets dropped at compile time.
 const CODE_ELIGIBLE_TYPES: ReadonlySet<IConfigurationSchema["type"]> = new Set([
-	"toggle", "integer", "float", "pin", "any", "string", "password", "options", "bytes", "color",
+	"toggle", "integer", "float", "pin", "any", "string", "password", "options", "bytes", "color", "dateTime",
 	// A script returning a list / a dict — sent as its JSON.
-	"list", "object",
+	"list", "object", "json", "multiOptions", "collection", "fixedCollection", "filter", "assignmentCollection",
+]);
+
+// Types made of fields of their own (a filter's conditions, a collection's
+// fields): what's dropped goes to the field under the pointer, never binds the
+// whole of it — a script can, through Fixed | Python.
+const HOLDS_FIELDS: ReadonlySet<IConfigurationSchema["type"]> = new Set(["filter", "collection", "fixedCollection", "assignmentCollection"]);
+
+// n8n's types whose value is a list or an object (JSON on the board): bound as
+// a whole, to whatever list or object an output, a variable or a script holds.
+const JSON_VALUE_TYPES: ReadonlySet<IConfigurationSchema["type"]> = new Set([
+	"json", "multiOptions", "collection", "fixedCollection", "filter", "assignmentCollection",
 ]);
 
 /** The shape a list / object config holds — null for the other types. */
@@ -70,7 +83,7 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 	const targetShape = configShape(base);
 	const isShapeAllowed = (source: IShape | "any" | string[] | undefined) =>
 		targetShape ? source === undefined || isShapeCompatible(source as IShape, targetShape)
-		: base.type === "any" || !isJsonShape(source);
+		: base.type === "any" || JSON_VALUE_TYPES.has(base.type) || !isJsonShape(source);
 	const [codeEditorTarget, setCodeEditorTarget] = useAtom(CodeEditorTargetAtom);
 	// Why the typed value doesn't pass the config's filters (patterns), if it doesn't.
 	const [filterError, setFilterError] = useState<string | null>(null);
@@ -92,6 +105,17 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 	// Any config can read a variable — except Set's own "which variable" and a
 	// script field (a variable holding the source to run means nothing).
 	const canBindVariable = !!onBindVariable && base.type !== "variable" && base.type !== "code" && base.type !== "file" && base.type !== "credential";
+
+	// Variables' Set: its Value is typed in as the variable it writes is — an
+	// integer variable takes a number, a list one a list. Undefined anywhere
+	// else, or before a variable is picked: the kind is the user's to choose.
+	const setVariableType = useMemo(() => {
+		if (!workflowData || !isVariablesComponent(component) || base.type !== "any" || base.displayName !== "Value") return undefined;
+		const resolved = resolveWorkflowAction(workflowData, actionId);
+		if (resolved?.action.base.displayName !== "Set") return undefined;
+		const variableId = resolved.configurations.find(config => config.base.type === "variable")?.value;
+		return variables.find(variable => variable.id === variableId)?.type;
+	}, [workflowData, component, base, actionId, variables]);
 
 	// A variable fits when it's bindable here and its shape fits the config's.
 	const variableFits = (variableId: string) => {
@@ -116,6 +140,8 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 	const drop = useBindDroppable(`config:${actionId}:${configuration.id}`, {
 		accepts: drag =>
 			base.type === "file" || base.type === "credential" ? "deny"
+			// Fields inside take a drop (a condition's value — a pill), not the whole of it.
+			: HOLDS_FIELDS.has(base.type) ? null
 			: drag.kind === "variable" ? (variableFits(drag.variableId) ? "ok" : "deny")
 			: drag.kind === "field" ? (fieldFits(drag.actionId, drag.outputName, drag.path) ? "ok" : "deny")
 			: !onBindOutput ? null
@@ -130,6 +156,9 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 	const dragRing = drop.state === "ok" ? "ring-1 ring-accent" : drop.state === "deny" ? "ring-1 ring-danger" : undefined;
 
 	const dropTarget = { ref: drop.setNodeRef };
+
+	// n8n's notice: a note in the node — no value, nothing to bind.
+	if (base.type === "notice") return <NoticeField text={base.displayName} tone={base.tone} />;
 
 	if (binding && "code" in binding) {
 
@@ -148,8 +177,8 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 		});
 
 		return (
-			<div className={clsx("flex flex-col gap-2 nodrag", compact && "w-full min-w-0")} title={compact ? base.description : undefined}>
-				{!compact && <FieldLabel base={base} />}
+			<div className={clsx("flex flex-col gap-1.5 nodrag w-full min-w-0", !compact && "group/param")}>
+				{!compact && <FieldLabel base={base} mode="code" onCode={openEditor} onFixed={() => onChange(undefined)} />}
 				<div className="flex items-center gap-2">
 					<button
 						type="button"
@@ -164,7 +193,7 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 						<Code2 size={12} className="text-accent-fg shrink-0" />
 						<Text variant="dim" size="xs" font="mono" className="truncate">{preview}</Text>
 					</button>
-					<Button.Root variant="ghost" className="p-2!" onClick={() => onChange(undefined)}>
+					<Button.Root variant="ghost" className={compact ? "size-6 p-0! justify-center shrink-0" : "p-2!"} onClick={() => onChange(undefined)} title="Unbind">
 						<Button.Icon>
 							<X size={12} />
 						</Button.Icon>
@@ -180,19 +209,19 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 		const variable = variables.find(v => v.id === binding.variableId);
 
 		return (
-			<div className={clsx("flex flex-col gap-2 nodrag", compact && "w-full min-w-0")} title={compact ? base.description : undefined} {...dropTarget}>
+			<div className={clsx("flex flex-col gap-1.5 nodrag w-full min-w-0", !compact && "group/param")} {...dropTarget}>
 				{!compact && <FieldLabel base={base} />}
 				<div className="flex items-center gap-2">
 					<Badge
 						variant={variable ? "default" : "error"}
-						className={clsx("w-fit", !variable && "ring-1 ring-danger", dragRing)}
+						className={clsx("flex-1 min-w-0 h-8", !variable && "ring-1 ring-danger", dragRing)}
 					>
 						<span className="flex items-center gap-1 font-mono">
 							<Variable size={11} className="shrink-0" />
 							{variable ? variable.name : "removed variable"}
 						</span>
 					</Badge>
-					<Button.Root variant="ghost" className="p-2!" onClick={() => onChange(undefined)}>
+					<Button.Root variant="ghost" className={compact ? "size-6 p-0! justify-center shrink-0" : "p-2!"} onClick={() => onChange(undefined)} title="Unbind">
 						<Button.Icon>
 							<X size={12} />
 						</Button.Icon>
@@ -208,13 +237,13 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 		const isOutputBinding = "outputName" in binding;
 
 		return (
-			<div className={clsx("flex flex-col gap-2 nodrag", compact && "w-full min-w-0")} title={compact ? base.description : undefined} {...dropTarget}>
+			<div className={clsx("flex flex-col gap-1.5 nodrag w-full min-w-0", !compact && "group/param")} {...dropTarget}>
 				{!compact && <FieldLabel base={base} />}
 				<div className="flex items-center gap-2">
 					<Badge
 						variant={isBindingBroken ? "error" : "default"}
 						className={clsx(
-							"w-fit",
+							"flex-1 min-w-0 h-8",
 							isBindingBroken && "ring-1 ring-danger",
 							dragRing,
 						)}
@@ -224,7 +253,7 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 							: binding.configurationName
 						}
 					</Badge>
-					<Button.Root variant="ghost" className="p-2!" onClick={() => onChange(undefined)}>
+					<Button.Root variant="ghost" className={compact ? "size-6 p-0! justify-center shrink-0" : "p-2!"} onClick={() => onChange(undefined)} title="Unbind">
 						<Button.Icon>
 							<X size={12} />
 						</Button.Icon>
@@ -280,22 +309,26 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 		<div
 			className={clsx(
 				"flex gap-2 nodrag rounded-sm transition-shadow",
-				compact ? "flex-row items-center w-full min-w-0" : "flex-col w-fit",
+				compact ? "flex-row items-center w-full min-w-0" : "group/param flex-col w-full gap-1.5",
 			)}
-			title={compact ? base.description : undefined}
 			{...dropTarget}
 		>
 
 			{!compact && (
 				<FieldLabel
 					base={base}
-					onEnableCode={onSetCode && CODE_ELIGIBLE_TYPES.has(base.type) ? openCodeMode : undefined}
+					mode="fixed"
+					onCode={onSetCode && CODE_ELIGIBLE_TYPES.has(base.type) ? openCodeMode : undefined}
 				/>
 			)}
 
 			<div className={clsx(dragRing, dragRing && "rounded-md", compact && "flex-1 min-w-0 [&>*]:w-full")}>
 
-				{base.type === "string" && (
+				{base.type === "string" && (base.rows ?? 1) > 1 && (
+					<TextValueField value={draft as string | undefined} onChange={next => commitChecked(next)} placeholder={base.placeholder} rows={base.rows} />
+				)}
+
+				{base.type === "string" && (base.rows ?? 1) <= 1 && (
 					<Input.Root className={clsx("nodrag", filterError && "ring-1 ring-danger rounded-md")} value={draft as string ?? ""}>
 						<Input.Field
 							placeholder={base.placeholder}
@@ -396,7 +429,7 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 						value={draft as string | undefined}
 						options={base.options}
 						onChange={commit}
-						className={compact ? "w-full" : undefined}
+						className="w-full"
 					/>
 				)}
 
@@ -404,6 +437,7 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 					<AnyField
 						value={draft as IAnyValueSchema | undefined}
 						availables={base.availables}
+						{...(setVariableType ? { kind: setVariableType } : {})}
 						onChange={commit}
 					/>
 				)}
@@ -439,8 +473,36 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 					<CredentialField base={base} value={draft as ICredentialValueSchema | undefined} onChange={commit} />
 				)}
 
+				{base.type === "dateTime" && (
+					<DateTimeField value={draft as string | undefined} onChange={commit} />
+				)}
+
+				{base.type === "json" && (
+					<div className="w-full"><JsonField value={draft as string | undefined} onChange={commit} rows={base.rows} /></div>
+				)}
+
+				{base.type === "multiOptions" && (
+					<div className="w-full"><MultiOptionsField value={draft as string[] | undefined} options={base.options} onChange={commit} /></div>
+				)}
+
+				{base.type === "collection" && (
+					<div className="w-full"><CollectionField property={base} value={draft as Record<string, unknown> | undefined} onChange={commit} /></div>
+				)}
+
+				{base.type === "fixedCollection" && (
+					<div className="w-full"><FixedCollectionField property={base} value={draft as Record<string, unknown> | undefined} onChange={commit} /></div>
+				)}
+
+				{base.type === "filter" && (
+					<div className="w-full"><FilterField value={draft as IFilterValueSchema | undefined} onChange={commit} /></div>
+				)}
+
+				{base.type === "assignmentCollection" && (
+					<div className="w-full"><AssignmentCollectionField value={draft as IAssignmentCollectionValueSchema | undefined} onChange={commit} /></div>
+				)}
+
 				{(base.type === "list" || base.type === "object") && targetShape && (
-					<div className="w-64">
+					<div className="w-full">
 						<ShapeValueEditor
 							shape={targetShape}
 							value={draft ?? base.defaultValue ?? emptyShapeValue(targetShape)}
@@ -453,19 +515,29 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 
 			</div>
 
-			{compact && onSetCode && CODE_ELIGIBLE_TYPES.has(base.type) && (
-				<button
-					type="button"
-					onClick={openCodeMode}
-					className="nodrag shrink-0 text-fg-secondary hover:text-accent-fg cursor-pointer"
-					title="Define with Python"
-				>
-					<Code2 size={11} />
-				</button>
+			{/* Compact: a slot as wide as Unbind's on a bound field, empty when it takes no code — every field ends at the same place. */}
+			{compact && (
+				<span className="nodrag flex items-center justify-center size-6 shrink-0">
+					{onSetCode && CODE_ELIGIBLE_TYPES.has(base.type) && (
+						<button
+							type="button"
+							onClick={openCodeMode}
+							className="flex items-center justify-center size-6 rounded-sm text-fg-secondary hover:text-accent-fg hover:bg-hover cursor-pointer"
+							title="Define with Python"
+						>
+							<Code2 size={12} />
+						</button>
+					)}
+				</span>
 			)}
 
 			{filterError && (
-				<Text variant="low" size="xs" className="text-danger! max-w-56">{filterError}</Text>
+				<Text variant="low" size="xs" className="text-danger!">{filterError}</Text>
+			)}
+
+			{/* n8n's parameter hint: a line under the field. */}
+			{!compact && base.hint && (
+				<Text variant="low" size="xs">{base.hint}</Text>
 			)}
 
 
@@ -476,46 +548,44 @@ export const ConfigurationField: React.FC<ConfigurationFieldProps> = ({ configur
 
 type FieldLabelProps = {
 	base: IConfigurationRuntime["base"];
-	// Present only for a type in CODE_ELIGIBLE_TYPES with onSetCode wired in —
-	// renders the small "switch to Python" trigger at the end of the label row.
-	onEnableCode?: () => void;
+	/** Typed in ("fixed"), or computed by Python ("code"). */
+	mode?: "fixed" | "code";
+	// Fixed | Python, at the end of the label row — only for a type in
+	// CODE_ELIGIBLE_TYPES with onSetCode wired in.
+	onCode?: () => void;
+	onFixed?: () => void;
 };
 
-const FieldLabel: React.FC<FieldLabelProps> = ({ base, onEnableCode }) => (
-	<div className="flex items-center gap-2">
-		{base.description?.trim() ? (
-			// Its description, on hover — the name or the ⓘ after it.
-			<Tooltip.Provider delayDuration={300}>
+const FieldLabel: React.FC<FieldLabelProps> = ({ base, mode = "fixed", onCode, onFixed }) => (
+	<div className="flex items-center gap-1.5 min-h-6">
+		<Text variant="high" size="xs" className="font-medium truncate">{base.displayName}</Text>
+		{base.required && <span className="text-xs leading-4 text-danger">*</span>}
+		{base.description?.trim() && (
+			// Its description, n8n's way: a (?) that shows on hover.
+			<Tooltip.Provider delayDuration={200}>
 				<Tooltip.Root>
 					<Tooltip.Trigger asChild>
-						<span className="nodrag group/label inline-flex items-center gap-1 min-w-0 cursor-help">
-							<Text variant="dim" size="xs" className="truncate">{base.displayName}</Text>
-							<Info size={10} className="shrink-0 text-fg-muted opacity-60 group-hover/label:opacity-100 group-hover/label:text-accent-fg transition-opacity" />
+						<span className="nodrag flex items-center text-fg-muted hover:text-fg cursor-help opacity-0 group-hover/param:opacity-100 transition-opacity">
+							<CircleHelp size={12} />
 						</span>
 					</Tooltip.Trigger>
 					<Tooltip.Content side="top" align="start">
-						<Text variant="high" size="xs" className="whitespace-normal">{base.description}</Text>
+						<Text variant="high" size="xs" className="whitespace-normal max-w-72">{base.description}</Text>
 					</Tooltip.Content>
 				</Tooltip.Root>
 			</Tooltip.Provider>
-		) : (
-			<Text variant="dim" size="xs">{base.displayName}</Text>
 		)}
-		{base.required && <Text variant="accent" size="xs">*</Text>}
-		{onEnableCode && (
-			<Tooltip.Provider>
-				<Tooltip.Root>
-					<Tooltip.Trigger
-						onClick={onEnableCode}
-						className="nodrag ml-auto text-fg-secondary hover:text-accent-fg cursor-pointer"
-					>
-						<Code2 size={11} />
-					</Tooltip.Trigger>
-					<Tooltip.Content>
-						<Text variant="high" size="xs">Definir com Python</Text>
-					</Tooltip.Content>
-				</Tooltip.Root>
-			</Tooltip.Provider>
+		{(onCode || onFixed) && (
+			// n8n's Fixed | Expression: a typed-in value, or Python that computes it on the board.
+			<ToggleGroup.Root
+				size="sm"
+				value={mode}
+				onValueChange={next => next === "code" ? onCode?.() : onFixed?.()}
+				className={clsx("nodrag ml-auto transition-opacity", mode === "code" ? "opacity-100" : "opacity-0 group-hover/param:opacity-100 focus-within:opacity-100")}
+			>
+				<ToggleGroup.Item value="fixed" className="h-5! px-1.5! text-[10px]!">Fixed</ToggleGroup.Item>
+				<ToggleGroup.Item value="code" className="h-5! px-1.5! text-[10px]!">Python</ToggleGroup.Item>
+			</ToggleGroup.Root>
 		)}
 	</div>
 );
@@ -556,105 +626,117 @@ const CodeField: React.FC<CodeFieldProps> = ({ value, isOpen, onOpen }) => {
 
 };
 
-const flattenOptions = (options: IOptionEntrySchema[]): IOptionValueSchema[] =>
-	options.flatMap(option => "categoryName" in option ? option.options : [option]);
-
-type OptionsFieldProps = {
-	value: string | undefined;
-	options: IOptionEntrySchema[];
-	onChange: (value: string) => void;
-	/** Its width — 12rem when not given. */
-	className?: string;
-};
-
-// A real select — one of the declared options; categories group them. A
-// value that isn't one of them (an older workflow's) shows as it is until
-// another is picked.
-const OptionsField: React.FC<OptionsFieldProps> = ({ value, options, onChange, className }) => {
-
-	const flat = flattenOptions(options);
-	const known = flat.some(option => option.value === value);
-
-	return (
-		<Select.Root value={known ? value : ""} onValueChange={onChange} className={clsx("nodrag", className ?? "w-48")}>
-			<Select.Trigger placeholder={value && !known ? value : "Pick one"} />
-			<Select.Content>
-				{options.length === 0 && <Text variant="low" size="xs" className="px-2 py-1.5">No options</Text>}
-				{options.map((option, index) => (
-					"categoryName" in option ? (
-						<Fragment key={option.categoryName}>
-							<Text variant="low" size="xs" className={clsx("block px-2 pb-1", index > 0 ? "pt-3" : "pt-1")}>{option.categoryName}</Text>
-							{option.options.map(nested => (
-								<Select.Item key={nested.value} value={nested.value}>{nested.displayName}</Select.Item>
-							))}
-						</Fragment>
-					) : (
-						<Select.Item key={option.value} value={option.value}>{option.displayName}</Select.Item>
-					)
-				))}
-			</Select.Content>
-		</Select.Root>
-	);
-
-};
-
 // An integer takes a whole number, a float a fractional part too — both may be negative.
-const ANY_KIND_PATTERNS: Record<Exclude<IAnyValueKindSchema, "bool">, RegExp> = {
+const ANY_KIND_PATTERNS: Record<"integer" | "float", RegExp> = {
 	integer: /^-?\d+$/,
 	float: /^-?\d+(\.\d+)?$/,
 };
 
+// A list / an object typed in: of anything (what a dynamic variable holds).
+const ANY_LIST_SHAPE: IShape = { list: "any" };
+const ANY_OBJECT_SHAPE: IShape = { object: {} };
+
+/** What a value of `kind` starts as, when the kind is picked. */
+const emptyAnyValue = (kind: IAnyValueKindSchema): IAnyValueSchema["value"] => {
+	switch (kind) {
+		case "integer":
+		case "float": return 0;
+		case "bool": return false;
+		case "string": return "";
+		case "list": return [];
+		case "object": return {};
+	}
+};
+
+const anyText = (value: IAnyValueSchema | undefined) =>
+	value && (typeof value.value === "number" || typeof value.value === "boolean" || typeof value.value === "string") ? String(value.value) : "";
+
 type AnyFieldProps = {
 	value: IAnyValueSchema | undefined;
 	availables: IAnyValueKindSchema[];
+	/** The kind it takes, set from outside (Set's Value: its variable's type) — no picker then. */
+	kind?: IAnyValueKindSchema;
 	onChange: (value: IAnyValueSchema) => void;
 };
 
-const AnyField: React.FC<AnyFieldProps> = ({ value, availables, onChange }) => {
+const AnyField: React.FC<AnyFieldProps> = ({ value, availables, kind: fixedKind, onChange }) => {
 
-	const kinds = availables;
-	const kind = value?.kind ?? kinds[0]!;
-	const [draft, setDraft] = useSyncedDraft(value, v => (v?.value !== undefined ? String(v.value) : ""));
+	const kind = fixedKind ?? value?.kind ?? availables[0]!;
+	// The value held, when it's of the kind shown — a variable whose type changed leaves an old one.
+	const current = value?.kind === kind ? value : undefined;
+	const [draft, setDraft] = useSyncedDraft(current, anyText);
 
-	const commitValue = () => {
+	const commitText = () => {
+
+		const revert = () => setDraft(anyText(current));
+
+		if (kind === "string") return draft === anyText(current) ? undefined : onChange({ kind, value: draft });
 
 		if (kind === "bool") {
 			const normalized = draft.trim().toLowerCase();
 			if (["true", "1", "yes", "on"].includes(normalized)) return onChange({ kind, value: true });
 			if (["false", "0", "no", "off"].includes(normalized)) return onChange({ kind, value: false });
-			return setDraft(value?.value !== undefined ? String(value.value) : "");
+			return revert();
 		}
 
-		const trimmed = draft.trim();
-		if (!ANY_KIND_PATTERNS[kind].test(trimmed)) return setDraft(value?.value !== undefined ? String(value.value) : "");
-		onChange({ kind, value: Number(trimmed) });
+		if (kind === "integer" || kind === "float") {
+			const trimmed = draft.trim();
+			if (!ANY_KIND_PATTERNS[kind].test(trimmed)) return revert();
+			return onChange({ kind, value: Number(trimmed) });
+		}
 
 	};
 
 	const changeKind = (nextKind: string) => {
-		const next = nextKind === "bool" ? false : 0;
-		setDraft(String(next));
+		const next = emptyAnyValue(nextKind as IAnyValueKindSchema);
+		setDraft(typeof next === "object" ? "" : String(next));
 		onChange({ kind: nextKind as IAnyValueKindSchema, value: next });
 	};
 
+	const picker = !fixedKind && availables.length > 1 && (
+		<Input.Select value={kind} onValueChange={changeKind}>
+			{availables.map(available => (
+				<Select.Item key={available} value={available}>
+					{available}
+				</Select.Item>
+			))}
+		</Input.Select>
+	);
+
+	if (kind === "list" || kind === "object") {
+		const shape = kind === "list" ? ANY_LIST_SHAPE : ANY_OBJECT_SHAPE;
+		return (
+			<div className="nodrag flex flex-col gap-1 min-w-56">
+				{picker && (
+					<Select.Root value={kind} onValueChange={changeKind} className="w-36">
+						<Select.Trigger />
+						<Select.Content>
+							{availables.map(available => (
+								<Select.Item key={available} value={available}>{available}</Select.Item>
+							))}
+						</Select.Content>
+					</Select.Root>
+				)}
+				<ShapeValueEditor
+					shape={shape}
+					value={current?.value ?? emptyAnyValue(kind)}
+					onChange={next => onChange({ kind, value: (next ?? emptyAnyValue(kind)) as IAnyValueSchema["value"] })}
+				/>
+			</div>
+		);
+	}
+
 	return (
-		<Input.Root className="nodrag w-36!">
+		<Input.Root className="nodrag w-full!">
 
 			<Input.Field
-				placeholder={kind === "bool" ? "true / false" : "0"}
+				placeholder={kind === "bool" ? "true / false" : kind === "string" ? "text" : "0"}
 				value={draft}
 				onChange={e => setDraft(e.target.value)}
-				onBlur={commitValue}
+				onBlur={commitText}
 			/>
 
-			<Input.Select value={kind} onValueChange={changeKind}>
-				{kinds.map(available => (
-					<Select.Item key={available} value={available}>
-						{available}
-					</Select.Item>
-				))}
-			</Input.Select>
-
+			{picker}
 
 		</Input.Root>
 	);
@@ -689,7 +771,7 @@ const PinField: React.FC<PinFieldProps> = ({ value, from, filterBy, component, b
 	};
 
 	return (
-		<div className="flex items-center gap-2 w-36">
+		<div className="flex items-center gap-2 w-full">
 
 			<Input.Root value={draft} className="nodrag flex-1">
 				<Input.Prefix>GPIO</Input.Prefix>
@@ -745,7 +827,7 @@ const VariableField: React.FC<VariableFieldProps> = ({ value, variables, onChang
 				<button
 					type="button"
 					className={clsx(
-						"nodrag flex items-center gap-2 w-36 h-8 px-2 rounded-md border text-left cursor-pointer",
+						"nodrag flex items-center gap-2 w-full h-8 px-2 rounded-md border text-left cursor-pointer",
 						"bg-field hover:bg-field-hover transition-colors",
 						missing ? "border-danger" : "border-line",
 					)}

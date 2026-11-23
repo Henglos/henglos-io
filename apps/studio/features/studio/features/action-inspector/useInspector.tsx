@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useAtom, useSetAtom } from "jotai";
-import { RemoveActionFromWorkflowComponent, actionPassesContext, isSwitchAction, isTriggerAction } from "@henglosio/workflow";
+import { RemoveActionFromWorkflowComponent, actionPassesContext, isTriggerAction } from "@henglosio/workflow";
 import type { IActionRuntime, IComponentRuntime, IConfigurationRuntime } from "@henglosio/workflow";
 import { WorkflowAtom } from "@/features/studio/store/workflow.store";
 import { WorkspaceSelectionAtom } from "@/features/studio/store/canvas.store";
@@ -10,9 +10,9 @@ import { useSyncedDraft } from "@/features/studio/lib/useSyncedDraft";
 import { mergeConfigurations } from "@/features/studio/components/ActionNode/lib/mergeConfigurations";
 import { isConfigVisible } from "@/features/studio/components/ActionNode/lib/isConfigVisible";
 import { ConfigurationField } from "@/features/studio/components/ActionNode/components/ConfigurationField.component";
+import { CategorizedFields } from "@/features/studio/components/ActionNode/components/CategorizedFields.component";
 import { upstreamOf } from "@/features/studio/features/code-editor/codeContextNames";
 import { PassContextField } from "./components/PassContextField.component";
-import { isSwitchCaseConfig, SwitchCasesField } from "./components/SwitchCasesField.component";
 
 const NOTES_COMMIT_DELAY_MS = 400;
 
@@ -34,8 +34,7 @@ export function useInspector(component: IComponentRuntime, action: IActionRuntim
 	// Visibility is evaluated over the whole list: a basic config may show/hide
 	// on an advanced one (displayOptions reference siblings by displayName).
 	const visible = configurations.filter(configuration => isConfigVisible(configuration, configurations));
-	// A Switch case's configs show grouped by case (renderSwitchCases), not here.
-	const basic = visible.filter(configuration => !configuration.base.advanced && !isSwitchCaseConfig(configuration));
+	const basic = visible.filter(configuration => !configuration.base.advanced);
 	const advanced = visible.filter(configuration => configuration.base.advanced);
 	const outputSchema = action.base.outputSchema ?? [];
 	// Values the action published that no output declares.
@@ -70,7 +69,8 @@ export function useInspector(component: IComponentRuntime, action: IActionRuntim
 			onBindVariable={variableId => configure(configuration.id, { op: "bind:configuration-variable", variableId })}
 		/>
 	);
-	const renderFields = (list: IConfigurationRuntime[]) => list.map(configuration => renderField(configuration));
+	// In their categories (a config's `category`): each a section with its title.
+	const renderFields = (list: IConfigurationRuntime[]) => <CategorizedFields configurations={list} renderField={configuration => renderField(configuration)} />;
 
 	// Notes: the draft stays local while typing and only reaches the workflow
 	// after a pause (or on blur/unmount) — like the code editor.
@@ -110,17 +110,9 @@ export function useInspector(component: IComponentRuntime, action: IActionRuntim
 	// How many entries the Advanced fold holds.
 	const advancedCount = advanced.length + (canPassContext ? 1 : 0);
 
-	// Switch: its cases, a group each — added at the end, removed, reordered.
-	const isSwitch = !!workflow && isSwitchAction(workflow.data, action.id);
-	const renderSwitchCases = () => isSwitch && (
-		<SwitchCasesField
-			configurations={configurations}
-			renderField={configuration => renderField(configuration, true)}
-			onAdd={() => mutate({ op: "add:switch-case", componentId: component.id, actionId: action.id })}
-			onRemove={n => mutate({ op: "remove:switch-case", componentId: component.id, actionId: action.id, case: n })}
-			onMove={(from, to) => mutate({ op: "move:switch-case", componentId: component.id, actionId: action.id, from, to })}
-		/>
-	);
+	// Its name — empty: back to its action's own (see RenameWorkflowAction).
+	const onRename = (alias: string) =>
+		mutate({ op: "update:action-alias", componentId: component.id, actionId: action.id, alias });
 
 	const onToggleDisabled = () =>
 		mutate({ op: "update:action-disabled", componentId: component.id, actionId: action.id, disabled: !disabled });
@@ -136,8 +128,8 @@ export function useInspector(component: IComponentRuntime, action: IActionRuntim
 
 	return {
 		component, action, shown, runner, debugging, disabled,
-		basic, advanced, advancedCount, renderFields, renderPassContext, renderSwitchCases, isSwitch, outputSchema, undeclared, upstream,
-		notes, onNotesChange, flushNotes, onToggleDisabled, onDelete, close,
+		basic, advanced, advancedCount, renderFields, renderPassContext, outputSchema, undeclared, upstream,
+		notes, onNotesChange, flushNotes, onRename, onToggleDisabled, onDelete, close,
 	};
 
 }

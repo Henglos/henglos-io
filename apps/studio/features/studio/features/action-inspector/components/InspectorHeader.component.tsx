@@ -19,7 +19,7 @@ type InspectorHeaderProps = {
 /** What's selected, how its last run went, and what can be done to it. */
 export const InspectorHeader: React.FC<InspectorHeaderProps> = ({ inspector, notesOpen, onToggleNotes, onShowOutput }) => {
 
-	const { action, component, shown, runner, debugging, disabled, notes } = inspector;
+	const { action, component, shown, runner, debugging, disabled, notes, onRename } = inspector;
 	const fallback = shown?.output.name === "Fallback";
 	// Start can't run alone, be skipped or removed — only set.
 	const start = component.id === START_NODE_ID;
@@ -33,7 +33,12 @@ export const InspectorHeader: React.FC<InspectorHeaderProps> = ({ inspector, not
 			<div className="flex items-center gap-1">
 				<div className="flex items-baseline gap-2 min-w-0 flex-1" title={action.base.description}>
 					<ActionIcon icon={nodeIcon(component, action)} fallback={null} size={13} className="shrink-0 self-center text-fg-muted" />
-					<Text variant="high" font="mono" size="sm" className={clsx("truncate", disabled && "line-through decoration-fg-muted")}>{action.alias}</Text>
+					<Text
+						variant="high" font="mono" size="sm"
+						className={clsx("truncate", disabled && "line-through decoration-fg-muted")}
+						editable dbClick value={action.alias} onChange={onRename} placeholder={action.base.displayName}
+						inputClassName="font-mono"
+					/>
 					<Text variant="low" size="xs" className="truncate">{isLogicComponent(component) ? "Logic" : component.alias}</Text>
 					{(start || trigger) && <span className="self-center"><TriggerTag /></span>}
 				</div>

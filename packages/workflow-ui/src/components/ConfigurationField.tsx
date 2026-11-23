@@ -601,10 +601,18 @@ const OptionsField: React.FC<OptionsFieldProps> = ({ value, options, readOnly, o
 };
 
 // An integer takes a whole number, a float a fractional part too — both may be negative.
-const ANY_KIND_PATTERNS: Record<Exclude<IAnyValueKindSchema, "bool">, RegExp> = {
+const ANY_KIND_PATTERNS: Record<"integer" | "float", RegExp> = {
 	integer: /^-?\d+$/,
 	float: /^-?\d+(\.\d+)?$/,
 };
+
+/** What a value of `kind` starts as, when the kind is picked. */
+const emptyAnyValue = (kind: IAnyValueKindSchema): IAnyValueSchema["value"] =>
+	kind === "bool" ? false : kind === "string" ? "" : kind === "list" ? [] : kind === "object" ? {} : 0;
+
+// A list / an object shows as its JSON; anything else as its text.
+const anyText = (value: IAnyValueSchema | undefined) =>
+	value === undefined ? "" : typeof value.value === "object" ? JSON.stringify(value.value) : String(value.value);
 
 type AnyFieldProps = {
 	value: IAnyValueSchema | undefined;
@@ -617,36 +625,52 @@ const AnyField: React.FC<AnyFieldProps> = ({ value, availables, readOnly, onChan
 
 	const kinds = availables;
 	const kind = value?.kind ?? kinds[0]!;
-	const [draft, setDraft] = useSyncedDraft(value, v => (v?.value !== undefined ? String(v.value) : ""));
+	const [draft, setDraft] = useSyncedDraft(value, anyText);
 
 	const commitValue = () => {
 
 		if (readOnly) return;
+		const revert = () => setDraft(anyText(value));
 
-		if (kind === "bool") {
-			const normalized = draft.trim().toLowerCase();
-			if (["true", "1", "yes", "on"].includes(normalized)) return onChange({ kind, value: true });
-			if (["false", "0", "no", "off"].includes(normalized)) return onChange({ kind, value: false });
-			return setDraft(value?.value !== undefined ? String(value.value) : "");
+		switch (kind) {
+			case "bool": {
+				const normalized = draft.trim().toLowerCase();
+				if (["true", "1", "yes", "on"].includes(normalized)) return onChange({ kind, value: true });
+				if (["false", "0", "no", "off"].includes(normalized)) return onChange({ kind, value: false });
+				return revert();
+			}
+			case "string":
+				return onChange({ kind, value: draft });
+			case "list":
+			case "object": {
+				try {
+					const parsed: unknown = JSON.parse(draft);
+					const fits = kind === "list" ? Array.isArray(parsed) : !!parsed && typeof parsed === "object" && !Array.isArray(parsed);
+					return fits ? onChange({ kind, value: parsed as IAnyValueSchema["value"] }) : revert();
+				} catch {
+					return revert();
+				}
+			}
+			default: {
+				const trimmed = draft.trim();
+				if (!ANY_KIND_PATTERNS[kind].test(trimmed)) return revert();
+				return onChange({ kind, value: Number(trimmed) });
+			}
 		}
-
-		const trimmed = draft.trim();
-		if (!ANY_KIND_PATTERNS[kind].test(trimmed)) return setDraft(value?.value !== undefined ? String(value.value) : "");
-		onChange({ kind, value: Number(trimmed) });
 
 	};
 
 	const changeKind = (nextKind: string) => {
-		const next = nextKind === "bool" ? false : 0;
-		setDraft(String(next));
-		onChange({ kind: nextKind as IAnyValueKindSchema, value: next });
+		const next = { kind: nextKind as IAnyValueKindSchema, value: emptyAnyValue(nextKind as IAnyValueKindSchema) };
+		setDraft(anyText(next));
+		onChange(next);
 	};
 
 	return (
-		<Input.Root className="nodrag w-36!">
+		<Input.Root className={kind === "list" || kind === "object" || kind === "string" ? "nodrag w-48!" : "nodrag w-36!"}>
 
 			<Input.Field
-				placeholder={kind === "bool" ? "true / false" : "0"}
+				placeholder={kind === "bool" ? "true / false" : kind === "string" ? "text" : kind === "list" ? "[1, 2]" : kind === "object" ? '{"a": 1}' : "0"}
 				value={draft}
 				readOnly={readOnly}
 				onChange={e => setDraft(e.target.value)}
