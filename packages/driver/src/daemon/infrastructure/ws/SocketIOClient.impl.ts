@@ -1,9 +1,28 @@
 import { io, Socket } from "socket.io-client";
+import * as parser from "socket.io-parser";
 import { injectable } from "tsyringe";
 import { serverHttpAgent, serverHttpsAgent } from "./serverAgents.js";
 import { createLogger } from "../logger/Logger.js";
 
 const log = createLogger("ws");
+
+/**
+ * Binary parts one message may carry. socket.io-parser takes 10 at most by
+ * default and drops the connection past that ("parse error"), yet one task
+ * sends a binary per frame and per attached file — a record of 11 actions is
+ * already over. The hosting is the driver's own: this only bounds what a
+ * message can make it hold.
+ */
+const MAX_ATTACHMENTS = 4096;
+
+class Decoder extends parser.Decoder {
+	constructor() {
+		super({ maxAttachments: MAX_ATTACHMENTS });
+	}
+}
+
+/** socket.io-client's default parser, with Decoder taking MAX_ATTACHMENTS. */
+const hostingParser = { ...parser, Decoder };
 
 /** The driver's socket to the hosting (/io/ws, namespace /driver), authenticated with its token. */
 @injectable()
@@ -27,6 +46,7 @@ export class SocketIOClient {
 			path: "/io/ws",
 			extraHeaders: { authorization: token },
 			agent,
+			parser: hostingParser,
 		});
 
 		log.info(`Connecting to ${host}`);
