@@ -1,5 +1,11 @@
 # @henglosio/component-pwm
 
+## 1.1.1
+
+### Patch Changes
+
+- Manifest written the n8n way: each property has a `name`, `default`, `number` / `boolean` with `typeOptions`, options as `{ name, value }`, `displayOptions` by name. Same configs as before — same wire ids, defaults, ranges and visibility; a hosting with @henglosio/workflow 2.3.0 or later reads it.
+
 ## 1.1.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @henglosio/cli
 
+## 1.6.1
+
+### Patch Changes
+
+- Driver: messages from the hosting may carry more binary parts than socket.io-parser's default of 10 — a record of 11 actions, or a session with many attached files, no longer drops the connection ("Disconnected: parse error"). A compile cancelled while it syncs or pulls the image no longer goes on to build.
+
 ## 1.6.0
 
 ### Minor Changes

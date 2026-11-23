@@ -1,5 +1,11 @@
 # @henglosio/hio-system
 
+## 1.6.0
+
+### Minor Changes
+
+- If and Switch are described with manifest properties like any component: If's Conditions are a `filter`, Switch's Routing Rules a `fixedCollection` of filters — out the first rule that holds, or Default. An action can declare `dynamicOutputs`: an output per row of a fixedCollection (Switch's case_N), kept in step with the rows and their wires. On the board, If and Switch evaluate their filters with henglosio.sdk's `matches`, an output or a variable dropped on a value read by its name. If / Switch nodes of an older shape are migrated when the workflow opens; the studio and the board must be updated together — a board on platform < 1.6.0 doesn't read today's If / Switch.
+
 ## 1.5.0
 
 ### Minor Changes

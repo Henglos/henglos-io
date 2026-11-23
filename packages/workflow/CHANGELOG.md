@@ -1,5 +1,13 @@
 # @henglosio/workflow
 
+## 2.3.0
+
+### Minor Changes
+
+- If and Switch are described with manifest properties like any component: If's Conditions are a `filter`, Switch's Routing Rules a `fixedCollection` of filters — out the first rule that holds, or Default. An action can declare `dynamicOutputs`: an output per row of a fixedCollection (Switch's case_N), kept in step with the rows and their wires. On the board, If and Switch evaluate their filters with henglosio.sdk's `matches`, an output or a variable dropped on a value read by its name. If / Switch nodes of an older shape are migrated when the workflow opens; the studio and the board must be updated together — a board on platform < 1.6.0 doesn't read today's If / Switch.
+- Manifest properties can be written the n8n way: `name`, `default`, `hint`, `typeOptions` (`password`, `rows`, `editor`, `minValue` / `maxValue` / `numberPrecision`, `multipleValues`), options as `{ name, value }`, and `displayOptions` keyed by a sibling's `name`. `boolean` and `number` are read as `toggle` and `integer` / `float`; the old types keep working. New types: `dateTime`, `multiOptions`, `json`, `notice`, `collection`, `fixedCollection`, `filter` and `assignmentCollection` — each sent to the board as the action reads it (a filter without the studio's ids, pairs as an object, JSON parsed). A property can declare a `category`, the section the studio shows it in. Values of Variables' Set / Append / Set Field can be typed in as any value type (string, list, object too).
+- Nodes can be renamed (`update:action-alias`) — only the name shown: the wire ids stay.
+
 ## 2.2.0
 
 ### Minor Changes
