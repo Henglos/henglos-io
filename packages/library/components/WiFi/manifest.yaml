@@ -54,23 +54,24 @@ schema:
       script: src/connect.py
       configurations:
         - displayName: Network
+          name: network
           description: The WiFi network to join — one of your credentials (its name and password), or a new one.
           type: credential
           credential: wifi
           required: true
         - displayName: Timeout
+          name: timeout
           description: How long it tries before giving up, in ms — 1000 to 60000. The flow waits meanwhile.
-          type: integer
-          defaultValue: "10000"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1000, maxValue: 60000 }
+          default: 10000
           placeholder: 1000-60000 ms
-          patterns:
-            - { name: Min, value: 1000 }
-            - { name: Max, value: 60000 }
         - displayName: Hostname
+          name: hostname
           advanced: true
           description: The name the board shows in the router's device list — empty keeps the default (espressif).
           type: string
-          defaultValue: ""
+          default: ""
           placeholder: e.g. henglos-board
       outputSchema:
         - &ipOut
@@ -100,15 +101,16 @@ schema:
       script: src/disconnect.py
       configurations:
         - displayName: Interface
+          name: interface
           description: What to stop — the connection to a network (Station), the board's own network (Access Point), or both.
           type: options
-          defaultValue: station
+          default: station
           options:
-            - displayName: Station
+            - name: Station
               value: station
-            - displayName: Access Point
+            - name: Access Point
               value: access_point
-            - displayName: Both
+            - name: Both
               value: both
 
     - displayName: Status
@@ -152,34 +154,34 @@ schema:
       script: src/access_point.py
       configurations:
         - displayName: SSID
+          name: ssid
           description: The network's name, as others will see it.
           type: string
           required: true
-          defaultValue: henglos
+          default: henglos
           placeholder: e.g. henglos
         - displayName: Password
+          name: password
           description: 8 characters or more (WPA2) — empty for an open network anyone can join.
           type: string
-          defaultValue: ""
+          default: ""
           placeholder: open
         - displayName: Channel
+          name: channel
           advanced: true
           description: The WiFi channel, 1 to 13 — another one if the air is crowded. With Connect on too, the board follows the network's channel.
-          type: integer
-          defaultValue: "1"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1, maxValue: 13 }
+          default: 1
           placeholder: 1–13
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 13 }
         - displayName: Max Clients
+          name: maxClients
           advanced: true
           description: How many devices may join at once — 1 to 10.
-          type: integer
-          defaultValue: "4"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1, maxValue: 10 }
+          default: 4
           placeholder: 1–10
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 10 }
       outputSchema:
         - name: ip
           type: any

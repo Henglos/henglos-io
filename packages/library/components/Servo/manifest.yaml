@@ -25,24 +25,30 @@ schema:
       script: src/to_angle.py
       configurations:
         - displayName: Signal Pin
+          name: signalPin
           description: Board pin the servo's signal wire is connected to.
           type: pin
           from: board
           filterBy: [pwm]
         - displayName: Angle
+          name: angle
           description: Target angle, in degrees (0-180). Values outside the range are clamped.
-          type: float
-          defaultValue: "90"
+          type: number
+          default: 90
         - displayName: Min Pulse
+          name: minPulse
           advanced: true
           description: Pulse width at 0°, in microseconds. Raise it if the servo strains at 0°.
-          type: integer
-          defaultValue: "500"
+          type: number
+          typeOptions: { numberPrecision: 0 }
+          default: 500
         - displayName: Max Pulse
+          name: maxPulse
           advanced: true
           description: Pulse width at 180°, in microseconds. Lower it if the servo strains at 180°.
-          type: integer
-          defaultValue: "2500"
+          type: number
+          typeOptions: { numberPrecision: 0 }
+          default: 2500
       outputSchema:
         - name: angle
           type: integer
@@ -56,33 +62,40 @@ schema:
       script: src/rotate.py
       configurations:
         - displayName: Signal Pin
+          name: signalPin
           description: Board pin the servo's signal wire is connected to.
           type: pin
           from: board
           filterBy: [pwm]
         - displayName: Speed
+          name: speed
           description: Rotation speed, 0 (stopped) to 100 (max). Values outside the range are clamped.
-          type: float
-          defaultValue: "50"
+          type: number
+          default: 50
         - displayName: Direction
+          name: direction
           description: Rotation direction.
           type: options
-          defaultValue: clockwise
+          default: clockwise
           options:
-            - displayName: Clockwise
+            - name: Clockwise
               value: clockwise
-            - displayName: Counterclockwise
+            - name: Counterclockwise
               value: counterclockwise
         - displayName: Stop Pulse
+          name: stopPulse
           advanced: true
           description: Pulse width where this servo stands still, in microseconds. Nudge it (e.g. 1480 or 1520) if it creeps at Speed 0.
-          type: integer
-          defaultValue: "1500"
+          type: number
+          typeOptions: { numberPrecision: 0 }
+          default: 1500
         - displayName: Range
+          name: range
           advanced: true
           description: Microseconds from Stop Pulse to full speed.
-          type: integer
-          defaultValue: "500"
+          type: number
+          typeOptions: { numberPrecision: 0 }
+          default: 500
       outputSchema:
         - name: speed
           type: integer
@@ -95,6 +108,7 @@ schema:
       script: src/release.py
       configurations:
         - displayName: Signal Pin
+          name: signalPin
           description: Board pin the servo's signal wire is connected to.
           type: pin
           from: board

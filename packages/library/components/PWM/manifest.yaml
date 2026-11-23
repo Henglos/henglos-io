@@ -32,56 +32,57 @@ schema:
       configurations:
         - &pin
           displayName: Pin
+          name: pin
           description: Board pin the signal goes out on — only PWM-capable pins are listed.
           type: pin
           from: board
           filterBy: [pwm]
           required: true
         - displayName: Duty
+          name: duty
           description: >
             How much of the time the pin is on, from 0 (off) to 100 (fully on),
             in %. Decimals are fine (12.5). Bind it to follow a sensor.
-          type: float
-          defaultValue: "50"
+          type: number
+          typeOptions: { minValue: 0, maxValue: 100 }
+          default: 50
           placeholder: 0–100 %
           required: true
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 100 }
         - &frequency
           displayName: Frequency
+          name: frequency
           description: >
             Signal frequency, from 1 to 40000 Hz. 1000 suits LEDs; motors run
             quieter at 20000 (out of hearing); on a buzzer it's the note.
-          type: integer
-          defaultValue: "1000"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1, maxValue: 40000 }
+          default: 1000
           placeholder: 1–40000 Hz
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 40000 }
         - &scale
           displayName: Scale
+          name: scale
           advanced: true
           description: >
             How Duty maps to the signal. Perceived brightness follows how the
             eye sees light, so a LED dims evenly (50% looks half as bright);
             keep Linear for motors and buzzers.
           type: options
-          defaultValue: linear
+          default: linear
           options:
-            - displayName: Linear
+            - name: Linear
               value: linear
-            - displayName: Perceived brightness
+            - name: Perceived brightness
               value: perceived
         - &invert
           displayName: Invert
+          name: invert
           advanced: true
           description: >
             On for a load that's on when the pin is LOW — a LED wired from
             3.3 V to the pin, an active-low driver. 100% is then fully on.
-          type: toggle
+          type: boolean
           label: Active low
-          defaultValue: false
+          default: false
       outputSchema:
         - name: duty
           type: float
@@ -96,36 +97,33 @@ schema:
       configurations:
         - *pin
         - displayName: To
+          name: to
           description: The duty to end at, from 0 to 100, in %.
-          type: float
-          defaultValue: "100"
+          type: number
+          typeOptions: { minValue: 0, maxValue: 100 }
+          default: 100
           placeholder: 0–100 %
           required: true
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 100 }
         - displayName: Duration
+          name: duration
           description: >
             How long the fade takes, in milliseconds — 0 jumps straight to To,
             up to 600000 (10 minutes). The flow waits for it, like a Delay.
-          type: integer
-          defaultValue: "1000"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 600000 }
+          default: 1000
           placeholder: ms
           required: true
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 600000 }
         - displayName: From
+          name: from
           advanced: true
           description: >
             The duty to start at, from 0 to 100, in %. Leave it empty to start
             where the pin is now (what the last Write or Fade left it at — 0 if
             none).
-          type: float
+          type: number
+          typeOptions: { minValue: 0, maxValue: 100 }
           placeholder: current
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 100 }
         - *frequency
         - *scale
         - *invert
@@ -140,9 +138,10 @@ schema:
       configurations:
         - *pin
         - displayName: Hold Low
+          name: holdLow
           description: >
             Drive the pin LOW after stopping, so what's on it stays off. Off:
             the pin is left floating (an input).
-          type: toggle
+          type: boolean
           label: LOW after
-          defaultValue: true
+          default: true

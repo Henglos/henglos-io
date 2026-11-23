@@ -33,54 +33,56 @@ schema:
       script: src/send.py
       configurations:
         - displayName: TX Pin
+          name: txPin
           description: Board pin driving the IR LED — through a transistor for range (a pin alone lights it for a meter or so).
           type: pin
           from: board
           filterBy: [digital_out]
           required: true
-          defaultValue: { gpio: 26, type: [digital_in, digital_out], displayName: GPIO26 }
+          default: { gpio: 26, type: [digital_in, digital_out], displayName: GPIO26 }
         - displayName: Protocol
+          name: protocol
           description: How the code is sent — NEC is what most remotes use (TV boxes, LED strips, cheap kits); Samsung for Samsung TVs.
           type: options
-          defaultValue: nec
+          default: nec
           options:
-            - displayName: NEC
+            - name: NEC
               value: nec
-            - displayName: Samsung
+            - name: Samsung
               value: samsung
         - &address
           displayName: Address
+          name: address
           description: >
             The device the code is for, as Receive shows it — hex ("0x00") or
             decimal. NEC takes up to 0xFFFF (extended NEC past 0xFF), Samsung
             up to 0xFF.
           type: string
-          defaultValue: "0x00"
+          default: "0x00"
           placeholder: e.g. 0x00
         - &command
           displayName: Command
+          name: command
           description: The button, as Receive shows it — hex ("0x45") or decimal, up to 0xFF.
           type: string
           required: true
-          defaultValue: "0x45"
+          default: "0x45"
           placeholder: e.g. 0x45
         - displayName: Repeats
+          name: repeats
           description: Frames sent after the code as a held button sends them, ~108 ms apart — 0 to 50. 0 is a single press.
-          type: integer
-          defaultValue: "0"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 50 }
+          default: 0
           placeholder: 0–50
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 50 }
         - displayName: Carrier
+          name: carrier
           advanced: true
           description: The light's blink rate, in kHz — 38 for almost every remote; 36 or 40 for a few. 30 to 60.
-          type: float
-          defaultValue: "38"
+          type: number
+          typeOptions: { minValue: 30, maxValue: 60 }
+          default: 38
           placeholder: 30–60 kHz
-          patterns:
-            - { name: Min, value: 30 }
-            - { name: Max, value: 60 }
 
     - displayName: Receive
       description: >
@@ -91,28 +93,29 @@ schema:
       configurations:
         - &rx
           displayName: RX Pin
+          name: rxPin
           description: Board pin wired to the receiver module's OUT (also called DATA or S).
           type: pin
           from: board
           filterBy: [digital_in]
           required: true
-          defaultValue: { gpio: 27, type: [digital_in, digital_out], displayName: GPIO27 }
+          default: { gpio: 27, type: [digital_in, digital_out], displayName: GPIO27 }
         - &timeout
           displayName: Timeout
+          name: timeout
           description: How long it waits for a code, in ms — 10 to 60000. The flow waits meanwhile.
-          type: integer
-          defaultValue: "1000"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 10, maxValue: 60000 }
+          default: 1000
           placeholder: 10–60000 ms
-          patterns:
-            - { name: Min, value: 10 }
-            - { name: Max, value: 60000 }
         - &repeats
           displayName: Repeats
+          name: repeats
           advanced: true
           description: Whether a held button's repeats count as codes too (marked repeat) — off, a held button is one press.
-          type: toggle
+          type: boolean
           label: Held button repeats
-          defaultValue: false
+          default: false
       outputSchema:
         - &protocolOut
           name: protocol
@@ -144,20 +147,22 @@ schema:
       configurations:
         - *rx
         - displayName: Protocol
+          name: protocol
           description: The protocol it has to be — Any takes either.
           type: options
-          defaultValue: any
+          default: any
           options:
-            - displayName: Any
+            - name: Any
               value: any
-            - displayName: NEC
+            - name: NEC
               value: nec
-            - displayName: Samsung
+            - name: Samsung
               value: samsung
         - displayName: Address
+          name: address
           description: The device it has to be for, hex or decimal — empty for any.
           type: string
-          defaultValue: ""
+          default: ""
           placeholder: any
         - *command
         - *timeout
@@ -185,25 +190,28 @@ schema:
       configurations:
         - *rx
         - displayName: Protocol
+          name: protocol
           description: The protocol it has to be — Any takes either.
           type: options
-          defaultValue: any
+          default: any
           options:
-            - displayName: Any
+            - name: Any
               value: any
-            - displayName: NEC
+            - name: NEC
               value: nec
-            - displayName: Samsung
+            - name: Samsung
               value: samsung
         - displayName: Address
+          name: address
           description: The device it has to be for, hex or decimal — empty for any.
           type: string
-          defaultValue: ""
+          default: ""
           placeholder: any
         - displayName: Command
+          name: command
           description: The button it has to be, hex ("0x45") or decimal — empty for any button.
           type: string
-          defaultValue: ""
+          default: ""
           placeholder: any
         - *repeats
       outputSchema:

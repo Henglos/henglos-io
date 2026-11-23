@@ -56,6 +56,7 @@ schema:
       script: src/request_trigger.py
       configurations:
         - displayName: Path
+          name: path
           description: >
             The base path it answers under — /api takes /api and everything
             below it (/api/led/on), read in subpath and segments; / takes
@@ -63,40 +64,43 @@ schema:
             The query (?a=1) doesn't count.
           type: string
           required: true
-          defaultValue: /webhook
+          default: /webhook
           placeholder: /webhook
         - displayName: Method
+          name: method
           description: Which requests run it — Any, or only one method.
           type: options
-          defaultValue: ANY
+          default: ANY
           options:
-            - { displayName: Any, value: ANY }
-            - { displayName: GET, value: GET }
-            - { displayName: POST, value: POST }
-            - { displayName: PUT, value: PUT }
-            - { displayName: PATCH, value: PATCH }
-            - { displayName: DELETE, value: DELETE }
+            - { name: Any, value: ANY }
+            - { name: GET, value: GET }
+            - { name: POST, value: POST }
+            - { name: PUT, value: PUT }
+            - { name: PATCH, value: PATCH }
+            - { name: DELETE, value: DELETE }
         - displayName: Port
+          name: port
           description: The port the board listens on — 80 is plain http://<board ip>/.
-          type: integer
-          defaultValue: "80"
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 65535 }
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1, maxValue: 65535 }
+          default: 80
         - displayName: Pick
+          name: pick
           description: One value from the body's JSON, by its path — sensor.temp, items.0; empty picks nothing. Published as `value`.
           type: string
-          defaultValue: ""
+          default: ""
           placeholder: sensor.temp
         - displayName: Auth
+          name: auth
           description: An HTTP Header Auth credential the request must carry (that header, that value) — else 401. Empty lets anyone in.
           type: credential
           credential: http_header
         - displayName: Save To
+          name: saveTo
           advanced: true
           description: A file of your own for the body — /data/last.json; it stays. Empty, it goes to a temporary file (one per trigger), cleared when a session starts.
           type: string
-          defaultValue: ""
+          default: ""
           placeholder: /data/request.json
       outputSchema:
         - name: method
@@ -140,71 +144,78 @@ schema:
       script: src/request.py
       configurations:
         - displayName: Method
+          name: method
           description: What the request does — GET reads, POST sends, PUT/PATCH change, DELETE removes.
           type: options
-          defaultValue: GET
+          default: GET
           options:
-            - { displayName: GET, value: GET }
-            - { displayName: POST, value: POST }
-            - { displayName: PUT, value: PUT }
-            - { displayName: PATCH, value: PATCH }
-            - { displayName: DELETE, value: DELETE }
-            - { displayName: HEAD, value: HEAD }
+            - { name: GET, value: GET }
+            - { name: POST, value: POST }
+            - { name: PUT, value: PUT }
+            - { name: PATCH, value: PATCH }
+            - { name: DELETE, value: DELETE }
+            - { name: HEAD, value: HEAD }
         - displayName: URL
+          name: url
           description: The address to call — https:// or http:// (without one, http://).
           type: string
           required: true
-          defaultValue: ""
+          default: ""
           placeholder: https://api.example.com/data
         - displayName: Body
+          name: body
           description: What POST, PUT and PATCH send — JSON, form fields or text. GET, HEAD and DELETE send none.
           type: string
-          defaultValue: ""
+          default: ""
           placeholder: '{"temp": 21.5}'
         - displayName: Pick
+          name: pick
           description: >
             One value from the JSON answer, by its path — main.temp,
             weather.0.description (a number steps into a list); empty picks
             nothing. Published as `value`.
           type: string
-          defaultValue: ""
+          default: ""
           placeholder: main.temp
         - displayName: Auth
+          name: auth
           description: An HTTP Header Auth credential — the API key or token sent as a header. Empty sends none.
           type: credential
           credential: http_header
         - displayName: Headers
+          name: headers
           advanced: true
           description: Headers to send — a name and a value each.
           type: list
           items: { object: { name: string, value: string } }
           maxItems: 8
-          defaultValue: []
+          default: []
         - displayName: Content Type
+          name: contentType
           advanced: true
           description: What the Body is — Auto takes JSON when it starts with { or [, text otherwise. A Content-Type in Headers wins.
           type: options
-          defaultValue: auto
+          default: auto
           options:
-            - { displayName: Auto, value: auto }
-            - { displayName: JSON, value: application/json }
-            - { displayName: Form, value: application/x-www-form-urlencoded }
-            - { displayName: Text, value: text/plain }
+            - { name: Auto, value: auto }
+            - { name: JSON, value: application/json }
+            - { name: Form, value: application/x-www-form-urlencoded }
+            - { name: Text, value: text/plain }
         - displayName: Save To
+          name: saveTo
           advanced: true
           description: A file of your own for the answer — /data/weather.json, its folders made; it stays. Empty, it goes to a temporary file, cleared when a session starts.
           type: string
-          defaultValue: ""
+          default: ""
           placeholder: /data/response.json
         - displayName: Timeout
+          name: timeout
           advanced: true
           description: How long it waits for the server, in ms — 1000 to 60000.
-          type: integer
-          defaultValue: "10000"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1000, maxValue: 60000 }
+          default: 10000
           placeholder: 1000–60000 ms
-          patterns:
-            - { name: Min, value: 1000 }
-            - { name: Max, value: 60000 }
       outputSchema:
         - name: status
           type: integer
@@ -232,15 +243,17 @@ schema:
       script: src/read_json.py
       configurations:
         - displayName: File
+          name: file
           description: The file to read — bind a Request's `file`, or a path like /data/response.json.
           type: string
           required: true
-          defaultValue: ""
+          default: ""
           placeholder: /data/response.json
         - displayName: Pick
+          name: pick
           description: The value's path — main.temp, weather.0.description; empty takes the whole file (if it fits).
           type: string
-          defaultValue: ""
+          default: ""
           placeholder: main.temp
       outputSchema:
         - name: value
@@ -258,32 +271,34 @@ schema:
       script: src/respond.py
       configurations:
         - displayName: Status
+          name: status
           description: The HTTP status — 200 OK, 201 created, 400 bad request, 404 not found…
-          type: integer
-          defaultValue: "200"
-          patterns:
-            - { name: Min, value: 100 }
-            - { name: Max, value: 599 }
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 100, maxValue: 599 }
+          default: 200
         - displayName: Body
+          name: body
           description: What it answers — text, or bind a list/object (sent as JSON).
           type: string
-          defaultValue: ""
+          default: ""
           placeholder: '{"ok": true}'
         - displayName: Content Type
+          name: contentType
           advanced: true
           description: What the Body is — Auto takes JSON for a list/object or text starting with { or [, plain text otherwise.
           type: options
-          defaultValue: auto
+          default: auto
           options:
-            - { displayName: Auto, value: auto }
-            - { displayName: JSON, value: application/json }
-            - { displayName: Text, value: text/plain }
-            - { displayName: HTML, value: text/html }
+            - { name: Auto, value: auto }
+            - { name: JSON, value: application/json }
+            - { name: Text, value: text/plain }
+            - { name: HTML, value: text/html }
         - displayName: File
+          name: file
           advanced: true
           description: A file on the board to answer with instead of Body — /www/index.html. Empty sends Body.
           type: string
-          defaultValue: ""
+          default: ""
           placeholder: /www/index.html
       outputSchema:
         - name: error

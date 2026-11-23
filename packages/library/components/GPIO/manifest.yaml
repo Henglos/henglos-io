@@ -18,6 +18,7 @@ schema:
       script: src/write.py
       configurations:
         - displayName: Pin
+          name: pin
           description: Board pin this GPIO instance controls.
           type: pin
           from: board
@@ -26,10 +27,11 @@ schema:
         # reads this byte as `data[0] != 0`, and the ASCII byte for "0" is 0x30
         # (non-zero) — a string-encoded "0" would read back as HIGH.
         - displayName: Value
+          name: value
           description: Value of GPIO send.
-          type: toggle
+          type: boolean
           label: HIGH
-          defaultValue: false
+          default: false
 
       outputSchema:
         - name: value
@@ -41,6 +43,7 @@ schema:
       script: src/read.py
       configurations:
         - displayName: Pin
+          name: pin
           description: Board pin this GPIO instance controls.
           type: pin
           from: board
@@ -59,31 +62,36 @@ schema:
       script: src/pin_trigger.py
       configurations:
         - displayName: Pin
+          name: pin
           description: The pin to watch.
           type: pin
           from: board
           filterBy: [digital_in]
           required: true
         - displayName: Edge
+          name: edge
           description: Which change fires it.
           type: options
-          defaultValue: rising
+          default: rising
           options:
-            - { displayName: Rising (low → high), value: rising }
-            - { displayName: Falling (high → low), value: falling }
-            - { displayName: Both, value: both }
+            - { name: Rising (low → high), value: rising }
+            - { name: Falling (high → low), value: falling }
+            - { name: Both, value: both }
         - displayName: Pull
+          name: pull
           description: The board's internal resistor — Up for a button wired to ground.
           type: options
-          defaultValue: none
+          default: none
           options:
-            - { displayName: None, value: none }
-            - { displayName: Up, value: up }
-            - { displayName: Down, value: down }
+            - { name: None, value: none }
+            - { name: Up, value: up }
+            - { name: Down, value: down }
         - displayName: Debounce
+          name: debounce
           description: Changes closer than this to the last one are ignored (a button bounces), in ms.
-          type: integer
-          defaultValue: "50"
+          type: number
+          typeOptions: { numberPrecision: 0 }
+          default: 50
       outputSchema:
         - name: level
           type: bool

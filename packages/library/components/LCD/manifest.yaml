@@ -35,143 +35,163 @@ schema:
       configurations:
         - &connection
           displayName: Connection
+          name: connection
           description: How the display is wired — an I2C backpack (4 pins), or straight to the board (6 pins, no I2C needed).
           type: options
-          defaultValue: i2c
+          default: i2c
           options:
-            - displayName: I2C backpack
+            - name: I2C backpack
               value: i2c
-            - displayName: Parallel (4-bit)
+            - name: Parallel (4-bit)
               value: parallel
         - &sda
           displayName: SDA Pin
+          name: sdaPin
           description: Board pin wired to the backpack's SDA.
           type: pin
           from: board
           filterBy: [digital_out]
-          defaultValue: { gpio: 21, type: [digital_in, digital_out], displayName: GPIO21 }
-          displayOptions: { show: { Connection: [i2c] } }
+          default: { gpio: 21, type: [digital_in, digital_out], displayName: GPIO21 }
+          displayOptions: { show: { connection: [i2c] } }
         - &scl
           displayName: SCL Pin
+          name: sclPin
           description: Board pin wired to the backpack's SCL.
           type: pin
           from: board
           filterBy: [digital_out]
-          defaultValue: { gpio: 22, type: [digital_in, digital_out], displayName: GPIO22 }
-          displayOptions: { show: { Connection: [i2c] } }
+          default: { gpio: 22, type: [digital_in, digital_out], displayName: GPIO22 }
+          displayOptions: { show: { connection: [i2c] } }
         - &rs
           displayName: RS Pin
+          name: rsPin
           description: Board pin wired to the display's RS (pin 4).
           type: pin
           from: board
           filterBy: [digital_out]
-          displayOptions: { show: { Connection: [parallel] } }
+          displayOptions: { show: { connection: [parallel] } }
         - &e
           displayName: E Pin
+          name: ePin
           description: Board pin wired to the display's E (pin 6). RW (pin 5) goes to GND.
           type: pin
           from: board
           filterBy: [digital_out]
-          displayOptions: { show: { Connection: [parallel] } }
+          displayOptions: { show: { connection: [parallel] } }
         - &d4
           displayName: D4 Pin
+          name: d4Pin
           description: Board pin wired to the display's D4 (pin 11).
           type: pin
           from: board
           filterBy: [digital_out]
-          displayOptions: { show: { Connection: [parallel] } }
+          displayOptions: { show: { connection: [parallel] } }
         - &d5
           displayName: D5 Pin
+          name: d5Pin
           description: Board pin wired to the display's D5 (pin 12).
           type: pin
           from: board
           filterBy: [digital_out]
-          displayOptions: { show: { Connection: [parallel] } }
+          displayOptions: { show: { connection: [parallel] } }
         - &d6
           displayName: D6 Pin
+          name: d6Pin
           description: Board pin wired to the display's D6 (pin 13).
           type: pin
           from: board
           filterBy: [digital_out]
-          displayOptions: { show: { Connection: [parallel] } }
+          displayOptions: { show: { connection: [parallel] } }
         - &d7
           displayName: D7 Pin
+          name: d7Pin
           description: Board pin wired to the display's D7 (pin 14).
           type: pin
           from: board
           filterBy: [digital_out]
-          displayOptions: { show: { Connection: [parallel] } }
+          displayOptions: { show: { connection: [parallel] } }
         - displayName: Text
+          name: text
           description: >
             What to show — type it, or bind an output or a variable (numbers are
             formatted, see Decimals). A typed \n goes on to the next line.
             Accents show as their plain letter (no glyphs for them on the LCD).
           type: string
-          defaultValue: Hello, world!
+          default: Hello, world!
           placeholder: e.g. Hello!
         - displayName: Line
+          name: line
           description: Which line to write on (3 and 4 only on a 20x4).
           type: options
-          defaultValue: "1"
+          default: "1"
           options:
-            - displayName: Line 1
+            - name: Line 1
               value: "1"
-            - displayName: Line 2
+            - name: Line 2
               value: "2"
-            - displayName: Line 3
+            - name: Line 3
               value: "3"
-            - displayName: Line 4
+            - name: Line 4
               value: "4"
         - displayName: Align
+          name: align
           description: Where on the line the text goes.
           type: options
-          defaultValue: left
+          default: left
           options:
-            - displayName: Left
+            - name: Left
               value: left
-            - displayName: Center
+            - name: Center
               value: center
-            - displayName: Right
+            - name: Right
               value: right
         - displayName: Format
+          name: format
           advanced: true
           description: 'Text around Text — {} stands for it: "Temp: {} °C". Without {}, it goes before it.'
           type: string
           placeholder: "Temp: {} °C"
         - displayName: Column
+          name: column
           advanced: true
           description: Which column the text starts at, from 1.
-          type: integer
-          defaultValue: "1"
-          displayOptions: { show: { Align: [left] } }
+          type: number
+          typeOptions: { numberPrecision: 0 }
+          default: 1
+          displayOptions: { show: { align: [left] } }
         - displayName: Clear Line
+          name: clearLine
           advanced: true
           description: Blank the rest of the line, so a shorter text doesn't leave the end of the last one behind.
-          type: toggle
-          defaultValue: true
+          type: boolean
+          default: true
         - displayName: Decimals
+          name: decimals
           advanced: true
           description: Decimal places of a bound number that isn't whole (0–6).
-          type: integer
-          defaultValue: "2"
+          type: number
+          typeOptions: { numberPrecision: 0 }
+          default: 2
         - &address
           displayName: Address
+          name: address
           advanced: true
           description: The backpack's I2C address — 0x27 on most, 0x3F on some (PCF8574A).
           type: string
-          defaultValue: "0x27"
+          default: "0x27"
           patterns: [I2CAddress7Bit]
-          displayOptions: { show: { Connection: [i2c] } }
+          displayOptions: { show: { connection: [i2c] } }
         - &size
           displayName: Size
+          name: size
           advanced: true
           description: The display's size, in characters.
           type: options
-          defaultValue: 16x2
+          default: 16x2
           options:
-            - displayName: 16x2
+            - name: 16x2
               value: 16x2
-            - displayName: 20x4
+            - name: 20x4
               value: 20x4
 
     - displayName: Clear
@@ -188,19 +208,20 @@ schema:
         - *d6
         - *d7
         - displayName: Line
+          name: line
           description: What to blank.
           type: options
-          defaultValue: all
+          default: all
           options:
-            - displayName: Whole display
+            - name: Whole display
               value: all
-            - displayName: Line 1
+            - name: Line 1
               value: "1"
-            - displayName: Line 2
+            - name: Line 2
               value: "2"
-            - displayName: Line 3
+            - name: Line 3
               value: "3"
-            - displayName: Line 4
+            - name: Line 4
               value: "4"
         - *address
         - *size
@@ -215,17 +236,19 @@ schema:
         - *sda
         - *scl
         - displayName: Backlight Pin
+          name: backlightPin
           description: >
             Board pin driving the display's backlight (A, pin 15 — through a
             resistor, or a transistor for brighter modules). Parallel only.
           type: pin
           from: board
           filterBy: [digital_out]
-          displayOptions: { show: { Connection: [parallel] } }
+          displayOptions: { show: { connection: [parallel] } }
         - displayName: "On"
+          name: on
           description: Light on (or off).
-          type: toggle
+          type: boolean
           label: "On"
-          defaultValue: true
+          default: true
         - *address
         - *size

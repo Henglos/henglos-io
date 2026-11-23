@@ -34,78 +34,84 @@ schema:
       configurations:
         - &sda
           displayName: SDA Pin
+          name: sdaPin
           description: Board pin wired to the sensor's SDA.
           type: pin
           from: board
           filterBy: [digital_out]
           required: true
-          defaultValue: { gpio: 21, type: [digital_in, digital_out], displayName: GPIO21 }
+          default: { gpio: 21, type: [digital_in, digital_out], displayName: GPIO21 }
         - &scl
           displayName: SCL Pin
+          name: sclPin
           description: Board pin wired to the sensor's SCL.
           type: pin
           from: board
           filterBy: [digital_out]
           required: true
-          defaultValue: { gpio: 22, type: [digital_in, digital_out], displayName: GPIO22 }
+          default: { gpio: 22, type: [digital_in, digital_out], displayName: GPIO22 }
         - &model
           displayName: Model
+          name: model
           description: >
             The sensor's chip. Auto finds it by its ID — pick it when a clone
             answers with an ID Auto doesn't know (it then reads as an MPU-6050).
           type: options
-          defaultValue: auto
+          default: auto
           options:
-            - displayName: Auto
+            - name: Auto
               value: auto
-            - displayName: MPU-6050 (GY-521)
+            - name: MPU-6050 (GY-521)
               value: mpu6050
-            - displayName: MPU-6500
+            - name: MPU-6500
               value: mpu6500
-            - displayName: MPU-9250 / 9255
+            - name: MPU-9250 / 9255
               value: mpu9250
         - &address
           displayName: Address
+          name: address
           advanced: true
           description: The sensor's I2C address — 0x68 with AD0 to GND or unwired (most modules), 0x69 with AD0 to 3.3 V. Auto tries both.
           type: options
-          defaultValue: auto
+          default: auto
           options:
-            - displayName: Auto
+            - name: Auto
               value: auto
-            - displayName: 0x68 (AD0 low)
+            - name: 0x68 (AD0 low)
               value: "0x68"
-            - displayName: 0x69 (AD0 high)
+            - name: 0x69 (AD0 high)
               value: "0x69"
         - &accelRange
           displayName: Accel Range
+          name: accelRange
           advanced: true
           description: The most acceleration it measures — ±2 g is the finest; raise it for hits and fast moves, which read as stuck at the top otherwise.
           type: options
-          defaultValue: "2"
+          default: "2"
           options:
-            - displayName: ±2 g
+            - name: ±2 g
               value: "2"
-            - displayName: ±4 g
+            - name: ±4 g
               value: "4"
-            - displayName: ±8 g
+            - name: ±8 g
               value: "8"
-            - displayName: ±16 g
+            - name: ±16 g
               value: "16"
         - &gyroRange
           displayName: Gyro Range
+          name: gyroRange
           advanced: true
           description: The fastest rotation it measures — ±250 °/s is the finest; raise it for quick spins.
           type: options
-          defaultValue: "250"
+          default: "250"
           options:
-            - displayName: ±250 °/s
+            - name: ±250 °/s
               value: "250"
-            - displayName: ±500 °/s
+            - name: ±500 °/s
               value: "500"
-            - displayName: ±1000 °/s
+            - name: ±1000 °/s
               value: "1000"
-            - displayName: ±2000 °/s
+            - name: ±2000 °/s
               value: "2000"
       outputSchema:
         - name: ax
@@ -147,14 +153,13 @@ schema:
         - *accelRange
         - *gyroRange
         - displayName: Gyro Weight
+          name: gyroWeight
           advanced: true
           description: How much each reading trusts the gyro over gravity, in % — 0 to 99.9. Higher is smoother but corrects drift slower; 0 is gravity alone.
-          type: float
-          defaultValue: "96"
+          type: number
+          typeOptions: { minValue: 0, maxValue: 99.9 }
+          default: 96
           placeholder: 0–99.9 %
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 99.9 }
       outputSchema:
         - name: pitch
           type: float
@@ -177,13 +182,12 @@ schema:
         - *model
         - *address
         - displayName: Threshold
+          name: threshold
           description: How far it has to lean to count, in degrees from flat — 1 to 90. Below it, Level.
-          type: float
-          defaultValue: "20"
+          type: number
+          typeOptions: { minValue: 1, maxValue: 90 }
+          default: 20
           placeholder: 1–90°
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 90 }
       outputs:
         - { id: forward, name: Forward }
         - { id: back, name: Back }
@@ -215,23 +219,21 @@ schema:
         - *accelRange
         - *gyroRange
         - displayName: Accel Threshold
+          name: accelThreshold
           advanced: true
           description: How far from gravity (1 g) the acceleration has to stray to count as Moving, in g — 0.01 to 4.
-          type: float
-          defaultValue: "0.15"
+          type: number
+          typeOptions: { minValue: 0.01, maxValue: 4 }
+          default: 0.15
           placeholder: 0.01–4 g
-          patterns:
-            - { name: Min, value: 0.01 }
-            - { name: Max, value: 4 }
         - displayName: Gyro Threshold
+          name: gyroThreshold
           advanced: true
           description: How fast it has to turn to count as Moving, in °/s — 1 to 1000.
-          type: float
-          defaultValue: "20"
+          type: number
+          typeOptions: { minValue: 1, maxValue: 1000 }
+          default: 20
           placeholder: 1–1000 °/s
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 1000 }
       outputs:
         - { id: still, name: Still }
         - { id: moving, name: Moving }
@@ -259,19 +261,19 @@ schema:
         - *model
         - *address
         - displayName: Samples
+          name: samples
           advanced: true
           description: Readings averaged, 5 ms apart — 10 to 500. 100 takes half a second.
-          type: integer
-          defaultValue: "100"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 10, maxValue: 500 }
+          default: 100
           placeholder: 10–500
-          patterns:
-            - { name: Min, value: 10 }
-            - { name: Max, value: 500 }
         - displayName: Level
+          name: level
           description: "The sensor is lying flat — zero the accelerometer too, so flat reads exactly (0, 0, 1 g). Off: only the gyro."
-          type: toggle
+          type: boolean
           label: Lying flat
-          defaultValue: true
+          default: true
       outputSchema:
         - name: gx_offset
           type: float

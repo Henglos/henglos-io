@@ -31,55 +31,53 @@ schema:
       configurations:
         - &signal
           displayName: Signal Pin
+          name: signalPin
           description: Board pin wired to the sensor's S — an analog input; GPIO32-39 keep working with Wi-Fi on.
           type: pin
           from: board
           filterBy: [analog_in]
           required: true
-          defaultValue: { gpio: 36, type: [digital_in, analog_in], displayName: GPIO36 }
+          default: { gpio: 36, type: [digital_in, analog_in], displayName: GPIO36 }
         - &power
           displayName: Power Pin
+          name: powerPin
           description: Board pin wired to the sensor's + — powered only while it reads, so its traces don't corrode. Empty, wire + to 3.3 V.
           type: pin
           from: board
           filterBy: [digital_out]
         - &threshold
           displayName: Threshold
+          name: threshold
           description: The level it counts as wet from, in % — 1 to 100.
-          type: float
-          defaultValue: "10"
+          type: number
+          typeOptions: { minValue: 1, maxValue: 100 }
+          default: 10
           placeholder: 1–100 %
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 100 }
         - &samples
           displayName: Samples
+          name: samples
           advanced: true
           description: Readings averaged, 1 to 64 — more is steadier, a little slower.
-          type: integer
-          defaultValue: "8"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1, maxValue: 64 }
+          default: 8
           placeholder: 1–64
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 64 }
         - &dry
           displayName: Dry Level
+          name: dryLevel
           advanced: true
           description: The raw reading out of the water (0 %), 0 to 65535 — until Calibrate measures it on the sensor.
-          type: integer
-          defaultValue: "0"
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 65535 }
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 65535 }
+          default: 0
         - &wet
           displayName: Wet Level
+          name: wetLevel
           advanced: true
           description: The raw reading as deep as it goes (100 %), 0 to 65535 — until Calibrate measures it on the sensor.
-          type: integer
-          defaultValue: "35000"
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 65535 }
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 65535 }
+          default: 35000
       outputSchema:
         - &levelOut
           name: level
@@ -123,20 +121,20 @@ schema:
         - *signal
         - *power
         - displayName: Point
+          name: point
           description: Which level this reading is — the sensor out of the water (Dry), or under it as deep as it goes (Wet).
           type: options
-          defaultValue: dry
+          default: dry
           options:
-            - { displayName: Dry, value: dry }
-            - { displayName: Wet, value: wet }
+            - { name: Dry, value: dry }
+            - { name: Wet, value: wet }
         - displayName: Samples
+          name: samples
           advanced: true
           description: Readings averaged, 1 to 64.
-          type: integer
-          defaultValue: "16"
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 64 }
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1, maxValue: 64 }
+          default: 16
       outputSchema:
         - *rawOut
         - name: dry
@@ -161,20 +159,21 @@ schema:
         - *power
         - *threshold
         - displayName: Fires On
+          name: firesOn
           description: Which change runs the branch.
           type: options
-          defaultValue: wet
+          default: wet
           options:
-            - { displayName: Getting wet, value: wet }
-            - { displayName: Drying off, value: dry }
-            - { displayName: Both, value: both }
+            - { name: Getting wet, value: wet }
+            - { name: Drying off, value: dry }
+            - { name: Both, value: both }
         - displayName: Interval
+          name: interval
           description: How often it reads, in ms — 50 at least.
-          type: integer
-          defaultValue: "500"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 50 }
+          default: 500
           placeholder: 500 ms
-          patterns:
-            - { name: Min, value: 50 }
         - *samples
         - *dry
         - *wet

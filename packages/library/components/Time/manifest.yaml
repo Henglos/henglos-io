@@ -23,19 +23,21 @@ schema:
       script: src/delay.py
       configurations:
         - displayName: Duration
+          name: duration
           description: How long to wait, in Unit.
-          type: float
-          defaultValue: "1000"
+          type: number
+          default: 1000
         - displayName: Unit
+          name: unit
           description: Unit of Duration.
           type: options
-          defaultValue: ms
+          default: ms
           options:
-            - displayName: Milliseconds
+            - name: Milliseconds
               value: ms
-            - displayName: Seconds
+            - name: Seconds
               value: s
-            - displayName: Minutes
+            - name: Minutes
               value: min
       outputSchema:
         - name: duration
@@ -55,18 +57,20 @@ schema:
       script: src/start_timer.py
       configurations:
         - displayName: Name
+          name: name
           description: Which timer — Elapsed reads it by this same name.
           type: string
-          defaultValue: timer
+          default: timer
 
     - displayName: Elapsed
       description: How long since Start Timer started the timer with this name.
       script: src/elapsed.py
       configurations:
         - displayName: Name
+          name: name
           description: The timer to read, as named in Start Timer.
           type: string
-          defaultValue: timer
+          default: timer
       outputSchema:
         - name: elapsed
           type: integer
@@ -79,25 +83,28 @@ schema:
       script: src/every.py
       configurations:
         - displayName: Interval
+          name: interval
           description: How often to go out Due, in Unit.
-          type: float
-          defaultValue: "1000"
+          type: number
+          default: 1000
         - displayName: Unit
+          name: unit
           description: Unit of Interval.
           type: options
-          defaultValue: ms
+          default: ms
           options:
-            - displayName: Milliseconds
+            - name: Milliseconds
               value: ms
-            - displayName: Seconds
+            - name: Seconds
               value: s
-            - displayName: Minutes
+            - name: Minutes
               value: min
         - displayName: Name
+          name: name
           advanced: true
           description: Tells several Every apart — each name keeps its own rhythm.
           type: string
-          defaultValue: every
+          default: every
       outputs:
         - id: due
           name: Due
@@ -117,12 +124,12 @@ schema:
       script: src/timer_trigger.py
       configurations:
         - displayName: Interval
+          name: interval
           description: Time between runs, in milliseconds (10 at least).
-          type: integer
-          defaultValue: "1000"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 10 }
+          default: 1000
           required: true
-          patterns:
-            - { name: Min, value: 10 }
       outputSchema:
         - name: count
           type: integer

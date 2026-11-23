@@ -31,27 +31,28 @@ schema:
       script: src/read.py
       configurations:
         - displayName: File
+          name: file
           description: The file's path — /data/log.txt; bind a Request's `file` to read its answer.
           type: string
           required: true
-          defaultValue: ""
+          default: ""
           placeholder: /data/log.txt
         - displayName: Offset
+          name: offset
           advanced: true
           description: Where to start, in bytes — 0 is the beginning. The next slice starts at Offset + `read`.
-          type: integer
-          defaultValue: "0"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0 }
+          default: 0
           placeholder: "0"
-          patterns:
-            - { name: Min, value: 0 }
         - displayName: Length
+          name: length
           advanced: true
           description: How many bytes to read — 0 (or more than fits) reads as much as fits a value, 384.
-          type: integer
-          defaultValue: "0"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0 }
+          default: 0
           placeholder: 0 = as much as fits
-          patterns:
-            - { name: Min, value: 0 }
       outputSchema:
         - name: content
           type: string
@@ -77,23 +78,26 @@ schema:
       script: src/write.py
       configurations:
         - displayName: File
+          name: file
           description: The file to write — /data/log.txt; its folders are made.
           type: string
           required: true
-          defaultValue: ""
+          default: ""
           placeholder: /data/log.txt
         - displayName: Content
+          name: content
           description: What to write — text, or bind an output (a Code binding can build it).
           type: string
-          defaultValue: ""
+          default: ""
           placeholder: "temperature: 21.5"
         - displayName: Mode
+          name: mode
           description: Overwrite replaces what the file had; Append adds at its end (a log).
           type: options
-          defaultValue: overwrite
+          default: overwrite
           options:
-            - { displayName: Overwrite, value: overwrite }
-            - { displayName: Append, value: append }
+            - { name: Overwrite, value: overwrite }
+            - { name: Append, value: append }
       outputSchema:
         - name: file
           type: string
@@ -110,16 +114,18 @@ schema:
       script: src/copy.py
       configurations:
         - displayName: From
+          name: from
           description: The file to copy — bind a Request's `file`, or a path.
           type: string
           required: true
-          defaultValue: ""
+          default: ""
           placeholder: /data/in.json
         - displayName: To
+          name: to
           description: Where it goes — its folders are made.
           type: string
           required: true
-          defaultValue: ""
+          default: ""
           placeholder: /data/kept.json
       outputSchema:
         - name: file
@@ -138,16 +144,18 @@ schema:
       script: src/move.py
       configurations:
         - displayName: From
+          name: from
           description: The file or folder to move.
           type: string
           required: true
-          defaultValue: ""
+          default: ""
           placeholder: /data/old.txt
         - displayName: To
+          name: to
           description: Its new path — nothing may be there yet; its folders are made.
           type: string
           required: true
-          defaultValue: ""
+          default: ""
           placeholder: /data/new.txt
       outputSchema:
         - name: file
@@ -162,17 +170,19 @@ schema:
       script: src/delete.py
       configurations:
         - displayName: Path
+          name: path
           description: The file or folder to remove.
           type: string
           required: true
-          defaultValue: ""
+          default: ""
           placeholder: /data/log.txt
         - displayName: Recursive
+          name: recursive
           advanced: true
           description: A folder goes with everything in it — off, only an empty one.
-          type: toggle
+          type: boolean
           label: With contents
-          defaultValue: false
+          default: false
       outputSchema:
         - *error
 
@@ -181,10 +191,11 @@ schema:
       script: src/info.py
       configurations:
         - displayName: Path
+          name: path
           description: The file or folder to check.
           type: string
           required: true
-          defaultValue: ""
+          default: ""
           placeholder: /data/log.txt
       outputs:
         - { id: exists, name: Exists }
@@ -207,9 +218,10 @@ schema:
       script: src/list.py
       configurations:
         - displayName: Folder
+          name: folder
           description: The folder to list — / is the board's root.
           type: string
-          defaultValue: /
+          default: /
           placeholder: /data
       outputSchema:
         - name: entries

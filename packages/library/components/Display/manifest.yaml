@@ -36,106 +36,112 @@ schema:
       configurations:
         - &sda
           displayName: SDA Pin
+          name: sdaPin
           description: Board pin wired to the display's SDA.
           type: pin
           from: board
           filterBy: [digital_out]
           required: true
-          defaultValue: { gpio: 21, type: [digital_in, digital_out], displayName: GPIO21 }
+          default: { gpio: 21, type: [digital_in, digital_out], displayName: GPIO21 }
         - &scl
           displayName: SCL Pin
+          name: sclPin
           description: Board pin wired to the display's SCL (sometimes labeled SCK).
           type: pin
           from: board
           filterBy: [digital_out]
           required: true
-          defaultValue: { gpio: 22, type: [digital_in, digital_out], displayName: GPIO22 }
+          default: { gpio: 22, type: [digital_in, digital_out], displayName: GPIO22 }
         - &model
           displayName: Model
+          name: model
           description: >
             The display's controller and size — 0.96" modules are usually
             SSD1306, 1.3" ones SH1106 (picking SSD1306 for one shows a
             shifted, noisy image).
           type: options
-          defaultValue: ssd1306_128x64
+          default: ssd1306_128x64
           options:
-            - displayName: SSD1306 · 128x64 (0.96")
+            - name: SSD1306 · 128x64 (0.96")
               value: ssd1306_128x64
-            - displayName: SSD1306 · 128x32 (0.91")
+            - name: SSD1306 · 128x32 (0.91")
               value: ssd1306_128x32
-            - displayName: SH1106 · 128x64 (1.3")
+            - name: SH1106 · 128x64 (1.3")
               value: sh1106_128x64
         - displayName: Text
+          name: text
           description: >
             What to show — type it, or bind an output or a variable (numbers are
             formatted, see Decimals). A typed \n goes on to the next line.
             Accents show as their plain letter.
           type: string
-          defaultValue: Hello!
+          default: Hello!
           placeholder: e.g. Hello!
         - displayName: Line
+          name: line
           description: >
             Which line to write on, from 1 at the top — lines are 8 px: 1 to 8
             on a 64-px screen, 1 to 4 on a 32-px one. A bigger Text Size takes
             more lines from there down.
-          type: integer
-          defaultValue: "1"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1, maxValue: 8 }
+          default: 1
           placeholder: 1–8
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 8 }
         - &font
           displayName: Font
+          name: font
           description: >
             The typeface — Standard (8 px a character, 16 a line), Small (a
             finer 5x7, 6 px a character: 21 a line, with descenders) or Bold
             (Standard 1 px thicker, 9 px a character: 14 a line).
           type: options
-          defaultValue: standard
+          default: standard
           options:
-            - displayName: Standard · 8x8
+            - name: Standard · 8x8
               value: standard
-            - displayName: Small · 5x7
+            - name: Small · 5x7
               value: small
-            - displayName: Bold · 8x8
+            - name: Bold · 8x8
               value: bold
         - &textSize
           displayName: Text Size
+          name: textSize
           description: How big the text is — 1x to 4x the font (8, 16, 24 or 32 px tall), taking that many 8-px lines from Line down.
           type: options
-          defaultValue: "1"
+          default: "1"
           options:
-            - displayName: 1x · 8 px
+            - name: 1x · 8 px
               value: "1"
-            - displayName: 2x · 16 px
+            - name: 2x · 16 px
               value: "2"
-            - displayName: 3x · 24 px
+            - name: 3x · 24 px
               value: "3"
-            - displayName: 4x · 32 px
+            - name: 4x · 32 px
               value: "4"
         - displayName: Align
+          name: align
           description: Where on the line the text goes.
           type: options
-          defaultValue: left
+          default: left
           options:
-            - displayName: Left
+            - name: Left
               value: left
-            - displayName: Center
+            - name: Center
               value: center
-            - displayName: Right
+            - name: Right
               value: right
         - displayName: Column
+          name: column
           advanced: true
           description: Which character the text starts at, from 1 — up to 16 in Standard at 1x, 21 in Small (fewer at bigger sizes).
-          type: integer
-          defaultValue: "1"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1, maxValue: 21 }
+          default: 1
           placeholder: 1–21
-          displayOptions: { show: { Align: [left] } }
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 21 }
+          displayOptions: { show: { align: [left] } }
         - &format
           displayName: Format
+          name: format
           advanced: true
           description: 'Text around Text — {} stands for it: "Temp: {} C". Without {}, it goes before it.'
           type: string
@@ -143,35 +149,37 @@ schema:
           patterns:
             - { name: MaxLength, value: 32 }
         - displayName: Decimals
+          name: decimals
           advanced: true
           description: Decimal places of a bound number that isn't whole, from 0 to 6.
-          type: integer
-          defaultValue: "2"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 6 }
+          default: 2
           placeholder: 0–6
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 6 }
         - displayName: Clear Line
+          name: clearLine
           advanced: true
           description: Blank the line (all of its height) before writing, so a shorter text doesn't leave the end of the last one behind.
-          type: toggle
+          type: boolean
           label: Blank first
-          defaultValue: true
+          default: true
         - &update
           displayName: Update Screen
+          name: updateScreen
           advanced: true
           description: >
             Send the drawing to the screen now. Turn it off to keep drawing with
             the next actions and show it all at once with the last one (no flicker).
-          type: toggle
+          type: boolean
           label: Show now
-          defaultValue: true
+          default: true
         - &address
           displayName: Address
+          name: address
           advanced: true
           description: The display's I2C address, in hex — 0x3C on most modules, 0x3D on some (set by a jumper on the back).
           type: string
-          defaultValue: "0x3C"
+          default: "0x3C"
           placeholder: "0x3C"
           patterns: [I2CAddress7Bit]
 
@@ -186,46 +194,45 @@ schema:
         - *scl
         - *model
         - displayName: Text
+          name: text
           description: What to scroll — type it, or bind an output or a variable. Accents show as their plain letter.
           type: string
-          defaultValue: Hello from Henglos IO!
+          default: Hello from Henglos IO!
           placeholder: e.g. Hello!
         - *format
         - displayName: Line
+          name: line
           description: Which 8-px line it runs on, from 1 at the top (1 to 8; 1 to 4 on a 32-px screen).
-          type: integer
-          defaultValue: "1"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1, maxValue: 8 }
+          default: 1
           placeholder: 1–8
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 8 }
         - *font
         - *textSize
         - displayName: Direction
+          name: direction
           description: Where the text moves to.
           type: options
-          defaultValue: left
+          default: left
           options:
-            - displayName: Left (reads naturally)
+            - name: Left (reads naturally)
               value: left
-            - displayName: Right
+            - name: Right
               value: right
         - displayName: Speed
+          name: speed
           description: How fast it moves, in px a second — from 10 (slow) to 400. 60 reads comfortably.
-          type: integer
-          defaultValue: "60"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 10, maxValue: 400 }
+          default: 60
           placeholder: 10–400 px/s
-          patterns:
-            - { name: Min, value: 10 }
-            - { name: Max, value: 400 }
         - displayName: Passes
+          name: passes
           description: How many times it crosses the screen before the flow goes on — 1 to 20. The line is left blank after.
-          type: integer
-          defaultValue: "1"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1, maxValue: 20 }
+          default: 1
           placeholder: 1–20
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 20 }
         - *address
 
     - displayName: Draw
@@ -236,108 +243,105 @@ schema:
         - *scl
         - *model
         - displayName: Shape
+          name: shape
           description: What to draw. Its own settings show below.
           type: options
-          defaultValue: rectangle
+          default: rectangle
           options:
-            - displayName: Pixel
+            - name: Pixel
               value: pixel
-            - displayName: Line
+            - name: Line
               value: line
-            - displayName: Rectangle
+            - name: Rectangle
               value: rectangle
-            - displayName: Circle
+            - name: Circle
               value: circle
-            - displayName: Polygon (custom shape)
+            - name: Polygon (custom shape)
               value: polygon
         - displayName: X
+          name: x
           description: Horizontal position, in px from the left — 0 to 127. A circle's center, a rectangle's left edge, a line's start, where a polygon's 0,0 is.
-          type: integer
-          defaultValue: "0"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 127 }
+          default: 0
           placeholder: 0–127
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 127 }
         - displayName: "Y"
+          name: y
           description: Vertical position, in px from the top — 0 to 63. A circle's center, a rectangle's top edge, a line's start, where a polygon's 0,0 is.
-          type: integer
-          defaultValue: "0"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 63 }
+          default: 0
           placeholder: 0–63
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 63 }
         - displayName: X2
+          name: x2
           description: Where the line ends, horizontally — 0 to 127 px.
-          type: integer
-          defaultValue: "127"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 127 }
+          default: 127
           placeholder: 0–127
-          displayOptions: { show: { Shape: [line] } }
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 127 }
+          displayOptions: { show: { shape: [line] } }
         - displayName: Y2
+          name: y2
           description: Where the line ends, vertically — 0 to 63 px.
-          type: integer
-          defaultValue: "63"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 63 }
+          default: 63
           placeholder: 0–63
-          displayOptions: { show: { Shape: [line] } }
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 63 }
+          displayOptions: { show: { shape: [line] } }
         - displayName: Width
+          name: width
           description: The rectangle's width, in px — 1 to 128.
-          type: integer
-          defaultValue: "32"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1, maxValue: 128 }
+          default: 32
           placeholder: 1–128
-          displayOptions: { show: { Shape: [rectangle] } }
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 128 }
+          displayOptions: { show: { shape: [rectangle] } }
         - displayName: Height
+          name: height
           description: The rectangle's height, in px — 1 to 64.
-          type: integer
-          defaultValue: "16"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1, maxValue: 64 }
+          default: 16
           placeholder: 1–64
-          displayOptions: { show: { Shape: [rectangle] } }
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 64 }
+          displayOptions: { show: { shape: [rectangle] } }
         - displayName: Radius
+          name: radius
           description: The circle's radius, in px — 1 to 64.
-          type: integer
-          defaultValue: "10"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1, maxValue: 64 }
+          default: 10
           placeholder: 1–64
-          displayOptions: { show: { Shape: [circle] } }
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 64 }
+          displayOptions: { show: { shape: [circle] } }
         - displayName: Vertices
+          name: vertices
           description: >
             The shape's corners, in order, as x,y pairs from X/Y — separated by
             spaces or ";" (at least 3; it closes back to the first). A triangle:
             "10,0 20,20 0,20". Negative values reach left of / above X/Y.
           type: string
-          defaultValue: "10,0 20,20 0,20"
+          default: "10,0 20,20 0,20"
           placeholder: "10,0 20,20 0,20"
-          displayOptions: { show: { Shape: [polygon] } }
+          displayOptions: { show: { shape: [polygon] } }
           patterns:
             - regex: '^\s*-?\d{1,3}\s*,\s*-?\d{1,3}(\s*[;\s]\s*-?\d{1,3}\s*,\s*-?\d{1,3}){2,}\s*$'
               message: 'At least 3 x,y pairs, separated by spaces or ";" — e.g. 10,0 20,20 0,20.'
             - { name: MaxLength, value: 64 }
         - displayName: Fill
+          name: fill
           description: Fill the shape in, rather than drawing only its outline.
-          type: toggle
+          type: boolean
           label: Filled
-          defaultValue: false
-          displayOptions: { show: { Shape: [rectangle, circle, polygon] } }
+          default: false
+          displayOptions: { show: { shape: [rectangle, circle, polygon] } }
         - displayName: Color
+          name: color
           description: Lit pixels, or Off to erase — draw in Off over something to cut it out.
           type: options
-          defaultValue: "on"
+          default: "on"
           options:
-            - displayName: "On (lit)"
+            - name: "On (lit)"
               value: "on"
-            - displayName: "Off (erase)"
+            - name: "Off (erase)"
               value: "off"
         - *update
         - *address
@@ -350,17 +354,19 @@ schema:
         - *scl
         - *model
         - displayName: Source
+          name: source
           description: A built-in icon, an image file you attach (any size — it's fitted to the screen), or bitmap bytes you type in.
           type: options
-          defaultValue: icon
+          default: icon
           options:
-            - displayName: Built-in icon
+            - name: Built-in icon
               value: icon
-            - displayName: Image file
+            - name: Image file
               value: file
-            - displayName: Custom bytes
+            - name: Custom bytes
               value: custom
         - displayName: Bitmap
+          name: bitmap
           description: >
             An image (PNG, JPG, BMP… or a .pbm) — the studio turns it into the
             screen's black and white, fitted in 128x64, and previews it. It
@@ -368,43 +374,45 @@ schema:
           type: file
           accept: [image/*, .pbm]
           image: { format: pbm, maxWidth: 128, maxHeight: 64 }
-          displayOptions: { show: { Source: [file] } }
+          displayOptions: { show: { source: [file] } }
         - displayName: Icon
+          name: icon
           description: Which icon — 16x16 px (32 to 64 px with Scale).
           type: options
-          defaultValue: heart
-          displayOptions: { show: { Source: [icon] } }
+          default: heart
+          displayOptions: { show: { source: [icon] } }
           options:
             - categoryName: Status
               options:
-                - { displayName: Check, value: check }
-                - { displayName: Cross, value: cross }
-                - { displayName: Warning, value: warning }
-                - { displayName: Bell, value: bell }
-                - { displayName: Lock, value: lock }
-                - { displayName: Power, value: power }
-                - { displayName: Clock, value: clock }
-                - { displayName: Home, value: home }
-                - { displayName: Heart, value: heart }
+                - { name: Check, value: check }
+                - { name: Cross, value: cross }
+                - { name: Warning, value: warning }
+                - { name: Bell, value: bell }
+                - { name: Lock, value: lock }
+                - { name: Power, value: power }
+                - { name: Clock, value: clock }
+                - { name: Home, value: home }
+                - { name: Heart, value: heart }
             - categoryName: Connection & battery
               options:
-                - { displayName: Wi-Fi, value: wifi }
-                - { displayName: Battery full, value: battery_full }
-                - { displayName: Battery half, value: battery_half }
-                - { displayName: Battery low, value: battery_low }
+                - { name: Wi-Fi, value: wifi }
+                - { name: Battery full, value: battery_full }
+                - { name: Battery half, value: battery_half }
+                - { name: Battery low, value: battery_low }
             - categoryName: Weather
               options:
-                - { displayName: Thermometer, value: thermometer }
-                - { displayName: Drop (humidity), value: drop }
-                - { displayName: Sun, value: sun }
-                - { displayName: Cloud, value: cloud }
+                - { name: Thermometer, value: thermometer }
+                - { name: Drop (humidity), value: drop }
+                - { name: Sun, value: sun }
+                - { name: Cloud, value: cloud }
             - categoryName: Arrows
               options:
-                - { displayName: Arrow up, value: arrow_up }
-                - { displayName: Arrow down, value: arrow_down }
-                - { displayName: Arrow left, value: arrow_left }
-                - { displayName: Arrow right, value: arrow_right }
+                - { name: Arrow up, value: arrow_up }
+                - { name: Arrow down, value: arrow_down }
+                - { name: Arrow left, value: arrow_left }
+                - { name: Arrow right, value: arrow_right }
         - displayName: Data
+          name: data
           description: >
             Your bitmap, in Encoding — from image2cpp ("Horizontal - 1 bit per
             pixel"): rows of Width / 8 bytes, the leftmost pixel in the top bit.
@@ -412,7 +420,7 @@ schema:
             base64) — raise Data size in Platform settings for more.
           type: string
           placeholder: "e.g. 0x18, 0x3C, … or GDw…"
-          displayOptions: { show: { Source: [custom] } }
+          displayOptions: { show: { source: [custom] } }
           patternMatch: any
           patterns:
             - regex: '^\s*(0x)?[0-9a-fA-F]{2}(\s*,?\s*(0x)?[0-9a-fA-F]{2})*\s*,?\s*$'
@@ -420,64 +428,65 @@ schema:
             - regex: '^\s*(?=\S)([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?\s*$'
               message: Base64 (a multiple of 4 characters).
         - displayName: Encoding
+          name: encoding
           description: How Data is written — Hex (what image2cpp's "Arduino code" shows) or Base64 (shorter, fits a bigger image).
           type: options
-          defaultValue: hex
-          displayOptions: { show: { Source: [custom] } }
+          default: hex
+          displayOptions: { show: { source: [custom] } }
           options:
-            - displayName: Hex
+            - name: Hex
               value: hex
-            - displayName: Base64
+            - name: Base64
               value: base64
         - displayName: Width
+          name: width
           description: The bitmap's width, in px — 1 to 128. Its height follows from the data.
-          type: integer
-          defaultValue: "16"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1, maxValue: 128 }
+          default: 16
           placeholder: 1–128
-          displayOptions: { show: { Source: [custom] } }
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 128 }
+          displayOptions: { show: { source: [custom] } }
         - displayName: X
+          name: x
           description: The image's left edge, in px from the left — 0 to 127.
-          type: integer
-          defaultValue: "0"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 127 }
+          default: 0
           placeholder: 0–127
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 127 }
         - displayName: "Y"
+          name: y
           description: The image's top edge, in px from the top — 0 to 63. Line n starts at (n − 1) × 8.
-          type: integer
-          defaultValue: "0"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 63 }
+          default: 0
           placeholder: 0–63
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 63 }
         - displayName: Scale
+          name: scale
           description: How many screen pixels each image pixel takes — a 16x16 icon at 2x is 32x32.
           type: options
-          defaultValue: "1"
+          default: "1"
           options:
-            - { displayName: 1x, value: "1" }
-            - { displayName: 2x, value: "2" }
-            - { displayName: 3x, value: "3" }
-            - { displayName: 4x, value: "4" }
+            - { name: 1x, value: "1" }
+            - { name: 2x, value: "2" }
+            - { name: 3x, value: "3" }
+            - { name: 4x, value: "4" }
         - displayName: Color
+          name: color
           description: Draw the image lit (On), or Off to cut it out of something lit.
           type: options
-          defaultValue: "on"
+          default: "on"
           options:
-            - displayName: "On (lit)"
+            - name: "On (lit)"
               value: "on"
-            - displayName: "Off (erase)"
+            - name: "Off (erase)"
               value: "off"
         - displayName: Transparent
+          name: transparent
           advanced: true
           description: Leave what's under the image's empty pixels as it is. Off — they're drawn too, in the opposite color (a solid block).
-          type: toggle
+          type: boolean
           label: Keep background
-          defaultValue: true
+          default: true
         - *update
         - *address
       outputSchema:
@@ -496,57 +505,57 @@ schema:
         - *scl
         - *model
         - displayName: Value
+          name: value
           description: What fills the bar — usually bound to an output or a variable. Below Min it's empty, above Max full.
-          type: float
+          type: number
           required: true
           placeholder: bind a value
         - displayName: Min
+          name: min
           description: The value of an empty bar.
-          type: float
-          defaultValue: "0"
+          type: number
+          default: 0
           placeholder: e.g. 0
         - displayName: Max
+          name: max
           description: The value of a full bar — must be above Min.
-          type: float
-          defaultValue: "100"
+          type: number
+          default: 100
           placeholder: e.g. 100
         - displayName: X
+          name: x
           description: The bar's left edge, in px from the left — 0 to 127.
-          type: integer
-          defaultValue: "0"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 127 }
+          default: 0
           placeholder: 0–127
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 127 }
         - displayName: "Y"
+          name: y
           description: The bar's top edge, in px from the top — 0 to 63. Line n starts at (n − 1) × 8.
-          type: integer
-          defaultValue: "56"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 63 }
+          default: 56
           placeholder: 0–63
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 63 }
         - displayName: Width
+          name: width
           description: The bar's width, in px — 3 to 128.
-          type: integer
-          defaultValue: "128"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 3, maxValue: 128 }
+          default: 128
           placeholder: 3–128
-          patterns:
-            - { name: Min, value: 3 }
-            - { name: Max, value: 128 }
         - displayName: Height
+          name: height
           description: The bar's height, in px — 3 to 64.
-          type: integer
-          defaultValue: "8"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 3, maxValue: 64 }
+          default: 8
           placeholder: 3–64
-          patterns:
-            - { name: Min, value: 3 }
-            - { name: Max, value: 64 }
         - displayName: Border
+          name: border
           description: Draw an outline around the bar, so an empty one still shows where it is.
-          type: toggle
+          type: boolean
           label: Outline
-          defaultValue: true
+          default: true
         - *update
         - *address
       outputSchema:
@@ -562,58 +571,58 @@ schema:
         - *scl
         - *model
         - displayName: Value
+          name: value
           description: Where the needle points — usually bound to an output or a variable. Past Min/Max it stops at the end.
-          type: float
+          type: number
           required: true
           placeholder: bind a value
         - displayName: Min
+          name: min
           description: The value at the dial's left end.
-          type: float
-          defaultValue: "0"
+          type: number
+          default: 0
           placeholder: e.g. 0
         - displayName: Max
+          name: max
           description: The value at the dial's right end — must be above Min.
-          type: float
-          defaultValue: "100"
+          type: number
+          default: 100
           placeholder: e.g. 100
         - displayName: X
+          name: x
           description: The needle's pivot (the bottom middle of the dial), in px from the left — 0 to 127.
-          type: integer
-          defaultValue: "64"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 127 }
+          default: 64
           placeholder: 0–127
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 127 }
         - displayName: "Y"
+          name: y
           description: The needle's pivot, in px from the top — 0 to 63. The dial rises Radius px above it; the value is written under it.
-          type: integer
-          defaultValue: "50"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 63 }
+          default: 50
           placeholder: 0–63
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 63 }
         - displayName: Radius
+          name: radius
           description: The dial's size, in px — 8 to 64.
-          type: integer
-          defaultValue: "40"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 8, maxValue: 64 }
+          default: 40
           placeholder: 8–64
-          patterns:
-            - { name: Min, value: 8 }
-            - { name: Max, value: 64 }
         - displayName: Show Value
+          name: showValue
           description: Write the value under the needle's pivot.
-          type: toggle
+          type: boolean
           label: Number
-          defaultValue: true
+          default: true
         - displayName: Decimals
+          name: decimals
           advanced: true
           description: Decimal places of the value shown under the dial (with Show Value on), from 0 to 6.
-          type: integer
-          defaultValue: "0"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 6 }
+          default: 0
           placeholder: 0–6
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 6 }
         - *update
         - *address
       outputSchema:
@@ -631,66 +640,67 @@ schema:
         - *scl
         - *model
         - displayName: Value
+          name: value
           description: The value to add — usually bound to an output or a variable. One per run.
-          type: float
+          type: number
           required: true
           placeholder: bind a value
         - displayName: Min
+          name: min
           description: The value at the chart's bottom. Empty — fit the history (the lowest value shown).
-          type: float
+          type: number
           placeholder: auto
         - displayName: Max
+          name: max
           description: The value at the chart's top. Empty — fit the history (the highest value shown).
-          type: float
+          type: number
           placeholder: auto
         - displayName: X
+          name: x
           description: The chart's left edge, in px from the left — 0 to 127.
-          type: integer
-          defaultValue: "0"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 127 }
+          default: 0
           placeholder: 0–127
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 127 }
         - displayName: "Y"
+          name: y
           description: The chart's top edge, in px from the top — 0 to 63.
-          type: integer
-          defaultValue: "16"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 63 }
+          default: 16
           placeholder: 0–63
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 63 }
         - displayName: Width
+          name: width
           description: The chart's width, in px — 4 to 128. One sample a pixel column, so also how much history it shows.
-          type: integer
-          defaultValue: "128"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 4, maxValue: 128 }
+          default: 128
           placeholder: 4–128
-          patterns:
-            - { name: Min, value: 4 }
-            - { name: Max, value: 128 }
         - displayName: Height
+          name: height
           description: The chart's height, in px — 4 to 64.
-          type: integer
-          defaultValue: "48"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 4, maxValue: 64 }
+          default: 48
           placeholder: 4–64
-          patterns:
-            - { name: Min, value: 4 }
-            - { name: Max, value: 64 }
         - displayName: Style
+          name: style
           description: How the samples are drawn.
           type: options
-          defaultValue: line
+          default: line
           options:
-            - displayName: Line
+            - name: Line
               value: line
-            - displayName: Bars
+            - name: Bars
               value: bars
-            - displayName: Dots
+            - name: Dots
               value: dots
         - displayName: Border
+          name: border
           description: Draw an outline around the chart.
-          type: toggle
+          type: boolean
           label: Outline
-          defaultValue: true
+          default: true
         - *update
         - *address
       outputSchema:
@@ -712,23 +722,23 @@ schema:
         - *scl
         - *model
         - displayName: Area
+          name: area
           description: What to blank.
           type: options
-          defaultValue: all
+          default: all
           options:
-            - displayName: Whole screen
+            - name: Whole screen
               value: all
-            - displayName: One line
+            - name: One line
               value: line
         - displayName: Line
+          name: line
           description: Which 8-px line to blank, from 1 at the top — 1 to 8 (1 to 4 on a 32-px screen).
-          type: integer
-          defaultValue: "1"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1, maxValue: 8 }
+          default: 1
           placeholder: 1–8
-          displayOptions: { show: { Area: [line] } }
-          patterns:
-            - { name: Min, value: 1 }
-            - { name: Max, value: 8 }
+          displayOptions: { show: { area: [line] } }
         - *update
         - *address
 
@@ -740,26 +750,28 @@ schema:
         - *scl
         - *model
         - displayName: Contrast
+          name: contrast
           description: Brightness, from 0 (dimmest — still visible) to 255. Lower it to save power and the screen's life.
-          type: integer
-          defaultValue: "207"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 0, maxValue: 255 }
+          default: 207
           placeholder: 0–255
-          patterns:
-            - { name: Min, value: 0 }
-            - { name: Max, value: 255 }
         - displayName: Rotate 180
+          name: rotate180
           description: Turn the picture upside down — for a display mounted the other way round.
-          type: toggle
+          type: boolean
           label: Upside down
-          defaultValue: false
+          default: false
         - displayName: Invert Colors
+          name: invertColors
           description: Dark pixels on a lit background.
-          type: toggle
+          type: boolean
           label: Inverted
-          defaultValue: false
+          default: false
         - displayName: Screen On
+          name: screenOn
           description: Off blanks the screen without losing what's drawn — On brings it back.
-          type: toggle
+          type: boolean
           label: "On"
-          defaultValue: true
+          default: true
         - *address

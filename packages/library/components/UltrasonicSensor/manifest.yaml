@@ -26,36 +26,42 @@ schema:
       script: src/measure.py
       configurations:
         - displayName: Trigger Pin
+          name: triggerPin
           description: Board pin wired to the sensor's Trig.
           type: pin
           from: board
           filterBy: [digital_out]
         - displayName: Echo Pin
+          name: echoPin
           description: Board pin wired to the sensor's Echo (through a divider on a 3.3 V board).
           type: pin
           from: board
           filterBy: [digital_in]
         - displayName: Unit
+          name: unit
           description: Unit of the distance it publishes.
           type: options
-          defaultValue: cm
+          default: cm
           options:
-            - displayName: Centimeters
+            - name: Centimeters
               value: cm
-            - displayName: Millimeters
+            - name: Millimeters
               value: mm
-            - displayName: Inches
+            - name: Inches
               value: in
         - displayName: Timeout
+          name: timeout
           advanced: true
           description: How long to wait for the echo, in milliseconds. 30 covers ~5 m; lower it to give up sooner on far objects.
-          type: integer
-          defaultValue: "30"
+          type: number
+          typeOptions: { numberPrecision: 0 }
+          default: 30
         - displayName: Temperature
+          name: temperature
           advanced: true
           description: Air temperature, in °C — sound travels faster in warm air. 20 is fine indoors.
-          type: float
-          defaultValue: "20"
+          type: number
+          default: 20
       outputSchema:
         - name: distance
           type: float
@@ -69,40 +75,47 @@ schema:
       script: src/detect.py
       configurations:
         - displayName: Trigger Pin
+          name: triggerPin
           description: Board pin wired to the sensor's Trig.
           type: pin
           from: board
           filterBy: [digital_out]
         - displayName: Echo Pin
+          name: echoPin
           description: Board pin wired to the sensor's Echo (through a divider on a 3.3 V board).
           type: pin
           from: board
           filterBy: [digital_in]
         - displayName: Threshold
+          name: threshold
           description: Closer than this (in Unit) goes out Near.
-          type: float
-          defaultValue: "20"
+          type: number
+          default: 20
         - displayName: Unit
+          name: unit
           description: Unit of Threshold and of the distance it publishes.
           type: options
-          defaultValue: cm
+          default: cm
           options:
-            - displayName: Centimeters
+            - name: Centimeters
               value: cm
-            - displayName: Millimeters
+            - name: Millimeters
               value: mm
-            - displayName: Inches
+            - name: Inches
               value: in
         - displayName: Timeout
+          name: timeout
           advanced: true
           description: How long to wait for the echo, in milliseconds. 30 covers ~5 m.
-          type: integer
-          defaultValue: "30"
+          type: number
+          typeOptions: { numberPrecision: 0 }
+          default: 30
         - displayName: Temperature
+          name: temperature
           advanced: true
           description: Air temperature, in °C — sound travels faster in warm air. 20 is fine indoors.
-          type: float
-          defaultValue: "20"
+          type: number
+          default: 20
       outputs:
         - id: near
           name: Near

@@ -27,28 +27,31 @@ schema:
       configurations:
         - &pin
           displayName: Data Pin
+          name: dataPin
           description: Board pin wired to the sensor's data (DATA / S / OUT). A bare sensor needs a 10 kΩ pull-up from it to 3.3 V; a module has one.
           type: pin
           from: board
           filterBy: [digital_in, digital_out]
           required: true
-          defaultValue: { gpio: 4, type: [digital_in, digital_out, analog_in, pwm, touch, uart], displayName: GPIO4 }
+          default: { gpio: 4, type: [digital_in, digital_out, analog_in, pwm, touch, uart], displayName: GPIO4 }
         - &model
           displayName: Model
+          name: model
           description: Which sensor it is — DHT11 (blue, 0-50 °C, 1 reading a second) or DHT22 / AM2302 (white, -40-80 °C, finer, 1 every 2 s).
           type: options
-          defaultValue: dht11
+          default: dht11
           options:
-            - { displayName: DHT11, value: dht11 }
-            - { displayName: DHT22 / AM2302, value: dht22 }
+            - { name: DHT11, value: dht11 }
+            - { name: DHT22 / AM2302, value: dht22 }
         - &unit
           displayName: Unit
+          name: unit
           description: What temperature, heat_index and dew_point are in.
           type: options
-          defaultValue: celsius
+          default: celsius
           options:
-            - { displayName: Celsius (°C), value: celsius }
-            - { displayName: Fahrenheit (°F), value: fahrenheit }
+            - { name: Celsius (°C), value: celsius }
+            - { name: Fahrenheit (°F), value: fahrenheit }
       outputSchema:
         - &temperature
           name: temperature
@@ -85,38 +88,41 @@ schema:
         - *pin
         - *model
         - displayName: Watch
+          name: watch
           description: Which value it watches.
           type: options
-          defaultValue: temperature
+          default: temperature
           options:
-            - { displayName: Temperature, value: temperature }
-            - { displayName: Humidity, value: humidity }
+            - { name: Temperature, value: temperature }
+            - { name: Humidity, value: humidity }
         - displayName: When
+          name: when
           description: Which way past Limit fires it.
           type: options
-          defaultValue: above
+          default: above
           options:
-            - { displayName: Goes above Limit, value: above }
-            - { displayName: Goes below Limit, value: below }
+            - { name: Goes above Limit, value: above }
+            - { name: Goes below Limit, value: below }
         - displayName: Limit
+          name: limit
           description: The temperature (in Unit) or humidity (%) it fires past.
-          type: float
-          defaultValue: "30"
+          type: number
+          default: 30
           required: true
         - displayName: Hysteresis
+          name: hysteresis
           advanced: true
           description: How far back past Limit the value has to come before it can fire again — in Unit or %.
-          type: float
-          defaultValue: "1"
-          patterns:
-            - { name: Min, value: 0 }
+          type: number
+          typeOptions: { minValue: 0 }
+          default: 1
         - displayName: Interval
+          name: interval
           description: How often it reads, in ms — at least the sensor's own (1000 for a DHT11, 2000 for a DHT22).
-          type: integer
-          defaultValue: "5000"
+          type: number
+          typeOptions: { numberPrecision: 0, minValue: 1000 }
+          default: 5000
           placeholder: 5000 ms
-          patterns:
-            - { name: Min, value: 1000 }
         - *unit
       outputSchema:
         - *temperature
