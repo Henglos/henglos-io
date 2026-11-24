@@ -1,5 +1,11 @@
 # @henglosio/hio-system
 
+## 1.6.1
+
+### Patch Changes
+
+- A Start that begins a session (`start/fresh`) clears the variables before seeding them, so values left by an earlier session no longer linger; loops back to Start keep what the program wrote.
+
 ## 1.6.0
 
 ### Minor Changes

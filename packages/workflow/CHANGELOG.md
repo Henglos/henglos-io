@@ -1,5 +1,11 @@
 # @henglosio/workflow
 
+## 2.4.0
+
+### Minor Changes
+
+- `GenerateExecuteCommand.execute` takes `{ freshVariables }`: the Start carries `start/fresh` (`START_FRESH_CONFIG_ID`) so the board restarts its variables.
+
 ## 2.3.0
 
 ### Minor Changes

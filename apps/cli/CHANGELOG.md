@@ -1,5 +1,11 @@
 # @henglosio/cli
 
+## 1.6.2
+
+### Patch Changes
+
+- The package registry comes from `HIO_REGISTRY_URL` (`HENGLOS_REGISTRY` still works as a fallback).
+
 ## 1.6.1
 
 ### Patch Changes

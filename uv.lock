@@ -37,7 +37,7 @@ source = { virtual = "." }
 
 [[package]]
 name = "hio-sdk"
-version = "1.1.0"
+version = "1.2.0"
 source = { editable = "packages/hio-sdk" }
 
 [package.dev-dependencies]
