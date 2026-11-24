@@ -3,7 +3,7 @@ import type { IWorkflowRuntime } from "../../../domain/entities/IWorkflow.runtim
 import { LOGIC_COMPONENT_ID, LogicComponentSchema } from "../../../domain/value-objects/LogicComponent.js";
 import { CreateWorkflow } from "./CreateWorkflow.use-case.js";
 import { AddActionToWorkflowComponent } from "./AddActionToComponent.use-case.js";
-import { MAX_ACTION_ALIAS_LENGTH, RenameWorkflowAction } from "./RenameAction.use-case.js";
+import { MAX_ACTION_ALIAS_LENGTH, RenameWorkflowAction, uniqueActionAlias } from "./RenameAction.use-case.js";
 import { GenerateExecuteCommand } from "./GenerateExecuteCommand.use-case.js";
 
 const withIf = () => {
@@ -43,9 +43,43 @@ describe("renaming a node", () => {
 		expect(generate.execute(renamed, id)).toEqual(generate.execute(workflow, id));
 	});
 
+	it("numbers a name another node has — ignoring case", () => {
+		const { workflow, id } = withIf();
+		expect(aliasOf(rename.execute(workflow, LOGIC_COMPONENT_ID, id, "start"), id)).toBe("start 2");
+	});
+
+	it("keeps its own name — renaming to it isn't a clash", () => {
+		const { workflow, id } = withIf();
+		expect(aliasOf(rename.execute(workflow, LOGIC_COMPONENT_ID, id, "If"), id)).toBe("If");
+	});
+
 	it("leaves the workflow as it was for a node it doesn't have", () => {
 		const { workflow } = withIf();
 		expect(rename.execute(workflow, LOGIC_COMPONENT_ID, "nope", "x")).toBe(workflow);
+	});
+
+});
+
+describe("no two nodes share a name", () => {
+
+	const ifSchema = LogicComponentSchema.actions!.find(action => action.displayName === "If")!;
+	const add = new AddActionToWorkflowComponent();
+
+	it("a second If is If 2, a third If 3", () => {
+		const first = withIf();
+		const second = add.execute(first.workflow, LOGIC_COMPONENT_ID, ifSchema);
+		const third = add.execute(second.workflow, LOGIC_COMPONENT_ID, ifSchema);
+		expect(second.action!.alias).toBe("If 2");
+		expect(third.action!.alias).toBe("If 3");
+	});
+
+	it("a copy of If 2 is the next free number, within the length", () => {
+		const { workflow, id } = withIf();
+		const second = add.execute(workflow, LOGIC_COMPONENT_ID, ifSchema);
+		expect(uniqueActionAlias(second.workflow, "If 2", "new")).toBe("If 3");
+		expect(uniqueActionAlias(second.workflow, "Free", "new")).toBe("Free");
+		const long = new RenameWorkflowAction().execute(second.workflow, LOGIC_COMPONENT_ID, id, "x".repeat(MAX_ACTION_ALIAS_LENGTH));
+		expect(uniqueActionAlias(long, "x".repeat(MAX_ACTION_ALIAS_LENGTH), "new")).toBe(`${"x".repeat(MAX_ACTION_ALIAS_LENGTH - 2)} 2`);
 	});
 
 });

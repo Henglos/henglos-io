@@ -24,6 +24,8 @@ type ClipboardActionItem = {
 	packageId: string;
 	componentAlias: string;
 	actionName: string;
+	/** The node's name — the clone's, numbered when it's taken ("If" → "If 2"). Absent in older clipboards. */
+	alias?: string;
 	values: ClipboardConfigValue[];
 	x?: number;
 	y?: number;
@@ -78,6 +80,7 @@ const toClipboardItem = (action: IActionRuntime, component: IComponentRuntime): 
 	packageId: component.packageId,
 	componentAlias: component.alias,
 	actionName: action.base.displayName,
+	alias: action.alias,
 	values: action.configurations
 		.filter(config => config.value !== undefined)
 		.map(config => ({ displayName: config.base.displayName, value: config.value })),
@@ -151,7 +154,7 @@ export function useCanvasClipboard() {
 	const createAction = async (
 		current: IWorkflowRuntime,
 		componentId: string,
-		item: Pick<ClipboardActionItem, "actionName" | "values" | "x" | "y">,
+		item: Pick<ClipboardActionItem, "actionName" | "alias" | "values" | "x" | "y">,
 	): Promise<{ action: IActionRuntime; current: IWorkflowRuntime } | undefined> => {
 
 		const component = current.components.find(c => c.id === componentId);
@@ -185,10 +188,15 @@ export function useCanvasClipboard() {
 			})
 			.filter((op): op is NonNullable<typeof op> => op !== null);
 
+		// The original's name — the rename numbers it, it's taken by the original.
+		const ops = item.alias && item.alias !== newAction.alias
+			? [...valueOps, { op: "update:action-alias" as const, componentId, actionId: newAction.id, alias: item.alias }]
+			: valueOps;
+
 		let finalAction = newAction;
 
-		if (valueOps.length > 0) {
-			const afterUpdate = await mutate(...valueOps);
+		if (ops.length > 0) {
+			const afterUpdate = await mutate(...ops);
 			if (afterUpdate) {
 				workingData = afterUpdate.data;
 				const componentAfterUpdate = workingData.components.find(c => c.id === componentId);
@@ -342,6 +350,7 @@ export function useCanvasClipboard() {
 
 			const result = await createAction(current, component.id, {
 				actionName: action.base.displayName,
+				alias: action.alias,
 				values: action.configurations
 					.filter(config => config.value !== undefined)
 					.map(config => ({ displayName: config.base.displayName, value: config.value })),
@@ -365,6 +374,9 @@ export function useCanvasClipboard() {
 
 	};
 
-	return { copy, paste, duplicate };
+	/** Whether a node (Start aside) is selected — what copy and duplicate act on. */
+	const hasSelection = () => getSelectedActions().length > 0;
+
+	return { copy, paste, duplicate, hasSelection };
 
 }

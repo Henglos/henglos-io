@@ -5,6 +5,7 @@ import type { IComponentRuntime } from "../../../domain/entities/IComponent.runt
 import { LOGIC_COMPONENT_ID, withLogicComponent } from "../../../domain/value-objects/LogicComponent.js";
 import { syncDynamicOutputs } from "./DynamicOutputs.js";
 import { AddActionToComponent } from "../component/AddAction.use-case.js";
+import { uniqueActionAlias } from "./RenameAction.use-case.js";
 
 /**
  * `workflow` ready to take an action of `componentId` — with the built-in
@@ -37,11 +38,13 @@ export class AddActionToWorkflowComponent {
 		const workflow = withComponentFor(current, componentId);
 		const componentIdx = workflow.components.findIndex(c => c.id === componentId);
 		if (componentIdx === -1) return { workflow: current, action: undefined };
-		const { component, action: added } = this.addAction.execute(workflow.components[componentIdx]!, action);
+		const { component, action: created } = this.addAction.execute(workflow.components[componentIdx]!, action);
+		// A second "If" is "If 2" — no two nodes share a name.
+		const added = created && { ...created, alias: uniqueActionAlias(workflow, created.alias, created.id) };
 		// Outputs from its rows (a Switch's rules): one per default row from the start.
 		const actionRuntime = added && syncDynamicOutputs(added);
 		const components = [...workflow.components];
-		components[componentIdx] = actionRuntime && actionRuntime !== added
+		components[componentIdx] = actionRuntime
 			? { ...component, actions: component.actions.map(found => found.id === actionRuntime.id ? actionRuntime : found) }
 			: component;
 		return { workflow: { ...workflow, components }, action: actionRuntime };

@@ -204,18 +204,26 @@ const WorkspaceInner = () => {
 		const onKeyDown = (e: KeyboardEvent) => {
 
 			if (!(e.ctrlKey || e.metaKey)) return;
-			if (!isCanvasFocused()) return;
 
 			const key = e.key.toLowerCase();
+
+			// Ctrl+D means nothing to text (the browser's is "bookmark this page"):
+			// it duplicates the selected nodes wherever the focus is — after a
+			// click in the inspector or the Logs too — unless something is typed in.
+			if (key === "d" && !e.shiftKey && !e.altKey) {
+				if (isEditingText() || !clipboard.hasSelection()) return;
+				e.preventDefault();
+				clipboard.duplicate();
+				return;
+			}
+
+			if (!isCanvasFocused()) return;
 
 			if (key === "c") {
 				e.preventDefault();
 				clipboard.copy();
 			} else if (key === "v") {
 				clipboard.paste();
-			} else if (key === "d") {
-				e.preventDefault();
-				clipboard.duplicate();
 			}
 
 		};
