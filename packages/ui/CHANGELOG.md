@@ -1,5 +1,11 @@
 # @henglosio/ui
 
+## 1.2.1
+
+### Patch Changes
+
+- A toast's detail keeps its line breaks.
+
 ## 1.2.0
 
 ### Minor Changes

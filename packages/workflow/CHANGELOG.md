@@ -1,5 +1,11 @@
 # @henglosio/workflow
 
+## 2.5.0
+
+### Minor Changes
+
+- No two nodes share a name: adding or renaming one to a name already taken numbers it ("If" → "If 2"). New `uniqueActionAlias` helper.
+
 ## 2.4.0
 
 ### Minor Changes
