@@ -18,7 +18,7 @@ const CACHE_VOLUME = "henglosio-firmware-cache";
  * Registers `hio firmware build|flash [board]`: runs a board's firmware script in
  * its image, the way the driver does, to try it without the studio.
  *
- * The platform the board depends on is fetched here (HENGLOS_REGISTRY), and the
+ * The platform the board depends on is fetched here (HIO_REGISTRY_URL), and the
  * board and the platform are mounted in the container, where this `hio`'s runner
  * host (dist/runner-host.mjs) runs them — the image needs no `hio` of its own.
  *

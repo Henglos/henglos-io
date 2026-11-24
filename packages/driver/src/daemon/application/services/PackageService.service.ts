@@ -5,13 +5,14 @@ import os from "os";
 import { ManifestService } from "@henglosio/shared";
 import { injectable } from "tsyringe";
 
-// The public npm registry. In development, point HENGLOS_REGISTRY at the
-// dev Gitea (http://localhost:3000/api/packages/henglosio/npm/).
+// The npm registry packages come from: HIO_REGISTRY_URL — the hosting's own
+// setting, so one name points both at the same registry (the dev Gitea:
+// http://localhost:3000/api/packages/henglosio/npm/). HENGLOS_REGISTRY, its
+// earlier name, still works. The public npm registry otherwise.
 const DEFAULT_REGISTRY = "https://registry.npmjs.org/";
 
 function registryUrl(): string {
-	console.log(process.env["HENGLOS_REGISTRY"] ?? DEFAULT_REGISTRY);
-	return process.env["HENGLOS_REGISTRY"] ?? DEFAULT_REGISTRY;
+	return process.env["HIO_REGISTRY_URL"] || process.env["HENGLOS_REGISTRY"] || DEFAULT_REGISTRY;
 }
 
 /** A package installed in the driver's cache, and where. */
@@ -26,7 +27,7 @@ export type CachedPackage = {
 
 /**
  * The driver's package cache (~/.henglos/io/driver/packages): boards, components and the
- * platform, installed from the registry (HENGLOS_REGISTRY) once per version.
+ * platform, installed from the registry (HIO_REGISTRY_URL) once per version.
  */
 @injectable()
 export class PackageService {

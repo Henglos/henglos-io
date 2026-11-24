@@ -8,12 +8,12 @@ import type { PlatformPackage } from "@henglosio/shared";
 const PACKAGE_NAME = PLATFORM_PACKAGE;
 /** Where downloaded platforms are kept: one folder per requested version. */
 const CACHE_DIR = path.join(os.homedir(), ".henglos", "io", "platforms");
-/** The public npm registry. In development, HENGLOS_REGISTRY points at the dev Gitea (http://localhost:3000/api/packages/henglosio/npm/). */
+/** The public npm registry. In development, HIO_REGISTRY_URL points at the dev Gitea (http://localhost:3000/api/packages/henglosio/npm/). */
 const DEFAULT_REGISTRY = "https://registry.npmjs.org/";
 
-/** The npm registry to fetch the platform from: `HENGLOS_REGISTRY`, else the public one. */
+/** The npm registry to fetch the platform from: `HIO_REGISTRY_URL` (the hosting's setting; `HENGLOS_REGISTRY`, its earlier name, still works), else the public one. */
 function registryUrl() {
-	return process.env["HENGLOS_REGISTRY"] ?? DEFAULT_REGISTRY;
+	return process.env["HIO_REGISTRY_URL"] || process.env["HENGLOS_REGISTRY"] || DEFAULT_REGISTRY;
 }
 
 /** Whether a platform was already extracted into `versionDir`. */
