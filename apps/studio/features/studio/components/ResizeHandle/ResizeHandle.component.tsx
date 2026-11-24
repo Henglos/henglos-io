@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import clsx from "clsx";
 
 type Edge = "top" | "right" | "bottom" | "left";
@@ -37,7 +37,14 @@ const write = (key: string | undefined, size: number) => {
 export function useResizable({ storageKey, initial, min, max }: UseResizableOptions) {
 
 	const clamp = useCallback((size: number) => Math.min(max, Math.max(min, size)), [min, max]);
-	const [size, setSizeState] = useState(() => clamp(read(storageKey) ?? initial));
+	// The first render is the server's too (no storage there): `initial`, so
+	// both draw the same — the size kept in this browser comes right after
+	// mounting, before the browser paints (no jump, no hydration mismatch).
+	const [size, setSizeState] = useState(() => clamp(initial));
+	useLayoutEffect(() => {
+		const stored = read(storageKey);
+		if (stored !== undefined) setSizeState(clamp(stored));
+	}, [storageKey, clamp]);
 
 	const setSize = useCallback((next: number, keep = false) => {
 		const clamped = clamp(next);
