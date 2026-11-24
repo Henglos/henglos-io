@@ -6,6 +6,18 @@ from henglosio.sdk.core.identifier import generate_id
 
 ACTION_ID = generate_id("core/start")
 MODE_ID = generate_id("start/mode")
+# A session begins (the studio's Play, Debug, ▶): the variables start over
+# from their initial values — a Start without it (its loops) keeps what the
+# program wrote.
+FRESH_ID = generate_id("start/fresh")
+
+
+def fresh(configs) -> bool:
+	# Whether this Start begins a session: its "start/fresh" flag, set.
+	for config in configs:
+		if config.config_id == FRESH_ID:
+			return len(config.data) > 0 and config.data[0] != 0
+	return False
 
 
 class FlowMode:

@@ -303,6 +303,14 @@ function buildLiteralEntry(configId: number, encoded: EncodedValue): Uint8Array 
 	return buildValueEntry(configId, encoded, VALUE_TYPE_LITERAL);
 }
 
+/**
+ * Start's flag that a session begins: the board drops what its variables
+ * hold before seeding them — so a value changed in the studio, or written by
+ * the last session, doesn't linger. Without it (Start's loops) a variable
+ * keeps what the program wrote.
+ */
+export const START_FRESH_CONFIG_ID = generateId("start/fresh");
+
 // "core/start" also seeds the workflow variables: one LITERAL per variable
 // with an initial value, CONFIG_ID = its VARIABLE_ID. The platform's _start
 // stores them in GlobalVariables — only when a variable has no value yet, so
@@ -481,7 +489,12 @@ function buildOutputEntries(workflow: IWorkflowRuntime, actionId: string): Uint8
 // [CONFIG_ID(16) + VALUE_TYPE(8) + (LITERAL | BIND | CODE | VARIABLE, see buildConfigEntry)]*
 export class GenerateExecuteCommand {
 
-	execute(workflow: IWorkflowRuntime, actionId: string, commandId: number = EXECUTE_COMMAND_ID): Uint8Array | undefined {
+	/**
+	 * `freshVariables`: a Start that begins a session (a Play, a Debug, a ▶) —
+	 * the board drops what its variables hold first, so they start from their
+	 * initial values (see START_FRESH_CONFIG_ID). Start's loops don't.
+	 */
+	execute(workflow: IWorkflowRuntime, actionId: string, commandId: number = EXECUTE_COMMAND_ID, options: { freshVariables?: boolean } = {}): Uint8Array | undefined {
 
 		const resolved = resolveWorkflowAction(workflow, actionId);
 		if (!resolved) return undefined;
@@ -508,7 +521,10 @@ export class GenerateExecuteCommand {
 			.filter(c => c.binding !== null || (c.value !== undefined && c.value !== null))
 			.map(c => buildConfigEntry(workflow, action.base.displayName, c, componentName === LogicComponentSchema.displayName))
 			.filter((entry): entry is Uint8Array => entry !== undefined);
-		if (actionId === workflow.start.id) configEntries.push(...buildVariableInitialEntries(workflow));
+		if (actionId === workflow.start.id) {
+			if (options.freshVariables) configEntries.push(buildLiteralEntry(START_FRESH_CONFIG_ID, encodeBool(true)));
+			configEntries.push(...buildVariableInitialEntries(workflow));
+		}
 		// Pass Context on: a flag the board takes out of the configs — without
 		// it, the next action gets only what this one published.
 		if (actionPassesContext(workflow, actionId)) {

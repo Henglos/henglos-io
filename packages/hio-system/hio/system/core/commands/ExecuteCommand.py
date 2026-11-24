@@ -366,9 +366,12 @@ class ExecuteCommand(ICommand):
 	def _initialize_variables(self, packet: ExecutePacket, transport: "ITransport | None") -> None:
 		# Every other literal of "core/start" is a variable's initial value,
 		# CONFIG_ID = its VARIABLE_ID. Only an unset variable takes it: a loop
-		# back to the start keeps what the program wrote.
+		# back to the start keeps what the program wrote — unless the Start
+		# begins a session ("start/fresh"): then they all start over.
+		if Start.fresh(packet.configs):
+			self._variables.clear()
 		for config in packet.configs:
-			if config.config_id == Start.MODE_ID:
+			if config.config_id == Start.MODE_ID or config.config_id == Start.FRESH_ID:
 				continue
 			if not self._variables.initialize(config.config_id, config):
 				debug(transport, DebugLevel.WARN, "[Variable] 0x%04x not initialized: no room" % config.config_id)
