@@ -235,7 +235,7 @@ const BoardSection: React.FC = () => {
 	const current = workflow.data.board.packageId;
 	const all = (boards ?? []).flatMap(board => board.versions.map(version => ({ id: version.id, name: board.name, version: version.version, platform: version.platform })));
 	// The versions that build on this platform.
-	const options = all.filter(option => !platform || !valid(platform) || satisfies(platform, option.platform));
+	const options = all.filter(option => !platform || !valid(platform) || satisfies(platform, option.platform, { includePrerelease: true }));
 	const currentOption = all.find(option => option.id === current);
 
 	const change = async (packageId: string) => {

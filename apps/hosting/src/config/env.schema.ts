@@ -29,7 +29,7 @@ export const EnvSchema = zod.object({
 
 	// The npm registry everything comes from: the boards and components (when
 	// none is given) and the platform's releases (@henglosio/hio-system). Point
-	// the drivers (HENGLOS_REGISTRY) at the same one.
+	// the drivers (their HIO_REGISTRY_URL) at the same one.
 	HIO_REGISTRY_URL: zod.string().default("https://registry.npmjs.org/"),
 
 	// The monorepo's packages/ folder: its boards, components and platform are

@@ -55,7 +55,7 @@ export class DeletePackageUseCase {
 				const workflow = await this.workflowRepository.findById(workflowId);
 				if (!workflow) continue;
 
-				const target = siblings.find(other => !other.pkg.platform || semver.satisfies(workflow.platform, other.pkg.platform));
+				const target = siblings.find(other => !other.pkg.platform || semver.satisfies(workflow.platform, other.pkg.platform, { includePrerelease: true }));
 				if (target) {
 					await this.updateWorkflowUseCase.execute(userId, workflowId, {
 						patch: [{ op: 'change:board', path: '', packageId: target.id! }],

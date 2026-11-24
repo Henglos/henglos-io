@@ -24,7 +24,8 @@ export class PlatformService {
 	/** Whether a release matches `version` — a version or a semver range. */
 	async hasVersion(version: string): Promise<boolean> {
 		const available = await this.repository.list();
-		return available.some(v => semver.satisfies(v, version));
+		// A prerelease (1.6.1-dev.0, a beta) counts: one picked on purpose is meant to be used.
+		return available.some(v => semver.satisfies(v, version, { includePrerelease: true }));
 	}
 
 	/** The published package of `version` (.tgz). */

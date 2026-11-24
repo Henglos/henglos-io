@@ -232,7 +232,7 @@ export class ImportWorkflowUseCase {
 
 		if (accountPackage.pkg.type !== pkg.type) throw new ImportPackageFailed(label, `it's a ${accountPackage.pkg.type}, not a ${pkg.type}`);
 		const range = accountPackage.pkg.platform;
-		if (range && !semver.satisfies(platform, range)) throw new ImportPackageFailed(label, `it needs platform ${range}, the workflow uses ${platform}`);
+		if (range && !semver.satisfies(platform, range, { includePrerelease: true })) throw new ImportPackageFailed(label, `it needs platform ${range}, the workflow uses ${platform}`);
 
 		return accountPackage;
 

@@ -121,7 +121,8 @@ export class UpdateWorkflowUseCase {
 
 		for (const accountPackage of packages) {
 			const range = accountPackage?.pkg?.platform;
-			if (range && !semver.satisfies(version, range)) throw new IncompatiblePlatformVersion;
+			// A prerelease platform (1.6.1-dev.0) is in a package's range like its release.
+			if (range && !semver.satisfies(version, range, { includePrerelease: true })) throw new IncompatiblePlatformVersion;
 		}
 	}
 
@@ -437,7 +438,7 @@ export class UpdateWorkflowUseCase {
 		let replacedBoardLink: string | null = null;
 		if (newBoard) {
 			const range = newBoard.pkg.platform;
-			if (range && !semver.satisfies(workflow.platform, range)) throw new IncompatiblePlatformVersion;
+			if (range && !semver.satisfies(workflow.platform, range, { includePrerelease: true })) throw new IncompatiblePlatformVersion;
 			const link = await this.packageLinkRepository.save(PackageLink.fromAccountPackage(newBoard));
 			replacedBoardLink = workflow.boardId;
 			workflow.boardId = link.id!;

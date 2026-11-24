@@ -32,7 +32,8 @@ export const BoardCard: React.FC<BoardCardProps> = ({
 	onSelect,
 }) => {
 	const compatibleVersions = targetPlatform
-		? versions.filter((v) => satisfies(targetPlatform, v.platform))
+		// A prerelease platform (1.6.1-dev.0) is in a package's range like its release.
+		? versions.filter((v) => satisfies(targetPlatform, v.platform, { includePrerelease: true }))
 		: [];
 	const hasCompatibleVersions = compatibleVersions.length > 0;
 
