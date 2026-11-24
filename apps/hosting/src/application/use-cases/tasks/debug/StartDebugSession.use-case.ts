@@ -53,7 +53,8 @@ export class StartDebugSessionUseCase {
 
 		const entry = entryId ?? workflow.start.id;
 		if (!workflowEntries(workflow).includes(entry)) throw new ActionNotFound();
-		const startPayload = this.generateExecuteCommand.execute(workflow, entry);
+		// A debug session starts the variables over from their initial values.
+		const startPayload = this.generateExecuteCommand.execute(workflow, entry, undefined, { freshVariables: entry === workflow.start.id });
 		if (!startPayload) throw new ActionNotFound();
 
 		// A session left paused (a reload, Debug pressed again) still holds the

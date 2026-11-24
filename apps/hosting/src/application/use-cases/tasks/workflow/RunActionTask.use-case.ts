@@ -1,5 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import {
+	type ContextValue,
 	type DriverExecuteFinishInDTO,
 	type DriverExecuteFrameInDTO,
 	type TaskCancelInDTO,
@@ -8,6 +9,7 @@ import {
 	OutputId,
 } from "@henglosio/shared";
 import { GenerateExecuteCommand, RUN_COMMAND_ID, resolveWorkflowAction } from "@henglosio/workflow";
+import { buildContextSetPayload } from "./contextSet";
 import { awaitDriverResponse, describeOutput, FIRST_RESPONSE_TIMEOUT_MS, readResponse, readValues, type RunActionResult, type RunValue } from "./actionResponse";
 import { BuildBoardInstall } from "../BuildBoardInstall";
 
@@ -53,7 +55,12 @@ export class RunActionTaskUseCase {
 	 *   DriverOffline; UnsupportedCapability; ActionRunFailed for anything the
 	 *   board or the driver failed with.
 	 */
-	async execute(userId: string, driverId: string, workflowId: string, actionId: string, port: string, baudrate: number): Promise<RunActionResult> {
+	/**
+	 * `context`: what the actions before it published, as the studio shows it
+	 * (their last run) — written on the board first, so the action reads them
+	 * as it would in the flow.
+	 */
+	async execute(userId: string, driverId: string, workflowId: string, actionId: string, port: string, baudrate: number, context: ContextValue[] = []): Promise<RunActionResult> {
 
 		if (!await this.userRepository.existsById(userId)) throw new UserNotFound();
 
@@ -75,9 +82,13 @@ export class RunActionTaskUseCase {
 		// big, a dangling bind) surface here, before anything reaches the board.
 		const frames: Uint8Array<ArrayBuffer>[] = [];
 		const seedsVariables = (workflow.data.variables ?? []).some(variable => variable.initial !== null);
+		// The variables as the studio has them — not what an earlier session left (fresh).
 		if (seedsVariables && actionId !== workflow.data.start.id) {
-			frames.push(buildRequestFrame(this.generateExecuteCommand.execute(workflow.data, workflow.data.start.id, RUN_COMMAND_ID)!));
+			frames.push(buildRequestFrame(this.generateExecuteCommand.execute(workflow.data, workflow.data.start.id, RUN_COMMAND_ID, { freshVariables: true })!));
 		}
+		// The outputs on screen of the actions before it.
+		const contextFrame = context.length > 0 ? buildRequestFrame(buildContextSetPayload(context)) : null;
+		if (contextFrame) frames.push(contextFrame);
 		const actionPayload = this.generateExecuteCommand.execute(workflow.data, actionId, RUN_COMMAND_ID);
 		if (!actionPayload) throw new ActionNotFound();
 		frames.push(buildRequestFrame(actionPayload));
@@ -108,6 +119,9 @@ export class RunActionTaskUseCase {
 					socket.emit("workflow:execute:continue", { id: task.id, frame } satisfies DriverExecuteFrameInDTO);
 				}
 				response = await answer;
+				if (frame === contextFrame && readResponse(response).id !== OutputId.SUCCESS) {
+					throw new Error("The board had no room for the outputs to run with — raise Pipeline entries in Settings → Limits");
+				}
 			}
 
 			if (!response) throw new Error("No answer from the board");

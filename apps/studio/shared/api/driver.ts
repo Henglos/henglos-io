@@ -1,4 +1,4 @@
-import type { Device, DriverItem, FsListOut, FsReadOut, PairTokenOut, PortStatusOut, TaskRecord, TaskType } from "@henglosio/shared";
+import type { ContextValue, Device, DriverItem, FsListOut, FsReadOut, PairTokenOut, PortStatusOut, TaskRecord, TaskType } from "@henglosio/shared";
 import { http } from "@shared/lib/http";
 
 export const generateDriverPairToken = async (): Promise<PairTokenOut> => {
@@ -139,10 +139,12 @@ export const runAction = async (
 	actionId: string,
 	port: string,
 	baudrate: number,
+	/** What the actions before it published (their last run, as shown) — it runs reading those. */
+	context: ContextValue[] = [],
 ): Promise<RunActionResult> => {
 	const { data } = await http.post<RunActionResult>(
 		`/drivers/${driverId}/workflows/${workflowId}/actions/${encodeURIComponent(actionId)}/run`,
-		{ port, baudrate },
+		{ port, baudrate, ...(context.length > 0 ? { context } : {}) },
 	);
 	return data;
 };

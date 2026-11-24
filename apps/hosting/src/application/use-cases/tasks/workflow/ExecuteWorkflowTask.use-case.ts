@@ -124,7 +124,8 @@ export class ExecuteWorkflowTaskUseCase {
 
 		// Its triggers are armed first (their EXECUTEs), then Start runs.
 		const opening = [...workflowTriggers(runnable).map(action => action.id), runnable.start.id];
-		const requestPayload = this.generateExecuteCommand.execute(runnable, opening[0]!);
+		// The session's first Start starts the variables over (freshVariables) — its loops keep them.
+		const requestPayload = this.generateExecuteCommand.execute(runnable, opening[0]!, undefined, { freshVariables: opening[0] === runnable.start.id });
 		if (!requestPayload) throw new ActionNotFound();
 		const frame = buildRequestFrame(requestPayload);
 		// What it uses goes on the board before that first frame — see BuildBoardInstall.
@@ -189,6 +190,8 @@ export class ExecuteWorkflowTaskUseCase {
 		};
 		// The first answer comes after the board's install — see FIRST_RESPONSE_TIMEOUT_MS.
 		let first = true;
+		// Whether Start has gone out yet: its first one starts the variables over.
+		let startSent = opening[0] === startActionId;
 
 		try {
 			for (;;) {
@@ -237,7 +240,9 @@ export class ExecuteWorkflowTaskUseCase {
 					nextActionId = startActionId;
 				}
 
-				const nextPayload = this.generateExecuteCommand.execute(workflow, nextActionId);
+				const fresh = nextActionId === startActionId && !startSent;
+				if (nextActionId === startActionId) startSent = true;
+				const nextPayload = this.generateExecuteCommand.execute(workflow, nextActionId, undefined, { freshVariables: fresh });
 				if (!nextPayload) return;
 
 				send(nextPayload);

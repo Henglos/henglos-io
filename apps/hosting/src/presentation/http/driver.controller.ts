@@ -65,7 +65,7 @@ import { ContinueDebugSessionUseCase } from '@/application/use-cases/tasks/debug
 import { SetDebugValuesUseCase } from '@/application/use-cases/tasks/debug/SetDebugValues.use-case';
 import { GetDebugSessionUseCase } from '@/application/use-cases/tasks/debug/GetDebugSession.use-case';
 import { StopDebugSessionUseCase } from '@/application/use-cases/tasks/debug/StopDebugSession.use-case';
-import { DebugValuesInSchema, type DebugValuesIn } from '@henglosio/shared';
+import { DebugValuesInSchema, type DebugValuesIn, RunActionInSchema, type RunActionIn } from '@henglosio/shared';
 import { RecordWorkflowTaskUseCase } from '@/application/use-cases/tasks/workflow/RecordWorkflowTask.use-case';
 import { StopTaskUseCase } from '@/application/use-cases/tasks/StopTask.use-case';
 import { StartReplTaskUseCase } from '@/application/use-cases/tasks/repl/StartReplTask.use-case';
@@ -291,10 +291,10 @@ export class DriverController {
 		@Param("driverId") driverId: string,
 		@Param("workflowId") workflowId: string,
 		@Param("actionId") actionId: string,
-		@Body(new ZodValidationPipe(ExecuteWorkflowInSchema)) body: ExecuteWorkflowIn,
+		@Body(new ZodValidationPipe(RunActionInSchema)) body: RunActionIn,
 	): Promise<RunActionResult> {
 
-		return this.runActionTaskUseCase.execute(authUser.userId, driverId, workflowId, actionId, body.port, body.baudrate);
+		return this.runActionTaskUseCase.execute(authUser.userId, driverId, workflowId, actionId, body.port, body.baudrate, body.context);
 
 	}
 
