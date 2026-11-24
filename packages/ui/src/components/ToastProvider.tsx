@@ -90,7 +90,7 @@ const Toast = ({ toast, onDismiss }: { toast: ToastState; onDismiss: () => void 
 					</p>
 
 					{toast.detail && (
-						<p className="text-xs leading-[1.15rem] mt-2" style={{ color: "var(--fg-muted)" }}>
+						<p className="text-xs leading-[1.15rem] mt-2 whitespace-pre-line" style={{ color: "var(--fg-muted)" }}>
 							{toast.detail}
 						</p>
 					)}

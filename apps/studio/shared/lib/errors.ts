@@ -25,6 +25,8 @@ const ERROR_MESSAGES: Record<string, string> = {
 	invalid_workflow_name:        "Invalid workflow name.",
 	required_workflow:            "A workflow is required.",
 	action_not_found:             "Action not found in the workflow.",
+	invalid_workflow_archive:     "This .hio file can't be imported.",
+	import_package_failed:        "A package the workflow needs couldn't be installed.",
 
 	// ── driver ────────────────────────────────────────────────────────────────
 	driver_not_found:             "Driver not found.",

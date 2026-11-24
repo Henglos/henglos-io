@@ -15,7 +15,7 @@ export const HIO_FORMAT = "henglosio/workflow";
 export const HIO_FORMAT_VERSION = 1;
 /** A .hio file's extension. */
 export const HIO_EXTENSION = ".hio";
-/** The .hio's manifest, at the zip's root. */
+/** The .hio's manifest, at the zip's root (or in its one folder, when zipped again by hand). */
 export const HIO_MANIFEST_FILE = "manifest.json";
 /** The .hio's workflow, at the zip's root. */
 export const HIO_WORKFLOW_FILE = "workflow.json";
@@ -56,6 +56,11 @@ export const ImportWorkflowOutSchema = zod.object({
 	name: zod.string(),
 	/** Packages the import added to the account, as name@version. */
 	installed: zod.array(zod.string()),
+	/**
+	 * What didn't fit and was imported anyway — a platform that isn't
+	 * published here, a package that doesn't support the workflow's platform.
+	 */
+	warnings: zod.array(zod.string()),
 });
 
 /** A package a .hio needs, at its exact version — installed from its registry on import. */

@@ -58,7 +58,15 @@ export const HubFeature = () => {
 			const installed = result.installed.length > 0
 				? ` — installed ${result.installed.length} package${result.installed.length === 1 ? "" : "s"}`
 				: "";
-			emitToast("success", `Imported "${result.name}"${installed}`);
+			// What didn't fit was imported anyway: said until dismissed, one per line.
+			if (result.warnings.length > 0) {
+				emitToast("warning", `Imported "${result.name}"${installed} — with ${result.warnings.length} problem${result.warnings.length === 1 ? "" : "s"}`, {
+					detail: result.warnings.join("\n"),
+					duration: 0,
+				});
+			} else {
+				emitToast("success", `Imported "${result.name}"${installed}`);
+			}
 		},
 		// errors are surfaced by the http interceptor's toast
 	});

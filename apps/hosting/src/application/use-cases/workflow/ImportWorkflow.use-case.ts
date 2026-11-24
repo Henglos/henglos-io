@@ -68,13 +68,16 @@ export class ImportWorkflowUseCase {
 
 		const { manifest, portable, attachments } = this.read(file);
 
-		if (!await this.platformService.hasVersion(manifest.platform)) throw new PlatformNotFound(manifest.platform);
+		// What doesn't fit is imported anyway and said — the studio shows it, and
+		// it's fixed there (Workflow settings), not by editing the file.
+		const warnings: string[] = [];
+		const platform = await this.pickPlatform(manifest.platform, warnings);
 
 		// Every package, in the account — installed now if it wasn't.
 		const installed: string[] = [];
 		const byRef = new Map<string, AccountPackage>();
 		for (const pkg of manifest.packages) {
-			byRef.set(pkg.ref, await this.ensurePackage(userId, pkg, manifest.platform, installed));
+			byRef.set(pkg.ref, await this.ensurePackage(userId, pkg, platform, installed, warnings));
 		}
 
 		const accountPackageOf = (ref: unknown, type: HioPackageRef["type"]): AccountPackage => {
@@ -122,7 +125,7 @@ export class ImportWorkflowUseCase {
 			userId,
 			data: workflowData,
 			boardId: boardLink.id!,
-			platform: manifest.platform,
+			platform,
 		}));
 
 		// Attached files: stored again under this workflow, the configs pointed
@@ -159,11 +162,25 @@ export class ImportWorkflowUseCase {
 		}
 
 		this.telemetry.capture("workflow_imported", { packages_installed: installed.length });
-		return { id: workflow.id!, name, installed };
+		return { id: workflow.id!, name, installed, warnings };
 
 	}
 
 	// ── internals ─────────────────────────────────────────────────────────────
+
+	/**
+	 * The archive's platform when it's published here — else the newest one
+	 * that is (a stable one before a prerelease), said in `warnings`.
+	 * @throws PlatformNotFound when none is published.
+	 */
+	private async pickPlatform(wanted: string, warnings: string[]): Promise<string> {
+		if (await this.platformService.hasVersion(wanted)) return wanted;
+		const available = semver.rsort((await this.platformService.list()).filter(version => semver.valid(version)));
+		const picked = available.find(version => !semver.prerelease(version)) ?? available[0];
+		if (!picked) throw new PlatformNotFound(wanted);
+		warnings.push(`Platform ${wanted} isn't published here — imported on ${picked}. Pick another in Workflow settings if it doesn't fit.`);
+		return picked;
+	}
 
 	// Unzips the archive and reads its manifest and workflow. @throws InvalidWorkflowArchive.
 	private read(file: Buffer) {
@@ -182,6 +199,7 @@ export class ImportWorkflowUseCase {
 			throw new InvalidWorkflowArchive("Not a .hio file");
 		}
 		if (unpacked > HIO_MAX_BYTES) throw new InvalidWorkflowArchive("The file is too large");
+		files = atRoot(files);
 
 		const json = (path: string): unknown => {
 			const raw = files[path];
@@ -214,28 +232,41 @@ export class ImportWorkflowUseCase {
 	}
 
 	/** The account's install of `pkg` — added from its registry if it has none. */
-	private async ensurePackage(userId: string, pkg: HioPackageRef, platform: string, installed: string[]): Promise<AccountPackage> {
+	private async ensurePackage(userId: string, pkg: HioPackageRef, platform: string, installed: string[], warnings: string[]): Promise<AccountPackage> {
 
 		const label = `${pkg.spec}@${pkg.version}`;
 
-		let accountPackage = await this.findInAccount(userId, pkg);
-		if (!accountPackage) {
-			try {
-				accountPackage = await this.addPackageUseCase.execute(userId, label, pkg.registry);
-				installed.push(label);
-			} catch (err) {
-				// Installed meanwhile (another import) — fine.
-				accountPackage = await this.findInAccount(userId, pkg);
-				if (!accountPackage) throw new ImportPackageFailed(label, describe(err));
-			}
-		}
+		const accountPackage = await this.findInAccount(userId, pkg) ?? await this.install(userId, pkg, label, installed, warnings);
 
 		if (accountPackage.pkg.type !== pkg.type) throw new ImportPackageFailed(label, `it's a ${accountPackage.pkg.type}, not a ${pkg.type}`);
 		const range = accountPackage.pkg.platform;
-		if (range && !semver.satisfies(platform, range, { includePrerelease: true })) throw new ImportPackageFailed(label, `it needs platform ${range}, the workflow uses ${platform}`);
+		if (range && !semver.satisfies(platform, range, { includePrerelease: true })) {
+			warnings.push(`${label} supports platform ${range}, not ${platform} — update it in the Library, or pick another platform.`);
+		}
 
 		return accountPackage;
 
+	}
+
+	// From the registry it was exported from, else the default one — an archive
+	// from a dev setup points at a registry (a local Gitea) that isn't reachable here.
+	private async install(userId: string, pkg: HioPackageRef, label: string, installed: string[], warnings: string[]): Promise<AccountPackage> {
+		const registries = pkg.registry ? [pkg.registry, undefined] : [undefined];
+		let failure: unknown;
+		for (const registry of registries) {
+			try {
+				const accountPackage = await this.addPackageUseCase.execute(userId, label, registry);
+				installed.push(label);
+				if (registry !== pkg.registry) warnings.push(`${label} came from the default registry — ${pkg.registry} didn't have it.`);
+				return accountPackage;
+			} catch (err) {
+				// Installed meanwhile (another import) — fine.
+				const meanwhile = await this.findInAccount(userId, pkg);
+				if (meanwhile) return meanwhile;
+				failure ??= err;
+			}
+		}
+		throw new ImportPackageFailed(label, describe(failure));
 	}
 
 	// The account's install of that exact package version, if it has one.
@@ -253,6 +284,20 @@ export class ImportWorkflowUseCase {
 		}
 	}
 
+}
+
+// A .hio zipped again by hand keeps its folder ("test/manifest.json"): the
+// one folder holding a manifest is taken as the root.
+function atRoot(files: Record<string, Uint8Array>): Record<string, Uint8Array> {
+	if (files[HIO_MANIFEST_FILE]) return files;
+	const folders = Object.keys(files)
+		.filter(path => !path.startsWith("__MACOSX/") && path.endsWith(`/${HIO_MANIFEST_FILE}`))
+		.map(path => path.slice(0, -HIO_MANIFEST_FILE.length));
+	const folder = folders.length === 1 ? folders[0]! : undefined;
+	if (!folder) return files;
+	return Object.fromEntries(Object.entries(files)
+		.filter(([path]) => path.startsWith(folder))
+		.map(([path, data]) => [path.slice(folder.length), data]));
 }
 
 // A BaseError carries its reason in `info`, else its id.
