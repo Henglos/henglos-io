@@ -103,7 +103,10 @@ function publishNpm(pkg) {
 	fs.writeFileSync(config, `${NPM_REGISTRY.replace(/^https?:/, "")}:_authToken=${token}\n`);
 	try {
 		// npm, not pnpm: hio-system's prepack bundles the sdk into the tarball.
-		run("npm", ["publish", "--registry", NPM_REGISTRY, "--userconfig", config], { cwd: pkg.dir });
+		// A prerelease (1.6.1-dev.0) goes under the "dev" tag — npm refuses one
+		// without a tag, so it never becomes the package's latest.
+		const tag = pkg.version.includes("-") ? ["--tag", "dev"] : [];
+		run("npm", ["publish", "--registry", NPM_REGISTRY, "--userconfig", config, ...tag], { cwd: pkg.dir });
 	} finally {
 		fs.rmSync(path.dirname(config), { recursive: true, force: true });
 	}
