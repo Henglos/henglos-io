@@ -1,0 +1,89 @@
+name: Raspberry Pi Pico
+description: The Raspberry Pi Pico (RP2040) — 26 GPIOs on its pins (3 analog inputs) and the LED on GP25, written by UF2.
+pins:
+  - gpio: 0
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GP0
+  - gpio: 1
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GP1
+  - gpio: 2
+    type: [digital_in, digital_out, pwm]
+    displayName: GP2
+  - gpio: 3
+    type: [digital_in, digital_out, pwm]
+    displayName: GP3
+  - gpio: 4
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GP4
+  - gpio: 5
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GP5
+  - gpio: 6
+    type: [digital_in, digital_out, pwm]
+    displayName: GP6
+  - gpio: 7
+    type: [digital_in, digital_out, pwm]
+    displayName: GP7
+  - gpio: 8
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GP8
+  - gpio: 9
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GP9
+  - gpio: 10
+    type: [digital_in, digital_out, pwm]
+    displayName: GP10
+  - gpio: 11
+    type: [digital_in, digital_out, pwm]
+    displayName: GP11
+  - gpio: 12
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GP12
+  - gpio: 13
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GP13
+  - gpio: 14
+    type: [digital_in, digital_out, pwm]
+    displayName: GP14
+  - gpio: 15
+    type: [digital_in, digital_out, pwm]
+    displayName: GP15
+  - gpio: 16
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GP16
+  - gpio: 17
+    type: [digital_in, digital_out, pwm, uart]
+    displayName: GP17
+  - gpio: 18
+    type: [digital_in, digital_out, pwm]
+    displayName: GP18
+  - gpio: 19
+    type: [digital_in, digital_out, pwm]
+    displayName: GP19
+  - gpio: 20
+    type: [digital_in, digital_out, pwm]
+    displayName: GP20
+  - gpio: 21
+    type: [digital_in, digital_out, pwm]
+    displayName: GP21
+  - gpio: 22
+    type: [digital_in, digital_out, pwm]
+    displayName: GP22
+  - gpio: 25
+    type: [digital_in, digital_out, pwm]
+    displayName: GP25 (LED)
+  - gpio: 26
+    type: [digital_in, digital_out, analog_in, pwm]
+    displayName: GP26
+  - gpio: 27
+    type: [digital_in, digital_out, analog_in, pwm]
+    displayName: GP27
+  - gpio: 28
+    type: [digital_in, digital_out, analog_in, pwm]
+    displayName: GP28
+connection:
+  serial:
+    # USB CDC: the speed isn't used on the wire, but the driver opens the port
+    # at the first one.
+    baudrates: [115200, 9600, 19200, 38400, 57600, 230400, 460800, 921600]

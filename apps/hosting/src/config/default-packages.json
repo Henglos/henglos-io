@@ -1,6 +1,7 @@
 {
 	"packages": [
 		{ "spec": "@henglosio/board-esp32", "name": "Esp32" },
+		{ "spec": "@henglosio/board-rpi-pico", "name": "RaspberryPiPico" },
 		{ "spec": "@henglosio/component-code", "name": "Code" },
 		{ "spec": "@henglosio/component-dht", "name": "DHT" },
 		{ "spec": "@henglosio/component-display", "name": "Display" },

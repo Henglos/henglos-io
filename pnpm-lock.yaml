@@ -548,6 +548,8 @@ importers:
 
   packages/library/boards/Esp32: {}
 
+  packages/library/boards/RaspberryPiPico: {}
+
   packages/library/components/Code: {}
 
   packages/library/components/DHT: {}
