@@ -71,7 +71,7 @@ export const FlashDialog: React.FC<FlashDialogProps> = ({ workflowId, driverId, 
 						</Dialog.Close>
 					</div>
 
-					<div className="flex flex-col gap-5 p-4">
+					<div className="flex flex-col gap-4 p-4">
 
 						<Form
 							key={method}

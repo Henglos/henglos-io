@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Select } from "@henglosio/ui";
-import { Field, PortSelect, Steps, type FlashFormProps } from "./common";
+import { Field, PortSelect, type FlashFormProps } from "./common";
 
 // The speeds esptool & co. commonly write at. The board's script has its own
 // default (460800 for the ESP32): "Board default" leaves it to it.
@@ -22,17 +22,11 @@ export const SerialFlashForm: React.FC<FlashFormProps<"serial">> = ({ last, defa
 
 	return (
 		<>
-			<Steps steps={[
-				"The board is put in its bootloader through its serial port.",
-				"Its tool (esptool…) writes the firmware over the driver's tunnel to the port.",
-				"The board restarts, and the runtime is installed through the same port.",
-			]} />
-
-			<Field label="Serial port" hint="Where the board is plugged in — it must be running, or in its bootloader.">
+			<Field label="Serial port">
 				<PortSelect value={port} onChange={setPort} devices={devices} />
 			</Field>
 
-			<Field label="Write speed" hint="Lower it if the write fails halfway — a long or poor USB cable.">
+			<Field label="Write speed">
 				<Select.Root value={speed} onValueChange={setSpeed} className="w-full">
 					<Select.Trigger />
 					<Select.Content>
