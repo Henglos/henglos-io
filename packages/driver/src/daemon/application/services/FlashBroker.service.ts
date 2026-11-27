@@ -65,7 +65,8 @@ export class FlashBrokerSession implements BrokerSession {
 	private readonly connections = new Map<string, Connection>();
 	private readonly target: FlashTarget;
 	private readonly tunnelHost: string;
-	private tunnelPort: number | null = null;
+	// The serial tunnel, once opened: the board's port, and the tunnel's.
+	private tunnel: { port: string; tunnelPort: number } | null = null;
 
 	constructor(
 		{ target, tunnelHost }: FlashBrokerTarget,
@@ -126,25 +127,28 @@ export class FlashBrokerSession implements BrokerSession {
 	/** The flash ended: what the Runner didn't release goes, and the serial tunnel closes. */
 	async destroy(): Promise<void> {
 		this.connections.clear();
-		if (this.tunnelPort !== null) {
-			this.tunnelPort = null;
-			await this.usbTunnel.disconnect(this.target.port).catch(() => {});
+		if (this.tunnel) {
+			const { port } = this.tunnel;
+			this.tunnel = null;
+			await this.usbTunnel.disconnect(port).catch(() => {});
 		}
 	}
 
 	// The board's port, lent to the container over RFC 2217 — opened the first
 	// time it's asked for.
 	private async connectSerial(options: FlashMethodRequest<"serial">): Promise<FlashMethodConnection<"serial">> {
-		this.tunnelPort ??= await this.usbTunnel.connect(this.target.port, REPL_BAUDRATE);
-		const preset = this.target.method === "serial" ? this.target.baudrate : undefined;
+		if (this.target.method !== "serial") throw new BrokerFailure("method_unsupported", "This flash has no serial port.");
+		const { port, baudrate } = this.target;
+		this.tunnel ??= { port, tunnelPort: await this.usbTunnel.connect(port, REPL_BAUDRATE) };
 		return {
-			url: `rfc2217://${this.tunnelHost}:${this.tunnelPort}`,
-			baudrate: preset ?? options.baudrate ?? DEFAULT_SERIAL_BAUDRATE,
+			url: `rfc2217://${this.tunnelHost}:${this.tunnel.tunnelPort}`,
+			baudrate: baudrate ?? options.baudrate ?? DEFAULT_SERIAL_BAUDRATE,
 		};
 	}
 
 	// The target's drive: there already, or once the board restarts in its
-	// bootloader through the target's port.
+	// bootloader through the target's port — with none, once it shows up (the
+	// board plugged in with BOOTSEL held).
 	private async connectUF2(options: FlashMethodRequest<"uf2">): Promise<{ volume: string; mount: string }> {
 		if (this.target.method !== "uf2") throw new BrokerFailure("method_unsupported", "This flash has no UF2 drive.");
 		const { volume, port } = this.target;
@@ -152,15 +156,22 @@ export class FlashBrokerSession implements BrokerSession {
 
 		let mount = await this.drives.find(volume);
 		if (!mount) {
-			log.info(`${volume} isn't there — restarting the board on ${port} in its bootloader`);
-			try {
-				await this.drives.enterBootloader(port);
-			} catch (err) {
-				throw new BrokerFailure("device_unavailable", `${volume} isn't there, and the board on ${port} couldn't be restarted in its bootloader: ${err instanceof Error ? err.message : String(err)}`, 409);
+			if (port) {
+				log.info(`${volume} isn't there — restarting the board on ${port} in its bootloader`);
+				try {
+					await this.drives.enterBootloader(port);
+				} catch (err) {
+					throw new BrokerFailure("device_unavailable", `${volume} isn't there, and the board on ${port} couldn't be restarted in its bootloader: ${err instanceof Error ? err.message : String(err)}`, 409);
+				}
+			} else {
+				log.info(`${volume} isn't there — waiting for it`);
 			}
 			await this.waitFor(async () => (mount = await this.drives.find(volume)) !== null, timeoutMs);
 		}
-		if (!mount) throw new BrokerFailure("device_unavailable", `${volume} didn't show up in ${Math.round(timeoutMs / 1000)}s — is the board in its bootloader?`, 409);
+		if (!mount) {
+			const hint = port ? "is the board in its bootloader?" : "hold BOOTSEL while plugging the board in, or pick its serial port";
+			throw new BrokerFailure("device_unavailable", `${volume} didn't show up in ${Math.round(timeoutMs / 1000)}s — ${hint}.`, 409);
+		}
 		return { volume, mount };
 	}
 

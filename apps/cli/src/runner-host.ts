@@ -8,7 +8,7 @@
  *
  *   node runner-host.mjs prepare --map runner.map.json [--force] <workspace>
  *   node runner-host.mjs build --map runner.map.json [--output <path>] <workspace>
- *   node runner-host.mjs flash --map runner.map.json --port <url> [--method serial|uf2] [--baudrate 460800] [--firmware <path>] <workspace>
+ *   node runner-host.mjs flash --map runner.map.json [--port <url>] [--method serial|uf2] [--baudrate 460800] [--firmware <path>] <workspace>
  *   node runner-host.mjs compile --map runner.map.json --input <CompileRequest.json> --output <CompileResult.json> <workspace>
  *
  * Progress goes to HIO_CALLBACK_URL when it's set (the driver), to the terminal
@@ -98,13 +98,15 @@ async function main(): Promise<void> {
 			const result = await compileModules(job, request);
 			await fs.writeFile(path.resolve(output), JSON.stringify(result));
 		} else {
+			// A UF2 write may have no port: the board is in its bootloader.
+			const method = parseMethod(args.options["method"]);
 			const port = args.options["port"];
-			if (!port) throw new Error("--port is required to flash.");
+			if (!port && method === "serial") throw new Error("--port is required to flash by serial.");
 			const firmware = args.options["firmware"];
 			const baudrate = Number(args.options["baudrate"] ?? "460800");
 			await flashFirmware({
 				...job,
-				method: parseMethod(args.options["method"]),
+				method,
 				baudrate,
 				broker: driver.broker(port, baudrate),
 				erase: process.env.HIO_FLASH_ERASE !== "0",

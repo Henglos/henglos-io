@@ -39,12 +39,13 @@ export const registerFlashCommand = (cli: Command) => {
 		const driver = connectDriver();
 		const send = driver.send;
 
-		if (!options.port) {
-			console.error("[-] --port is required.");
-			exit(1);
-		}
 		if (options.method !== "serial" && options.method !== "uf2") {
 			console.error(`[-] Unknown --method ${options.method} — use serial or uf2.`);
+			exit(1);
+		}
+		// A UF2 write may have no port: the board is in its bootloader.
+		if (!options.port && options.method === "serial") {
+			console.error("[-] --port is required to flash by serial.");
 			exit(1);
 		}
 

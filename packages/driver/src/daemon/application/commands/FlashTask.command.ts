@@ -23,7 +23,9 @@ export class FlashTaskCommand implements ITaskCommand<TaskFlashPayload> {
 	// wait on each other, just on the port they share.
 	async locks(p: TaskFlashPayload): Promise<string[]> {
 		const compiled = await this.workflowState.isCompiled(p.workflowId);
-		return compiled ? [`port:${p.target.port}`] : [`workflow:${p.workflowId}`, `port:${p.target.port}`];
+		// A UF2 target without a port (the board in its bootloader): its drive.
+		const board = p.target.port ? `port:${p.target.port}` : `volume:${p.target.method === "uf2" ? p.target.volume : ""}`;
+		return compiled ? [board] : [`workflow:${p.workflowId}`, board];
 	}
 
 	execute(p: TaskFlashPayload, ctx: TaskContext) { return this.useCase.execute(p.workflowId, p.target, ctx); }

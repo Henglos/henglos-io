@@ -37,16 +37,17 @@ export class DriverFlashBroker implements FlashBroker {
  */
 export class LocalFlashBroker implements FlashBroker {
 
-	private readonly url: string;
+	private readonly url: string | null;
 	private readonly baudrate: number;
 
-	constructor(port: string, baudrate: number, env: NodeJS.ProcessEnv = process.env) {
-		this.url = resolveSerialUrl(port, env);
+	constructor(port: string | undefined, baudrate: number, env: NodeJS.ProcessEnv = process.env) {
+		this.url = port ? resolveSerialUrl(port, env) : null;
 		this.baudrate = baudrate;
 	}
 
 	send = async <K extends FlashMethodName>(name: K, options: FlashMethodSendOptions<K>): Promise<void> => {
 		if (name !== "serial") throw new DriverError("method_unsupported", `Without the driver, a board can only be written through its serial port, not ${name}.`);
+		if (!this.url) throw new DriverError("bad_request", "No serial port to write the board through — pass --port.");
 		const serial = options as FlashMethodSendOptions<"serial">;
 		await serial.write({ url: this.url, baudrate: serial.baudrate ?? this.baudrate });
 	};

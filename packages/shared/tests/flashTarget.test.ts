@@ -8,11 +8,13 @@ describe("flash target", () => {
 		expect(FlashTargetSchema.parse({ method: "serial", port: "COM7", baudrate: 921600 }).method).toBe("serial");
 	});
 
-	test("uf2: a port (the REPL) and a volume, both needed", () => {
+	test("uf2: a volume — and a port (the REPL) when the board has one", () => {
 		expect(FlashTargetSchema.safeParse({ method: "uf2", port: "COM7", volume: "RPI-RP2" }).success).toBe(true);
+		// A board in its bootloader shows only its drive.
+		expect(FlashTargetSchema.safeParse({ method: "uf2", volume: "E:\\" }).success).toBe(true);
 		expect(FlashTargetSchema.safeParse({ method: "uf2", port: "COM7" }).success).toBe(false);
-		expect(FlashTargetSchema.safeParse({ method: "uf2", volume: "E:\\" }).success).toBe(false);
 		expect(FlashTargetSchema.safeParse({ method: "uf2", port: "COM7", volume: "" }).success).toBe(false);
+		expect(FlashTargetSchema.safeParse({ method: "uf2", port: "", volume: "RPI-RP2" }).success).toBe(false);
 	});
 
 	test("an unknown method is refused", () => {

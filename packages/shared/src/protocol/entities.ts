@@ -24,6 +24,8 @@ export const VolumeDTOSchema = zod.object({
 	label: zod.string(),
 	/** Where it's mounted: E:\, /Volumes/RPI-RP2, … */
 	mount: zod.string(),
+	/** Whether it's a board's UF2 bootloader — it has an INFO_UF2.TXT. */
+	uf2: zod.boolean(),
 
 });
 

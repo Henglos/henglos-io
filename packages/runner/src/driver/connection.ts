@@ -12,7 +12,8 @@ import { DriverClient } from "./http.js";
 export type DriverConnection = {
 
 	send: (payload: RunnerProtocol) => Promise<void>;
-	broker: (port: string, baudrate: number) => FlashBroker;
+	/** `port`: the board's serial port — none for a UF2 write (the board in its bootloader). */
+	broker: (port: string | undefined, baudrate: number) => FlashBroker;
 
 }
 

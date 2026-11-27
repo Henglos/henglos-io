@@ -66,7 +66,9 @@ export class FlashWorkflowUseCase {
 	) {}
 
 	// `target`: where and how the studio has the firmware written. Its `port` is
-	// the board's REPL either way — checked before, the runtime installed after.
+	// the board's REPL — checked before, the runtime installed after. A UF2 target
+	// without one is a board in its bootloader: its firmware is written, and the
+	// runtime installed on the port it comes back on.
 	async execute(
 		workflowId: string,
 		target: FlashTarget,
@@ -100,11 +102,15 @@ export class FlashWorkflowUseCase {
 		// wipe a board that was fine.
 		let repl: ReplSession | null = null;
 		let running: [number, number] | null = null;
-		try {
-			repl = await ReplSession.open(port);
-			running = await repl.mpyVersion();
-		} catch (err) {
-			await this.noRepl(target, err, ctx);
+		if (port) {
+			try {
+				repl = await ReplSession.open(port);
+				running = await repl.mpyVersion();
+			} catch (err) {
+				await this.noRepl(target, port, err, ctx);
+			}
+		} else {
+			this.inBootloader(target, ctx);
 		}
 
 		if (!running || running[0] !== wanted) {
@@ -141,7 +147,7 @@ export class FlashWorkflowUseCase {
 			await repl!.close(restart);
 		}
 
-		ctx.info(`Installed ${files.length} file(s) on ${port} in ${Date.now() - startMs}ms.`);
+		ctx.info(`Installed ${files.length} file(s) on ${port ?? "the board"} in ${Date.now() - startMs}ms.`);
 		return true;
 	}
 
@@ -167,7 +173,8 @@ export class FlashWorkflowUseCase {
 		// open at all is a connection problem, not a board to rewrite.
 		let repl: ReplSession | null = null;
 		let running: { micropython: string; buildId: string } | null = null;
-		try {
+		if (!port) this.inBootloader(target, ctx);
+		else try {
 			repl = await ReplSession.open(port);
 			const out = await repl.exec([
 				"import os",
@@ -181,7 +188,7 @@ export class FlashWorkflowUseCase {
 			const [micropython = "", buildId = ""] = (out.trim().split("\n").at(-1) ?? "").split(" ");
 			running = { micropython, buildId };
 		} catch (err) {
-			await this.noRepl(target, err, ctx);
+			await this.noRepl(target, port, err, ctx);
 		}
 
 		if (running?.buildId === firmware.buildId) {
@@ -230,7 +237,7 @@ export class FlashWorkflowUseCase {
 			await repl!.close(restart);
 		}
 
-		ctx.info(`Installed the runtime (build ${firmware.buildId}) on ${port} in ${Date.now() - startMs}ms.`);
+		ctx.info(`Installed the runtime (build ${firmware.buildId}) on ${port ?? "the board"} in ${Date.now() - startMs}ms.`);
 		return true;
 
 	}
@@ -240,16 +247,23 @@ export class FlashWorkflowUseCase {
 	// connection problem (in use, adapter stuck, unplugged) — erasing the flash
 	// over it would wipe a board that was fine. Unless the target is a UF2
 	// drive that's there: the board sits in its bootloader, with no serial port.
-	private async noRepl(target: FlashTarget, err: unknown, ctx: TaskContext): Promise<void> {
+	private async noRepl(target: FlashTarget, port: string, err: unknown, ctx: TaskContext): Promise<void> {
 		if (err instanceof ReplError) {
-			ctx.info(`No answer from a REPL on ${target.port}: ${err.message}`);
+			ctx.info(`No answer from a REPL on ${port}: ${err.message}`);
 			return;
 		}
 		if (target.method === "uf2" && await this.drives.find(target.volume)) {
-			ctx.info(`${target.port} doesn't open, but the ${target.volume} drive is there — the board is in its bootloader.`);
+			ctx.info(`${port} doesn't open, but the ${target.volume} drive is there — the board is in its bootloader.`);
 			return;
 		}
-		throw portError(target.port, err);
+		throw portError(port, err);
+	}
+
+	// A UF2 target without a port: what the board runs can't be asked — it's in
+	// its bootloader, so its firmware is written.
+	private inBootloader(target: FlashTarget, ctx: TaskContext): void {
+		const volume = target.method === "uf2" ? target.volume : "its drive";
+		ctx.info(`No serial port — the board is in its bootloader (${volume}): writing its firmware.`);
 	}
 
 	// `hio flash` in the board's container: its script writes a MicroPython
@@ -279,7 +293,7 @@ export class FlashWorkflowUseCase {
 			const command = await this.runnerHost.command(containerName, [
 				"flash", "--map", "runner.map.json",
 				"--method", target.method,
-				"--port", target.port,
+				...(target.port ? ["--port", target.port] : []),
 				"--baudrate", String(target.method === "serial" ? target.baudrate ?? FIRMWARE_FLASH_BAUDRATE : FIRMWARE_FLASH_BAUDRATE),
 				...(firmware ? ["--firmware", firmware.image] : []),
 				".",
@@ -313,22 +327,27 @@ export class FlashWorkflowUseCase {
 
 	// The board's serial port once the UF2 write restarted it: the target's port
 	// when it comes back, or else a port that wasn't there before — the same
-	// USB ids as the target's, when it was there to compare with.
+	// USB ids as the target's, when it was there to compare with; the only new
+	// one, when it wasn't (or the target has no port).
 	private async portAfterUF2(target: FlashTarget, before: Awaited<ReturnType<typeof SerialPort.list>>, ctx: TaskContext): Promise<string> {
 		const original = before.find(p => p.path === target.port);
 		const until = Date.now() + PORT_RETURN_TIMEOUT_MS;
 		for (;;) {
 			const ports = await SerialPort.list();
-			if (ports.some(p => p.path === target.port)) return target.port;
+			if (target.port && ports.some(p => p.path === target.port)) return target.port;
 			const fresh = ports.filter(p => !before.some(b => b.path === p.path));
 			const match = original?.vendorId
 				? fresh.find(p => p.vendorId === original.vendorId && p.productId === original.productId)
 				: fresh.length === 1 ? fresh[0] : undefined;
 			if (match) {
-				ctx.info(`The board came back on ${match.path}, not ${target.port}.`);
+				ctx.info(target.port ? `The board came back on ${match.path}, not ${target.port}.` : `The board came up on ${match.path}.`);
 				return match.path;
 			}
-			if (Date.now() >= until) throw new Error(`The board didn't come back on ${target.port} after the UF2 write — pick its serial port and flash again.`);
+			if (Date.now() >= until) {
+				throw new Error(target.port
+					? `The board didn't come back on ${target.port} after the UF2 write — pick its serial port and flash again.`
+					: `No new serial port showed up after the UF2 write${fresh.length > 1 ? ` (${fresh.length} did: ${fresh.map(p => p.path).join(", ")})` : ""} — pick the board's serial port and flash again.`);
+			}
 			await new Promise(resolve => setTimeout(resolve, 500));
 		}
 	}

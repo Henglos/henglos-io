@@ -111,9 +111,10 @@ export const TaskCompilePayloadSchema = zod.object({
 // `firmware.methods` lists, and the studio picks from.
 export const FlashMethodNameSchema = zod.enum(["serial", "uf2"]);
 
-// Where and how the studio has a board's firmware written. Every target names
-// the board's serial `port` too: the REPL — checking what the board runs, then
-// installing the runtime — always goes through it.
+// Where and how the studio has a board's firmware written. The board's serial
+// `port` is its REPL — what checks what the board runs, then installs the
+// runtime. A UF2 target may have none: a board in its bootloader shows only its
+// drive — its firmware is written, and the port it comes back on found after.
 export const FlashTargetSchema = zod.discriminatedUnion("method", [
 	// esptool & co., through the driver's RFC 2217 tunnel to `port`.
 	zod.object({
@@ -124,10 +125,11 @@ export const FlashTargetSchema = zod.discriminatedUnion("method", [
 	}),
 	// The board's UF2 drive: `volume` is its label (RPI-RP2) or where it's
 	// mounted (E:\, /Volumes/RPI-RP2). Not mounted yet: the driver restarts the
-	// board in its bootloader through `port`.
+	// board in its bootloader through `port` — or, with none, waits for the drive
+	// (BOOTSEL held while plugging the board in).
 	zod.object({
 		method: zod.literal("uf2"),
-		port: zod.string().min(1),
+		port: zod.string().min(1).optional(),
 		volume: zod.string().min(1),
 	}),
 ]);
