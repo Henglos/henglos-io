@@ -80,7 +80,7 @@ export const UF2FlashForm: React.FC<FlashFormProps<"uf2">> = ({ driverId, last, 
 								aria-checked={active}
 								onClick={() => setVolume(name)}
 								className={clsx(
-									"flex items-center gap-3 h-10 px-3 rounded-md border text-left transition-colors cursor-pointer",
+									"flex items-center gap-3 h-10 shrink-0 px-3 rounded-md border text-left transition-colors cursor-pointer",
 									active ? "border-accent bg-active" : "border-line hover:bg-hover",
 								)}
 							>
