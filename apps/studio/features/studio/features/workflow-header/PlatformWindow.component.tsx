@@ -7,7 +7,7 @@ import { Button, Dialog, Dropdown, emitToast, Input, Select, Switch, Text } from
 import { checkPlatformSettings, type PlatformSetting } from "@henglosio/shared/browser";
 import { Blocks, Check, ChevronDown, Info, RotateCcw, Settings, TriangleAlert, X } from "lucide-react";
 import clsx from "clsx";
-import { satisfies, valid } from "semver";
+import { rcompare, satisfies, valid } from "semver";
 import { getPlatformSettings, listPackages, updateWorkflow } from "@shared/api";
 import { WorkflowAtom } from "@/features/studio/store/workflow.store";
 import { useWorkflowMutate } from "@/features/studio/hooks/useWorkflowMutate";
@@ -235,8 +235,16 @@ const BoardSection: React.FC = () => {
 	const current = workflow.data.board.packageId;
 	const all = (boards ?? []).flatMap(board => board.versions.map(version => ({ id: version.id, name: board.name, version: version.version, platform: version.platform })));
 	// The versions that build on this platform.
-	const options = all.filter(option => !platform || !valid(platform) || satisfies(platform, option.platform, { includePrerelease: true }));
+	const builds = (range: string) => !platform || !valid(platform) || satisfies(platform, range, { includePrerelease: true });
+	const options = all.filter(option => builds(option.platform));
 	const currentOption = all.find(option => option.id === current);
+	// The boards, each with its versions that build here — newest first.
+	const groups = (boards ?? [])
+		.map(board => ({
+			name: board.name,
+			versions: board.versions.filter(version => builds(version.platform)).sort((a, b) => valid(a.version) && valid(b.version) ? rcompare(a.version, b.version) : 0),
+		}))
+		.filter(group => group.versions.length > 0);
 
 	const change = async (packageId: string) => {
 		if (packageId === current || changing) return;
@@ -267,17 +275,29 @@ const BoardSection: React.FC = () => {
 							<Button.Icon><ChevronDown size={12} /></Button.Icon>
 						</Button.Root>
 					</Dropdown.Trigger>
-					<Dropdown.Content align="end">
-						{options.length === 0 && <Dropdown.Item disabled>No board in your library builds on platform {platform}</Dropdown.Item>}
-						{options.map(option => (
-							<Dropdown.Item key={option.id} onSelect={() => change(option.id)}>
-								<span className="flex items-center gap-2 w-full">
-									<span className={clsx("w-3", option.id !== current && "opacity-0")}><Check size={12} /></span>
-									<span className="truncate">{option.name}</span>
-									<span className="ml-auto pl-3 font-mono text-fg-muted">{option.version}</span>
-								</span>
-							</Dropdown.Item>
-						))}
+					{/* The boards — hovering one opens its versions beside it. */}
+					<Dropdown.Content align="end" className="p-1! min-w-48">
+						{groups.length === 0 && <Dropdown.Item disabled className="text-xs!">No board in your library builds on platform {platform}</Dropdown.Item>}
+						{groups.map(group => {
+							const isCurrent = group.name === currentOption?.name;
+							return (
+								<Dropdown.Sub key={group.name}>
+									<Dropdown.SubTrigger className={clsx("text-xs! py-1.5! px-2!", isCurrent && "text-accent-fg!")}>
+										<span className={clsx("size-1.5 rounded-full shrink-0", isCurrent ? "bg-accent-fg" : "bg-fg-muted/40")} />
+										<span className="flex-1 truncate">{group.name}</span>
+										<span className="text-[10px] text-fg-muted tabular-nums">{group.versions.length}</span>
+									</Dropdown.SubTrigger>
+									<Dropdown.SubContent className="p-1! min-w-32">
+										{group.versions.map(version => (
+											<Dropdown.Item key={version.id} onSelect={() => change(version.id)} className="text-xs! py-1.5! pl-2! pr-3!">
+												<Check size={12} className={clsx("shrink-0", version.id === current ? "text-accent-fg" : "invisible")} />
+												<span className="font-mono">{version.version}</span>
+											</Dropdown.Item>
+										))}
+									</Dropdown.SubContent>
+								</Dropdown.Sub>
+							);
+						})}
 					</Dropdown.Content>
 				</Dropdown.Root>
 			</div>
