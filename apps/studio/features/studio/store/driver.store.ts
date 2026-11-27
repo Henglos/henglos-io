@@ -1,5 +1,6 @@
 import { atom } from "jotai";
-import type { Device } from "@henglosio/shared";
+import { atomWithStorage } from "jotai/utils";
+import type { Device, FlashTarget } from "@henglosio/shared";
 
 export type DriverConnection = {
 	id: string;
@@ -14,3 +15,5 @@ export const DevicesAtom = atom<Device[]>([]);
 // A number is an explicit override picked for this session.
 export const BaurateAtom = atom<number | null>(null);
 
+// The last flash target picked, by workflow — the flash dialog opens with it.
+export const FlashTargetsAtom = atomWithStorage<Record<string, FlashTarget>>("henglosio:flash-targets", {});

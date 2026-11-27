@@ -23,9 +23,6 @@ importers:
       '@hono/node-server':
         specifier: ^1.19.11
         version: 1.19.14(hono@4.12.30)
-      '@pybricks/mpy-cross-v6':
-        specifier: 2.0.0
-        version: 2.0.0
       axios:
         specifier: ^1.15.0
         version: 1.18.1
@@ -455,9 +452,6 @@ importers:
       '@hono/node-server':
         specifier: ^1.19.11
         version: 1.19.14(hono@4.12.30)
-      '@pybricks/mpy-cross-v6':
-        specifier: 2.0.0
-        version: 2.0.0
       '@types/pacote':
         specifier: ^11.1.8
         version: 11.1.8
@@ -550,14 +544,7 @@ importers:
         specifier: ^3.0.0
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.8.2)
 
-  packages/hio-system:
-    devDependencies:
-      '@henglosio/runner':
-        specifier: workspace:*
-        version: link:../runner
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.20.1
+  packages/hio-system: {}
 
   packages/library/boards/Esp32: {}
 
@@ -2737,9 +2724,6 @@ packages:
 
   '@protobufjs/utf8@1.1.2':
     resolution: {integrity: sha512-b1UQwcEZ4yCnMCD8DAL1VlbvBJE9/IX4FTIp7BG1xYpf29SLazLSrqUkj4w7Y5y7cCVP6E5tcqqcI0xemPkHug==}
-
-  '@pybricks/mpy-cross-v6@2.0.0':
-    resolution: {integrity: sha512-DJqQgpAyoUR/myQCJFl27WxXfQavVx3nYLMOpEAuxXRcYyDebHLx4fsUOhLV+vK1LfEqeBpzAjMMSh2U4Q+dtA==}
 
   '@quansync/fs@1.0.0':
     resolution: {integrity: sha512-4TJ3DFtlf1L5LDMaM6CanJ/0lckGNtJcMjQ1NAV6zDmA0tEHKZtxNKin8EgPaVX1YzljbxckyT2tJrpQKAtngQ==}
@@ -11423,8 +11407,6 @@ snapshots:
   '@protobufjs/pool@1.1.0': {}
 
   '@protobufjs/utf8@1.1.2': {}
-
-  '@pybricks/mpy-cross-v6@2.0.0': {}
 
   '@quansync/fs@1.0.0':
     dependencies:

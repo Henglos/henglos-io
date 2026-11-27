@@ -1,4 +1,4 @@
-import type { DriverTasksState, DriverCreateWorkflowInDTO, DriverDeleteWorkflowInDTO, DriverExecuteFinishInDTO, DriverExecuteFrameInDTO, DriverListDevicesInDTO, DriverPortStatusInDTO, DriverRemovePackageInDTO, DriverSyncWorkflowInDTO, DriverSyncWorkflowsInDTO, ReplData, TaskCancelInDTO, TaskStartInDTO } from "@henglosio/shared";
+import type { DriverTasksState, DriverCreateWorkflowInDTO, DriverDeleteWorkflowInDTO, DriverExecuteFinishInDTO, DriverExecuteFrameInDTO, DriverListDevicesInDTO, DriverListVolumesInDTO, DriverPortStatusInDTO, DriverRemovePackageInDTO, DriverSyncWorkflowInDTO, DriverSyncWorkflowsInDTO, ReplData, TaskCancelInDTO, TaskStartInDTO } from "@henglosio/shared";
 import { injectable } from "tsyringe";
 
 import { SocketIOClient } from "../infrastructure/ws/SocketIOClient.impl.js";
@@ -10,6 +10,7 @@ import { DeleteWorkflowUseCase } from "../application/use-cases/workflow/DeleteW
 import { SyncWorkflowUseCase } from "../application/use-cases/workflow/SyncWorkflow.use-case.js";
 import { SyncWorkflowsUseCase } from "../application/use-cases/workflow/SyncWorkflows.use-case.js";
 import { ListDevicesUseCase } from "../application/use-cases/devices/ListDevices.use-case.js";
+import { ListVolumesUseCase } from "../application/use-cases/devices/ListVolumes.use-case.js";
 import { RemovePackageUseCase } from "../application/use-cases/package/RemovePackage.use-case.js";
 import { restartDriver } from "../process-manager.js";
 import { createLogger } from "../infrastructure/logger/Logger.js";
@@ -33,6 +34,7 @@ export class GatewayWS {
 		private readonly syncWorkflowUseCase: SyncWorkflowUseCase,
 		private readonly syncWorkflowsUseCase: SyncWorkflowsUseCase,
 		private readonly listDevicesUseCase: ListDevicesUseCase,
+		private readonly listVolumesUseCase: ListVolumesUseCase,
 		private readonly removePackageUseCase: RemovePackageUseCase
 	) {
 
@@ -49,6 +51,7 @@ export class GatewayWS {
 		this.registerRemovePackage();
 
 		this.registerListDevices();
+		this.registerListVolumes();
 		this.registerRestart();
 
 	}
@@ -299,6 +302,21 @@ export class GatewayWS {
 				data: { devices }
 			});
 
+		});
+
+	}
+
+
+	// The removable drives — what a UF2 flash target can name.
+	registerListVolumes() {
+
+		this.ws.socket?.on("volume:list", async (data: DriverListVolumesInDTO) => {
+			try {
+				const volumes = await this.listVolumesUseCase.execute();
+				this.ws.socket?.emit("volume:list:result", { id: data.id, type: "done", data: { volumes } });
+			} catch (error) {
+				this.ws.socket?.emit("volume:list:result", { id: data.id, type: "error", data: error instanceof Error ? error.message : String(error) });
+			}
 		});
 
 	}

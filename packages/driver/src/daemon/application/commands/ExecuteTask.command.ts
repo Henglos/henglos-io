@@ -21,7 +21,7 @@ export class ExecuteTaskCommand implements ITaskCommand<TaskExecutePayload> {
 	) {}
 	isValidPayload(p: unknown): p is TaskExecutePayload { return TaskExecutePayloadSchema.safeParse(p).success; }
 	locks(p: TaskExecutePayload): string[] { return [`port:${p.port}`]; }
-	execute(p: TaskExecutePayload, ctx: TaskContext) { return this.startExecuteSession.execute(ctx.taskId, p.port, p.baudrate, p.frame, ctx, p.install); }
+	execute(p: TaskExecutePayload, ctx: TaskContext) { return this.startExecuteSession.execute(ctx.taskId, p.workflowId, p.port, p.baudrate, p.frame, ctx, p.install); }
 
 	/** Routed here from the gateway — hosting's graph walker drives these. */
 	continue(taskId: string, frame: Uint8Array) { return this.continueExecuteSession.execute(taskId, frame); }

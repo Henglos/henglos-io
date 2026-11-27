@@ -40,7 +40,6 @@
     "@henglosio/runner": "workspace:*",
     "@henglosio/shared": "workspace:*",
     "@hono/node-server": "^1.19.11",
-    "@pybricks/mpy-cross-v6": "2.0.0",
     "@types/pacote": "^11.1.8",
     "auto-launch": "^5.0.6",
     "axios": "^1.15.0",

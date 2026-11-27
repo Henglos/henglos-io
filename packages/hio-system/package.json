@@ -10,18 +10,12 @@
 		"hio/**/*.py",
 		"henglosio/**/*.py",
 		"main.py",
-		"boot.py",
-		"runner/build.js"
+		"boot.py"
 	],
 	"scripts": {
-		"build": "bun build ./runner/build.ts --outfile ./runner/build.js --target node",
 		"test": "uv run --project . pytest -q test",
 		"build:mpy": "uv run --project . python scripts/build.py",
 		"prepack": "node scripts/bundle-sdk.mjs",
 		"postpack": "node scripts/bundle-sdk.mjs --clean"
-	},
-	"devDependencies": {
-		"@henglosio/runner": "workspace:*",
-		"@types/node": "^22.0.0"
 	}
 }

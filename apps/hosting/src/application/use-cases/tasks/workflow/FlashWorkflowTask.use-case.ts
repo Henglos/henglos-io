@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import type { TaskCancelInDTO, TaskStartInDTO } from "@henglosio/shared";
+import type { FlashTarget, TaskCancelInDTO, TaskStartInDTO } from "@henglosio/shared";
 
 import { Task } from "@/domain/entities/Task";
 import { type IDriverRepository } from "@/domain/repositories/IDriverRepository.repo";
@@ -13,8 +13,8 @@ import { DriverNotFound, DriverOffline } from "@/application/errors/Driver.error
 import { WorkflowNotFound } from "@/application/errors/Workflow.error";
 
 /**
- * Flashes a board: writes its MicroPython firmware through the driver. A
- * `flash` task, on the board's port.
+ * Flashes a board: writes its MicroPython firmware through the driver, where
+ * and how the studio picked (`target`). A `flash` task, on the board's port.
  */
 @Injectable()
 export class FlashWorkflowTaskUseCase {
@@ -31,11 +31,11 @@ export class FlashWorkflowTaskUseCase {
 	/**
 	 * Starts it — its progress comes as the task's events.
 	 *
-	 * @param port The board's serial port; `baudrate` how fast to write.
+	 * @param target Where and how to write it — its `port` is the board's REPL too.
 	 * @returns The task, already started.
 	 * @throws UserNotFound, DriverNotFound, WorkflowNotFound, DriverOffline.
 	 */
-	async execute(userId: string, driverId: string, workflowId: string, port: string, baudrate: number): Promise<Task> {
+	async execute(userId: string, driverId: string, workflowId: string, target: FlashTarget): Promise<Task> {
 
 		if (!await this.userRepository.existsById(userId)) throw new UserNotFound();
 
@@ -50,7 +50,7 @@ export class FlashWorkflowTaskUseCase {
 		const connection = this.driverConnection.getByDriverId(driverId);
 		if (!connection) throw new DriverOffline();
 
-		const task = Task.create({ type: "flash", workflowId, userId, driverId, port });
+		const task = Task.create({ type: "flash", workflowId, userId, driverId, port: target.port });
 
 		await this.taskRegistry.register({
 			task,
@@ -61,7 +61,7 @@ export class FlashWorkflowTaskUseCase {
 			connection.socket.emit("task:start", {
 				taskId: task.id,
 				type: "flash",
-				payload: { workflowId, port, baudrate },
+				payload: { workflowId, target },
 			} satisfies TaskStartInDTO);
 		} catch (err) {
 			await this.taskRegistry.fail(task.id, err instanceof Error ? err.message : String(err));

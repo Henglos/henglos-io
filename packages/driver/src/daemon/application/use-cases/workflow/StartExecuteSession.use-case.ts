@@ -3,6 +3,7 @@ import type { BoardInstall } from "@henglosio/shared";
 import { TaskContext } from "../../../domain/entities/TaskContext.js";
 import { ReplSession } from "../../services/ReplSession.service.js";
 import { BoardInstaller } from "../../services/BoardInstaller.service.js";
+import { MpyCompiler } from "../../services/MpyCompiler.service.js";
 import { ExecuteSessionsService, type StartingExecuteSession } from "../../services/ExecuteSessions.service.js";
 
 // Runs a workflow's execution as a session: the board's REPL is opened once
@@ -19,9 +20,10 @@ export class StartExecuteSessionUseCase {
 	constructor(
 		private readonly executeSessions: ExecuteSessionsService,
 		private readonly installer: BoardInstaller,
+		private readonly compiler: MpyCompiler,
 	) {}
 
-	async execute(taskId: string, port: string, _baudrate: number, frame: Uint8Array, ctx: TaskContext, install?: BoardInstall): Promise<void> {
+	async execute(taskId: string, workflowId: string, port: string, _baudrate: number, frame: Uint8Array, ctx: TaskContext, install?: BoardInstall): Promise<void> {
 
 		// A finish can come before the session exists — the hosting gave up
 		// while the board was still opening or installing. It's kept here, so
@@ -45,7 +47,7 @@ export class StartExecuteSessionUseCase {
 				const onAbortInstall = () => { void repl.close(true); };
 				ctx.signal.addEventListener("abort", onAbortInstall, { once: true });
 				try {
-					await this.installer.sync(repl, install, ctx);
+					await this.installer.sync(repl, install, ctx, this.compiler.forWorkflow(workflowId));
 				} catch (err) {
 					await repl.close(true);
 					throw stopped() ? cancelled() : err;

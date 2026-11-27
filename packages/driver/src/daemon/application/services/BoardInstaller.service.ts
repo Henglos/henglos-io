@@ -3,7 +3,7 @@ import fs from "fs/promises";
 import path from "path";
 import { injectable } from "tsyringe";
 import type { BoardInstall } from "@henglosio/shared";
-import { MpyCompiler } from "./MpyCompiler.service.js";
+import { MpyCompilerUnavailable, type ModuleCompiler, type MpyModule } from "./MpyCompiler.service.js";
 import { PackageService } from "./PackageService.service.js";
 
 // Puts on the board what a session needs, right before its first frame —
@@ -17,8 +17,9 @@ import { PackageService } from "./PackageService.service.js";
 //                                          `scope: runtime` options — read when the runtime
 //                                          starts (no build): when it changes, it's reloaded
 //
-// Compiled here (MpyCompiler); a board whose MicroPython doesn't import
-// .mpy v6 gets the .py source instead. Each root keeps an .index.json of
+// Compiled with the board's own mpy-cross (MpyCompiler); a board whose
+// MicroPython doesn't import that .mpy version — or a workflow not compiled on
+// this driver, with no mpy-cross to compile with — gets the .py source instead. Each root keeps an .index.json of
 // what it holds (path -> sha256 of the bytes), so only what changed is sent
 // and what's no longer used is removed.
 //
@@ -79,20 +80,12 @@ export function relativeImports(source: string): string[] {
 @injectable()
 export class BoardInstaller {
 
-	constructor(
-		private readonly packages: PackageService,
-		private readonly compiler: MpyCompiler,
-	) {}
+	constructor(private readonly packages: PackageService) {}
 
-	async sync(board: BoardFiles, install: BoardInstall, log: InstallProgress): Promise<void> {
+	/** `compiler`: the board's mpy-cross — MpyCompiler.forWorkflow(the session's workflow). */
+	async sync(board: BoardFiles, install: BoardInstall, log: InstallProgress, compiler: ModuleCompiler): Promise<void> {
 
 		log.progress("install", 0);
-
-		const version = await board.mpyVersion();
-		const compiled = version?.[0] === MpyCompiler.ABI;
-		if (!compiled) {
-			log.info(`The board's MicroPython doesn't import .mpy v${MpyCompiler.ABI}${version ? ` (it has v${version[0]})` : ""} — sending the components as .py source.`);
-		}
 
 		const wanted = new Map<string, Wanted>();
 		const want = (boardPath: string, data: Uint8Array) => wanted.set(boardPath, { data, sha: sha256(data) });
@@ -100,6 +93,8 @@ export class BoardInstaller {
 		// ── Components: the actions used, and what they import ─────────────────
 		const empty = new Uint8Array(0);
 		if (install.components.length > 0) want("/components/__init__.py", empty);
+		// Each module's place on the board (without its extension), and what it is.
+		const sources: (MpyModule & { boardPath: string })[] = [];
 
 		for (const component of install.components) {
 			const cached = await this.packages.getPackage(component.name, component.version)
@@ -135,10 +130,15 @@ export class BoardInstaller {
 					queue.push({ file: dependency, module: imported });
 				}
 
-				const name = `components/${component.module}/${module}.py`;
-				if (compiled) want(`${folder}/${module}.mpy`, await this.compiler.compile(name, source));
-				else want(`${folder}/${module}.py`, new TextEncoder().encode(source));
+				sources.push({ boardPath: `${folder}/${module}`, name: `components/${component.module}/${module}.py`, source });
 			}
+		}
+
+		const compiled = await this.compile(board, sources, compiler, log);
+		for (const { boardPath, name, source } of sources) {
+			const mpy = compiled?.get(name);
+			if (mpy) want(`${boardPath}.mpy`, mpy);
+			else want(`${boardPath}.py`, new TextEncoder().encode(source));
 		}
 
 		// ── Files attached to configs ─────────────────────────────────────────
@@ -224,6 +224,34 @@ export class BoardInstaller {
 			: `Board: up to date (${wanted.size} file(s)).`);
 		log.progress("install", 100);
 
+	}
+
+	// The modules as .mpy — or null, for the board to get their source: it imports
+	// another .mpy version than the board's mpy-cross makes, or there's no
+	// mpy-cross to compile with (the workflow wasn't compiled on this driver).
+	private async compile(board: BoardFiles, modules: MpyModule[], compiler: ModuleCompiler, log: InstallProgress): Promise<Map<string, Uint8Array> | null> {
+		if (modules.length === 0) return null;
+
+		const version = await board.mpyVersion();
+		if (!version) {
+			log.info("The board doesn't say which .mpy it imports — sending the components as .py source.");
+			return null;
+		}
+
+		let compiled;
+		try {
+			compiled = await compiler.compile(modules);
+		} catch (err) {
+			if (!(err instanceof MpyCompilerUnavailable)) throw err;
+			log.info(`${err.message} Sending the components as .py source.`);
+			return null;
+		}
+
+		if (compiled.version !== version[0]) {
+			log.info(`The board imports .mpy v${version[0]}, its mpy-cross makes v${compiled.version} — sending the components as .py source.`);
+			return null;
+		}
+		return compiled.mpy;
 	}
 
 	// The board's files under the roots, its folders under /components, the indexes and the limits file.

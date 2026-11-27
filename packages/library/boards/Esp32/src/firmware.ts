@@ -1,4 +1,4 @@
-import type { BoardFirmware, FirmwareBuildContext } from "@henglosio/runner";
+import type { BoardBuildContext, BoardFirmware } from "@henglosio/runner";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -31,7 +31,7 @@ const CONFIG_OVERRIDES = [
 const MICROPYTHON_REPO = "https://github.com/micropython/micropython.git";
 const ESP_IDF_REPO = "https://github.com/espressif/esp-idf.git";
 
-type Context = Pick<FirmwareBuildContext, "run" | "log">;
+type Context = Pick<BoardBuildContext, "run" | "log">;
 
 // Where ESP-IDF `version` lives in the cache — and what its install.sh and
 // export.sh read (IDF_TOOLS_PATH: ctx.run passes this process's environment on).
@@ -42,9 +42,11 @@ function idfPath(cache: string, version: string): string {
 
 export default {
 
-	// Once per MicroPython version (the platform runs it under the cache's lock,
-	// and only until it succeeds): the MicroPython checkout, ESP-IDF — the version
-	// MicroPython's CI uses — and its toolchain for the chip, all in ctx.cache.
+	// Once per MicroPython version (hio runs it under the cache's lock, and only
+	// until it succeeds): the MicroPython checkout, ESP-IDF — the version
+	// MicroPython's CI uses — and its toolchain for the chip, all in ctx.cache,
+	// and the checkout's mpy-cross, which the runtime and the components are
+	// compiled with (the port's build uses it too).
 	async prepare(ctx) {
 		const micropython = path.join(ctx.cache, "micropython", "v" + ctx.micropython);
 		await cloneOnce(ctx, "MicroPython v" + ctx.micropython, MICROPYTHON_REPO, "v" + ctx.micropython, micropython, []);
@@ -58,6 +60,10 @@ export default {
 			await ctx.run(path.join(idf, "install.sh"), [CHIP]);
 			fs.writeFileSync(ready, "");
 		}
+
+		const mpyCross = path.join(micropython, "mpy-cross");
+		await withIdf(ctx, idf, "make", ["-C", mpyCross, "-j" + os.availableParallelism()]);
+		return { mpyCross: path.join(mpyCross, "build", "mpy-cross") };
 	},
 
 	// MicroPython with the runtime frozen in, so it runs from flash and the RAM is
@@ -73,7 +79,6 @@ export default {
 
 		const jobs = "-j" + os.availableParallelism();
 		const portDir = path.join(micropython, "ports", PORT);
-		await withIdf(ctx, idf, "make", ["-C", path.join(micropython, "mpy-cross"), jobs]);
 		await withIdf(ctx, idf, "make", ["-C", portDir, "BOARD=" + BOARD, "submodules"]);
 
 		// No BUILD= here: a variable on make's command line reaches every sub-make,
@@ -98,14 +103,17 @@ export default {
 			firmware = await downloadOnce(ctx, firmware, path.join(ctx.cache, "firmware", path.basename(firmware.split("?")[0]!)));
 		}
 
-		await ctx.run("esptool", [
-			"--chip", CHIP,
-			"--port", ctx.serialUrl,
-			"--baud", String(ctx.baudrate),
-			"write-flash",
-			...(ctx.erase ? ["--erase-all"] : []),
-			"-z", OFFSET, firmware,
-		]);
+		await ctx.send("serial", {
+			baudrate: ctx.baudrate,
+			write: ({ url, baudrate }) => ctx.run("esptool", [
+				"--chip", CHIP,
+				"--port", url,
+				"--baud", String(baudrate),
+				"write-flash",
+				...(ctx.erase ? ["--erase-all"] : []),
+				"-z", OFFSET, firmware,
+			]),
+		});
 	},
 
 } satisfies BoardFirmware;

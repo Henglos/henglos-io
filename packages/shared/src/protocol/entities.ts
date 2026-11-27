@@ -17,8 +17,21 @@ export const DeviceDTOSchema = zod.object({
 
 });
 
+/** A removable drive on a driver's machine — where a UF2 board's bootloader shows up. */
+export const VolumeDTOSchema = zod.object({
+
+	/** Its label: RPI-RP2, RP2350, … (empty when it has none). */
+	label: zod.string(),
+	/** Where it's mounted: E:\, /Volumes/RPI-RP2, … */
+	mount: zod.string(),
+
+});
+
 /** A package a workflow needs: its npm name, version, and role (board, platform or component). */
 export type PackageDTO = zod.infer<typeof PackageDTOSchema>;
 
 /** A board on a driver's machine, as the driver lists it. */
 export type DeviceDTO = zod.infer<typeof DeviceDTOSchema>;
+
+/** A removable drive on a driver's machine. */
+export type VolumeDTO = zod.infer<typeof VolumeDTOSchema>;

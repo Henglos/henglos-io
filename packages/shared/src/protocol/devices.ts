@@ -9,6 +9,13 @@ export const DriverListDevicesInDTOSchema = zod.object({
 
 });
 
+/** Hosting -> driver (`volume:list`): which removable drives are mounted — for a UF2 flash target. */
+export const DriverListVolumesInDTOSchema = zod.object({
+
+	id: zod.string(),
+
+});
+
 // What has a board busy. Hosting -> driver: `port:status` answers the tasks
 // holding the port. Hosting -> studio: GET /drivers/:driverId/ports/status?port=,
 // with what the hosting knows of them.
@@ -38,6 +45,8 @@ export const PortStatusOutSchema = zod.object({
 
 /** Hosting -> driver (`device:list`): which boards are plugged in. */
 export type DriverListDevicesInDTO = zod.infer<typeof DriverListDevicesInDTOSchema>;
+/** Hosting -> driver (`volume:list`): which removable drives are mounted. */
+export type DriverListVolumesInDTO = zod.infer<typeof DriverListVolumesInDTOSchema>;
 /** Hosting -> driver (`port:status`): what holds a board's port. */
 export type DriverPortStatusInDTO = zod.infer<typeof DriverPortStatusInDTOSchema>;
 /** A task holding a board's port, as the driver knows it. */

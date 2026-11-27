@@ -8,7 +8,7 @@ import type { ResolvedPackages } from "./runner.js";
 
 // Container mode (runner.map.json) lives in runner.js — what the injected runner
 // host is built from. Re-exported: the commands find everything here.
-export { createSend, loadBoardFirmware, loadRunner, resolveFromMap, type ResolvedPackages, type RunnerMap } from "./runner.js";
+export { loadBoardFirmware, resolveFromMap, type ResolvedPackages, type RunnerMap } from "./runner.js";
 
 const packages = new PackageService();
 
@@ -25,7 +25,7 @@ const packages = new PackageService();
  * fetched from the registry (see {@link resolvePlatform}).
  *
  * @param workspace Absolute path to the workspace folder.
- * @returns The packages, validated, with no setting overrides.
+ * @returns The packages, validated, with the board's default options.
  * @throws When the board or a component isn't a valid package.
  */
 export async function resolveFromWorkspace(workspace: string): Promise<ResolvedPackages> {
@@ -47,8 +47,8 @@ export async function resolveFromWorkspace(workspace: string): Promise<ResolvedP
 		components.push(component);
 	}
 
-	// Local builds run with the platform's defaults.
-	return { board, platform, components, settings: {}, options: resolveBoardOptions(board.options ?? [], {}) };
+	// Local builds run with the board's defaults.
+	return { board, platform, components, options: resolveBoardOptions(board.options ?? [], {}) };
 
 }
 

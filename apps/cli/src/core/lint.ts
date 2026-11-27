@@ -47,7 +47,8 @@ type YamlFile = {
  * - **A component** — its `schema` is valid; every action's and trigger's
  *   `script` is there, and registers the name the studio sends to the board
  *   (`@action("<component>/<action>")`, all lowercase).
- * - **A platform** — its `build.script` is there.
+ * - **A platform** — the runtime's `files` are there (not its `packages`: one
+ *   may only be put there when it's packed).
  *
  * @param target A package folder, or its manifest.yaml.
  * @returns The report. It has no `error` issues when the package is fine to publish.
@@ -173,9 +174,11 @@ export async function lintPackage(target: string): Promise<LintReport> {
 		}
 
 		case "platform": {
-			const script = asRecord(data.build).script;
-			if (typeof script === "string" && !(await isFile(path.resolve(manifestDir, script)))) {
-				error(manifestPath, `build.script: ${script} doesn't exist.`, lineOf(yaml, ["build", "script"]));
+			const files = asRecord(data.runtime).files;
+			for (const file of Array.isArray(files) ? files : []) {
+				if (typeof file === "string" && !(await isFile(path.resolve(manifestDir, file)))) {
+					error(manifestPath, `runtime.files: ${file} doesn't exist.`, lineOf(yaml, ["runtime", "files"]));
+				}
 			}
 			break;
 		}
@@ -284,8 +287,12 @@ function describe(issue: ZodError["issues"][number], at: PropertyKey[], data: un
 // will load it in the image, so what Node can't run shows here too.
 async function firmwareScriptProblem(file: string): Promise<string | null> {
 	try {
-		const mod = await import(pathToFileURL(file).href) as { default?: { build?: unknown; flash?: unknown } };
-		if (typeof mod.default?.build !== "function" || typeof mod.default.flash !== "function") return "It must export default { build, flash }.";
+		const mod = await import(pathToFileURL(file).href) as { default?: { prepare?: unknown; build?: unknown; flash?: unknown } };
+		const firmware = mod.default;
+		if (typeof firmware?.prepare !== "function" || typeof firmware.flash !== "function"
+			|| (firmware.build !== undefined && typeof firmware.build !== "function")) {
+			return "It must export default { prepare, build?, flash } — prepare returning { mpyCross }.";
+		}
 		return null;
 	} catch (err) {
 		return `It can't be loaded: ${err instanceof Error ? err.message : String(err)}`;

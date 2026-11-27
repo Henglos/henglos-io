@@ -274,14 +274,18 @@ capabilities: []
 
 # How MicroPython gets onto it.
 firmware:
-  # The MicroPython version it runs: the platform compiles for exactly it.
+  # The MicroPython version it runs — the runtime is compiled for exactly it,
+  # with the mpy-cross the script's prepare returns.
   micropython: 1.29.0
   # The Docker image the build and the flash run in: any image with Node 24+,
-  # hio (npm i -g @henglosio/cli) and Python 3 with pip, plus the tools your
-  # firmware script uses.
+  # plus the tools your firmware script uses (git, make and a C compiler to
+  # build mpy-cross).
   image: your-org/your-board-workbench:1.0.0
   # What builds and writes the firmware. The folder is up to you.
   script: ./src/firmware.ts
+  # How the firmware can be written, the preferred first — the studio offers
+  # these, and the script gets the one picked as ctx.method: serial, uf2.
+  methods: [serial]
 
 # Parameters of the firmware, if it has any: the studio shows a form, and the
 # script reads them from ctx.options, as text. Not for secrets.
@@ -295,31 +299,48 @@ firmware:
 #     choices: [4MB, 8MB, 16MB]
 `,
 
-		"src/firmware.ts": `import type { BoardFirmware, FirmwareBuildContext, FirmwareFlashContext, FirmwarePrepareContext } from "@henglosio/runner";
+		"src/firmware.ts": `import type { BoardFirmware, BoardBuildContext, BoardFlashContext, BoardPrepareContext } from "@henglosio/runner";
+import fs from "node:fs";
+import path from "node:path";
 
-// How MicroPython gets onto the board — run by the platform in the manifest's
+// The MicroPython the board runs — the official one, or a fork with a port of
+// your own.
+const MICROPYTHON_REPO = "https://github.com/micropython/micropython.git";
+
+// How MicroPython gets onto the board — run by hio in the manifest's
 // firmware.image. ctx.run(command, args) runs a command of that image, ctx.log
 // reports to the studio, ctx.cache is kept between runs and ctx.options holds
 // the board's options (the manifest's \`options\`).
 export default {
 
-	// Optional: sets up what build and flash need — sources, toolchains — in
-	// ctx.cache (the container is thrown away, the cache is kept). Runs once, until
-	// it succeeds, for this script, ctx.micropython and the options with
-	// \`scope: prepare\`; the studio shows it as its own phase.
-	async prepare(ctx: FirmwarePrepareContext) {
+	// Sets up what build and flash need — sources, toolchains — in ctx.cache (the
+	// container is thrown away, the cache is kept), and returns the mpy-cross of
+	// the board's MicroPython: the runtime and the components are compiled with
+	// it. Runs once, until it succeeds, for this script, ctx.micropython and the
+	// options with \`scope: prepare\`; the studio shows it as its own phase.
+	async prepare(ctx: BoardPrepareContext) {
+		const micropython = path.join(ctx.cache, "micropython", "v" + ctx.micropython);
+		if (!fs.existsSync(path.join(micropython, ".git"))) {
+			await ctx.run("git", ["clone", "--depth", "1", "--branch", "v" + ctx.micropython, MICROPYTHON_REPO, micropython]);
+		}
+		await ctx.run("make", ["-C", path.join(micropython, "mpy-cross")]);
+		return { mpyCross: path.join(micropython, "mpy-cross", "build", "mpy-cross") };
 	},
 
-	// Optional: builds MicroPython ctx.micropython with ctx.freezeManifest (the
-	// runtime) frozen in, into ctx.firmwareOutput. Left empty, the runtime goes
-	// on the board's filesystem as .mpy files instead.
-	async build(ctx: FirmwareBuildContext) {
+	// Optional — remove it to put the runtime on the board's filesystem as .mpy
+	// files: builds MicroPython ctx.micropython with ctx.freezeManifest (the
+	// port's frozen modules plus the runtime; ctx.runtimeManifest has the runtime
+	// alone) frozen in, into ctx.firmwareOutput.
+	async build(ctx: BoardBuildContext) {
 	},
 
 	// Writes ctx.firmware — or, when there's none, the board's stock MicroPython —
-	// to the board at ctx.serialUrl (ctx.baudrate), erasing the flash first when
-	// ctx.erase. Left empty, the board must already run MicroPython ctx.micropython.
-	async flash(ctx: FirmwareFlashContext) {
+	// erasing the flash first when ctx.erase, by ctx.method (one of the manifest's
+	// firmware.methods, picked in the studio) through ctx.send: "serial" (write
+	// gets the port's url, at ctx.baudrate) or "uf2" (the driver copies the file
+	// to the board's drive). Left empty, the board must already run MicroPython
+	// ctx.micropython.
+	async flash(ctx: BoardFlashContext) {
 	},
 
 } satisfies BoardFirmware;

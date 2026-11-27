@@ -39,6 +39,7 @@ import {
 	FlashWorkflowInSchema,
 	type PortStatusOut,
 	type ListDevicesOut,
+	type ListVolumesOut,
 	type ListDriversByUserOut,
 	type LogsIdOut,
 	type PairDriverIn,
@@ -52,6 +53,7 @@ import {
 	type TaskRecord,
 } from '@henglosio/shared';
 import { ListDevicesUseCase } from '@/application/use-cases/driver/ListDevices.use-case';
+import { ListVolumesUseCase } from '@/application/use-cases/driver/ListVolumes.use-case';
 import { RestartDriverUseCase } from '@/application/use-cases/driver/RestartDriver.use-case';
 import { GetPortStatusUseCase } from '@/application/use-cases/driver/GetPortStatus.use-case';
 import { CompileWorkflowTaskUseCase } from '@/application/use-cases/tasks/workflow/CompileWorkflowTask.use-case';
@@ -95,6 +97,7 @@ export class DriverController {
 		private readonly deleteDriverUseCase: DeleteDriverUseCase,
 		private readonly listDriversByUserUseCase: ListDriversByUserUseCase,
 		private readonly listDevicesUseCase: ListDevicesUseCase,
+		private readonly listVolumesUseCase: ListVolumesUseCase,
 		private readonly restartDriverUseCase: RestartDriverUseCase,
 		private readonly compileWorkflowTaskUseCase: CompileWorkflowTaskUseCase,
 		private readonly releasePortUseCase: ReleasePortUseCase,
@@ -212,6 +215,18 @@ export class DriverController {
 
 	}
 
+	/** GET /drivers/:driverId/volumes — the removable drives on the driver's machine, for a UF2 flash target. */
+	@Get(':driverId/volumes')
+	@UseGuards(AuthGuard)
+	async listVolumes(
+		@Param('driverId') driverId: string,
+		@AuthUser() authUser: MinimalUser,
+	): Promise<ListVolumesOut> {
+
+		return { volumes: await this.listVolumesUseCase.execute(authUser.userId, driverId) };
+
+	}
+
 	/** GET /drivers/:driverId/ports/status?port= — what has the board on `port` busy, if anything. */
 	@Get(':driverId/ports/status')
 	@UseGuards(AuthGuard)
@@ -249,7 +264,7 @@ export class DriverController {
 
 	}
 
-	/** POST /drivers/:driverId/workflows/:workflowId/flash — starts flashing the board (`port`, `baudrate`); answers its task id. */
+	/** POST /drivers/:driverId/workflows/:workflowId/flash — starts writing the board's firmware to `target`; answers its task id. */
 	@Post(":driverId/workflows/:workflowId/flash")
 	@UseGuards(AuthGuard)
 	async flashWorkflow(
@@ -259,7 +274,7 @@ export class DriverController {
 		@Body(new ZodValidationPipe(FlashWorkflowInSchema)) body: FlashWorkflowIn,
 	):Promise<LogsIdOut> {
 
-		const task = await this.flashWorkflowTaskUseCase.execute(authUser.userId, driverId, workflowId, body.port, body.baudrate);
+		const task = await this.flashWorkflowTaskUseCase.execute(authUser.userId, driverId, workflowId, body.target);
 		return { id: task.id };
 
 	}

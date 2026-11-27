@@ -179,6 +179,9 @@ export class PackageRegistryService {
 		if (manifest.kind === 'board' && manifest.options && schemaData && typeof schemaData === 'object') {
 			schemaData = { ...(schemaData as Record<string, unknown>), options: manifest.options };
 		}
+		if (manifest.kind === 'board' && schemaData && typeof schemaData === 'object') {
+			schemaData = { ...(schemaData as Record<string, unknown>), flashMethods: manifest.firmware.methods };
+		}
 
 		const parsed = manifest.kind === 'board'
 			? BoardSchema.safeParse(schemaData)

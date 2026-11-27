@@ -12,5 +12,5 @@ export class RecordTaskCommand implements ITaskCommand<TaskRecordPayload> {
 	constructor(private readonly useCase: RecordWorkflowUseCase) {}
 	isValidPayload(p: unknown): p is TaskRecordPayload { return TaskRecordPayloadSchema.safeParse(p).success; }
 	locks(p: TaskRecordPayload): string[] { return [`port:${p.port}`]; }
-	execute(p: TaskRecordPayload, ctx: TaskContext) { return this.useCase.execute(p.port, p.baudrate, p.frames, ctx, p.install); }
+	execute(p: TaskRecordPayload, ctx: TaskContext) { return this.useCase.execute(p.workflowId, p.port, p.baudrate, p.frames, ctx, p.install); }
 }

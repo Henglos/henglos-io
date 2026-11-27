@@ -8,8 +8,8 @@ import { rm } from "fs/promises";
 // A board is hardware only: pins and the MicroPython firmware it runs.
 const BOARD_MANIFEST = "kind: board\nname: Test Board\nschemaVersion: 1\ndependences:\n  platform: ^2.0.0\nui:\n  schema: ./board.schema.yaml\nfirmware:\n  micropython: 1.29.0\n  image: test/workbench:1\n  script: ./firmware.ts\n";
 
-// The platform carries the build.
-const PLATFORM_MANIFEST = "kind: platform\nname: HenglosIO\nschemaVersion: 1\nversion: 2.1.0\nbuild:\n  script: ./build/build.js\n  output: /workspace/build\n";
+// The platform is the runtime: what it's made of.
+const PLATFORM_MANIFEST = "kind: platform\nname: HenglosIO\nschemaVersion: 1\nversion: 2.1.0\nruntime:\n  packages: [hio]\n  files: [main.py]\n";
 
 const BOARD_STRUCTURE = {
 	"manifest.yaml": { type: "file", content: BOARD_MANIFEST },
@@ -18,8 +18,8 @@ const BOARD_STRUCTURE = {
 } as const satisfies GenerateSchema;
 
 const PLATFORM_STRUCTURE = {
-	build: { type: "directory", children: { "build.js": { type: "file", content: "" } } },
 	hio: { type: "directory", children: { "__init__.py": { type: "file", content: "" } } },
+	"main.py": { type: "file", content: "" },
 	"manifest.yaml": { type: "file", content: PLATFORM_MANIFEST },
 } as const satisfies GenerateSchema;
 
@@ -47,7 +47,7 @@ describe("Validate packages", () => {
 	test("a board package resolves to its manifest's folder, with its firmware", async () => {
 		const result = await new PackageService().validateBoard(path.join(root, "board"));
 		expect(result?.path).toBe(path.join(root, "board"));
-		expect(result?.firmware).toEqual({ micropython: "1.29.0", image: "test/workbench:1", script: "./firmware.ts" });
+		expect(result?.firmware).toEqual({ micropython: "1.29.0", image: "test/workbench:1", script: "./firmware.ts", methods: ["serial"] });
 	});
 
 	test("a board whose firmware script is missing is invalid", async () => {
@@ -55,14 +55,15 @@ describe("Validate packages", () => {
 		expect(await new PackageService().validateBoard(path.join(root, "board"))).toBeNull();
 	});
 
-	test("a platform package carries its build", async () => {
-		const result = await new PackageService().validate(path.join(root, "platform"));
+	test("a platform package is its runtime", async () => {
+		const result = await new PackageService().validatePlatform(path.join(root, "platform"));
 		expect(result?.kind).toBe("platform");
 		expect(result?.path).toBe(path.join(root, "platform"));
+		expect(result?.runtime).toEqual({ packages: ["hio"], files: ["main.py"] });
 	});
 
-	test("a platform whose build script is missing is invalid", async () => {
-		await rm(path.join(root, "platform", "build", "build.js"));
+	test("a platform missing one of its runtime's files is invalid", async () => {
+		await rm(path.join(root, "platform", "main.py"));
 		expect(await new PackageService().validatePlatform(path.join(root, "platform"))).toBeNull();
 	});
 

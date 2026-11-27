@@ -3,6 +3,7 @@ import { OutputId, parseResponse, type BoardInstall } from "@henglosio/shared";
 import { TaskContext } from "../../../domain/entities/TaskContext.js";
 import { ReplSession } from "../../services/ReplSession.service.js";
 import { BoardInstaller } from "../../services/BoardInstaller.service.js";
+import { MpyCompiler } from "../../services/MpyCompiler.service.js";
 import { createLogger } from "../../../infrastructure/logger/Logger.js";
 
 const log = createLogger("record");
@@ -18,9 +19,12 @@ const isAbortError = (err: unknown): boolean => err instanceof Error && err.name
 @injectable()
 export class RecordWorkflowUseCase {
 
-	constructor(private readonly installer: BoardInstaller) {}
+	constructor(
+		private readonly installer: BoardInstaller,
+		private readonly compiler: MpyCompiler,
+	) {}
 
-	async execute(port: string, _baudrate: number, frames: Uint8Array[], ctx: TaskContext, install?: BoardInstall): Promise<boolean> {
+	async execute(workflowId: string, port: string, _baudrate: number, frames: Uint8Array[], ctx: TaskContext, install?: BoardInstall): Promise<boolean> {
 
 		log.info(`Opening ${port} (${frames.length} frame(s))`);
 		const repl = await ReplSession.open(port);
@@ -35,7 +39,7 @@ export class RecordWorkflowUseCase {
 				const onAbortInstall = () => { void repl.close(false); };
 				ctx.signal.addEventListener("abort", onAbortInstall, { once: true });
 				try {
-					await this.installer.sync(repl, install, ctx);
+					await this.installer.sync(repl, install, ctx, this.compiler.forWorkflow(workflowId));
 				} finally {
 					ctx.signal.removeEventListener("abort", onAbortInstall);
 				}

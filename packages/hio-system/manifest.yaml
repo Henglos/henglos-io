@@ -3,13 +3,13 @@ name: HenglosIO
 schemaVersion: 1
 version: 1.4.0
 
-# The platform builds itself, in the board's image: runner/build.js has the
-# board's firmware script build MicroPython with the runtime frozen in (or, when
-# it builds none, compiles the runtime to .mpy for the board's firmware version),
-# into `output` (what the driver installs). The script also writes the firmware.
-build:
-  script: ./runner/build.js
-  output: /workspace/build
+# The runtime. `hio` builds it in the board's image, with the board's mpy-cross:
+# its packages frozen into the firmware the board's script builds (or, when it
+# builds none, compiled to .mpy for the board's filesystem), its files copied
+# as they are. henglosio/ (the sdk) is put here when the package is packed.
+runtime:
+  packages: [hio, henglosio]
+  files: [main.py, boot.py]
 
 # Limits a workflow may override (studio → Platform). Not compiled in: the
 # driver writes the workflow's values to /hio_settings.json on the board before

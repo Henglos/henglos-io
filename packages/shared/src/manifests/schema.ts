@@ -84,18 +84,20 @@ export const platformSettingError = (setting: PlatformSetting, value: unknown): 
 	return null;
 };
 
-// The platform is the runtime (hio/**/*.py) and knows how to build itself:
-// `build` is its Runner (`script`), run in the board's image — build compiles
-// the runtime and the workflow's components for the board's firmware version
-// into `output` (which the driver uploads); flash writes the board's firmware.
+// The platform is the runtime — Python only, no code of its own to run. `hio`
+// builds it, in the board's image, with the board's mpy-cross: `runtime`
+// says what it is.
 export const PlatformManifestSchema = zod.object({
 	kind: zod.literal("platform"),
 	name: zod.string(),
 	schemaVersion: zod.number().int().positive(),
 	version: zod.string(),
-	build: zod.object({
-		script: zod.string(),
-		output: zod.string(),
+	runtime: zod.object({
+		// The runtime's packages (folders of .py files): frozen into the board's
+		// firmware when its script builds one, else compiled to .mpy.
+		packages: zod.array(zod.string()).min(1),
+		// Copied to the board as .py — MicroPython never runs main.py or boot.py as .mpy.
+		files: zod.array(zod.string()).default([]),
 	}),
 	// What a workflow can override at build time — see PlatformSettingSchema.
 	settings: zod.array(PlatformSettingSchema).optional(),
@@ -139,6 +141,9 @@ export const BoardFirmwareSchema = zod.object({
 	// The TypeScript file that builds and writes the firmware, in any folder of
 	// the package (relative to this manifest).
 	script: zod.string().regex(/\.ts$/, "must be a .ts file").refine(script => !script.split(/[\\/]/).includes(".."), "must be inside the package"),
+	// How its firmware can be written, the preferred first: the studio offers
+	// these, and the script gets the one picked (ctx.method).
+	methods: zod.array(zod.enum(["serial", "uf2"])).min(1).default(["serial"]),
 });
 
 /** A board package's manifest.yaml. */

@@ -35,6 +35,7 @@ import { GetWorkflowFileUseCase } from "./workflow/GetWorkflowFile.use-case";
 import { DescribeRegistryPackageUseCase } from "./package/DescribeRegistryPackage.use-case";
 import { BuildBoardInstall } from "./tasks/BuildBoardInstall";
 import { ListDevicesUseCase } from "./driver/ListDevices.use-case";
+import { ListVolumesUseCase } from "./driver/ListVolumes.use-case";
 import { RestartDriverUseCase } from "./driver/RestartDriver.use-case";
 import { GetPortStatusUseCase } from "./driver/GetPortStatus.use-case";
 import { ReleasePortUseCase } from "./driver/ReleasePort.use-case";
@@ -137,6 +138,7 @@ import { DeleteCredentialUseCase } from "./credential/DeleteCredential.use-case"
 		ListDriversByUserUseCase,
 		DeleteDriverUseCase,
 		ListDevicesUseCase,
+		ListVolumesUseCase,
 		RestartDriverUseCase,
 		GetPortStatusUseCase,
 		ReleasePortUseCase,
@@ -206,6 +208,7 @@ import { DeleteCredentialUseCase } from "./credential/DeleteCredential.use-case"
 		ListDriversByUserUseCase,
 		DeleteDriverUseCase,
 		ListDevicesUseCase,
+		ListVolumesUseCase,
 		RestartDriverUseCase,
 		GetPortStatusUseCase,
 		ReleasePortUseCase,

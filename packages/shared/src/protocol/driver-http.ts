@@ -1,4 +1,6 @@
 import zod from "zod";
+import { VolumeDTOSchema } from "./entities.js";
+import { FlashTargetSchema } from "./task.js";
 
 /** A board on a driver's machine: its port and USB ids. */
 export const UsbDeviceSchema = zod.object({
@@ -25,10 +27,9 @@ export const PairDriverOutSchema = zod.object({
 
 });
 
-/** POST …/flash — the board's port, and how fast to write. */
+/** POST …/flash — where and how to write the board's firmware (see FlashTargetSchema). */
 export const FlashWorkflowInSchema = zod.object({
-	port: zod.string(),
-	baudrate: zod.number(),
+	target: FlashTargetSchema,
 });
 
 /** POST …/execute (and ▶ run) — the board's port and baud rate. */
@@ -51,6 +52,11 @@ export const DeleteDriverOutSchema = zod.object({
 /** GET /drivers/:driverId/devices — the boards plugged into the driver's machine. */
 export const ListDevicesOutSchema = zod.object({
 	devices: UsbDeviceSchema.array(),
+});
+
+/** GET /drivers/:driverId/volumes — the removable drives on the driver's machine, for a UF2 flash target. */
+export const ListVolumesOutSchema = zod.object({
+	volumes: VolumeDTOSchema.array(),
 });
 
 /** A driver in the list: its id, name, and whether it's online. */
@@ -85,7 +91,9 @@ export type ListDevicesOut = zod.infer<typeof ListDevicesOutSchema>;
 export type DriverItem = zod.infer<typeof DriverItemSchema>;
 /** GET /drivers — the user's drivers. */
 export type ListDriversByUserOut = zod.infer<typeof ListDriversByUserOutSchema>;
-/** POST …/flash — the board's port, and how fast to write. */
+/** GET /drivers/:driverId/volumes — the removable drives on the driver's machine. */
+export type ListVolumesOut = zod.infer<typeof ListVolumesOutSchema>;
+/** POST …/flash — where and how to write the board's firmware. */
 export type FlashWorkflowIn = zod.infer<typeof FlashWorkflowInSchema>;
 /** POST …/execute (and ▶ run) — the board's port and baud rate. */
 export type ExecuteWorkflowIn = zod.infer<typeof ExecuteWorkflowInSchema>;

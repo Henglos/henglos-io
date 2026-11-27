@@ -1,15 +1,16 @@
 import * as path from "path";
 import { exit } from "process";
 import type { Command } from "commander";
-import type { BuildContext } from "@henglosio/runner";
-import { createSend, loadBoardFirmware, loadRunner, resolveFromMap, resolveFromWorkspace } from "../core/packages.js";
+import { BUILD_OUTPUT, connectDriver } from "@henglosio/runner";
+import { buildFirmware } from "../core/firmware.js";
+import { loadBoardFirmware, resolveFromMap, resolveFromWorkspace } from "../core/packages.js";
 
 /**
  * Registers `hio build <workspace>`.
  *
- * Resolves the board, the platform and the components, then hands them to the
- * platform's Runner, which compiles the runtime and the components for the
- * board's firmware.
+ * Resolves the board, the platform and the components, then builds the runtime
+ * and the components with the mpy-cross the board's `prepare` returns — the
+ * runtime frozen into a firmware when the board's script has a `build`.
  *
  * Two ways to run it:
  * - **Container mode** (`--map runner.map.json`) — how the driver runs it: the
@@ -25,32 +26,30 @@ import { createSend, loadBoardFirmware, loadRunner, resolveFromMap, resolveFromW
  */
 export const registerBuildCommand = (cli: Command) => {
 	const buildCommand = cli.command("build <workspace>");
-	buildCommand.description("run the platform's build: compile the runtime and components for the board's firmware");
+	buildCommand.description("build the runtime and components for the board's firmware, with the board's mpy-cross");
 	buildCommand.option("--map <path>", "path to runner.map.json");
-	buildCommand.action(async (workspace: string, options: { map?: string }) => {
+	buildCommand.option("--output <path>", "where the build goes", BUILD_OUTPUT);
+	buildCommand.action(async (workspace: string, options: { map?: string; output: string }) => {
 
 		workspace = path.resolve(process.cwd(), workspace);
-		const send = createSend(process.env.HIO_CALLBACK_URL);
+		const send = connectDriver().send;
 
 		try {
 
-			const { board, platform, components, settings, options: boardOptions } = options.map
+			const { board, platform, components, options: boardOptions } = options.map
 				? await resolveFromMap(path.resolve(process.cwd(), options.map))
 				: await resolveFromWorkspace(workspace);
 
-			const context: BuildContext = {
-				workspace,
+			await buildFirmware({
 				board,
 				platform,
 				components,
-				settings,
 				boardFirmware: await loadBoardFirmware(board),
 				options: boardOptions,
+				output: path.resolve(process.cwd(), options.output),
 				log: (data) => send({ type: "data", data }),
 				phase: (phase) => send({ type: "phase", phase }),
-			};
-
-			await (await loadRunner(platform)).build(context);
+			});
 
 		} catch (err) {
 			await send({ type: "error", id: "build_failed", data: err instanceof Error ? err.message : String(err) });

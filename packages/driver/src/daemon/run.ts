@@ -28,12 +28,16 @@ import { DeleteWorkflowUseCase } from "./application/use-cases/workflow/DeleteWo
 import { SyncWorkflowUseCase } from "./application/use-cases/workflow/SyncWorkflow.use-case.js";
 import { SyncWorkflowsUseCase } from "./application/use-cases/workflow/SyncWorkflows.use-case.js";
 import { ListDevicesUseCase } from "./application/use-cases/devices/ListDevices.use-case.js";
+import { ListVolumesUseCase } from "./application/use-cases/devices/ListVolumes.use-case.js";
 import { FlashWorkflowUseCase } from "./application/use-cases/workflow/FlashWorkflow.use-case.js";
 import { ExecuteSessionsService } from "./application/services/ExecuteSessions.service.js";
 import { ReplTerminalsService } from "./application/services/ReplTerminals.service.js";
 import { RecordWorkflowUseCase } from "./application/use-cases/workflow/RecordWorkflow.use-case.js";
 import { RemovePackageUseCase } from "./application/use-cases/package/RemovePackage.use-case.js";
 import { createLogger } from "./infrastructure/logger/Logger.js";
+import { UF2Drives } from "./application/services/UF2Drives.service.js";
+import { FlashBrokerService } from "./application/services/FlashBroker.service.js";
+import { MpyCompiler } from "./application/services/MpyCompiler.service.js";
 
 const log = createLogger("driver");
 
@@ -56,6 +60,10 @@ container.registerSingleton(SocketIOClient);
 container.registerSingleton(WorkflowService);
 container.registerSingleton(PackageService);
 container.registerSingleton(USBTunnel);
+container.registerSingleton(UF2Drives);
+container.registerSingleton(FlashBrokerService);
+// One: it serializes each workflow's `hio compile`.
+container.registerSingleton(MpyCompiler);
 container.registerSingleton(ContainerTunnel);
 container.registerSingleton(DeviceWatcher);
 container.registerSingleton(LockManager);
@@ -78,6 +86,7 @@ container.registerSingleton(SyncWorkflowsUseCase);
 container.registerSingleton(RemovePackageUseCase);
 
 container.registerSingleton(ListDevicesUseCase);
+container.registerSingleton(ListVolumesUseCase);
 
 container.registerSingleton(GatewayWS);
 

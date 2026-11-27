@@ -1,4 +1,4 @@
-import type { ContextValue, Device, DriverItem, FsListOut, FsReadOut, PairTokenOut, PortStatusOut, TaskRecord, TaskType } from "@henglosio/shared";
+import type { ContextValue, Device, DriverItem, FlashTarget, FsListOut, FsReadOut, PairTokenOut, PortStatusOut, TaskRecord, TaskType, VolumeDTO } from "@henglosio/shared";
 import { http } from "@shared/lib/http";
 
 export const generateDriverPairToken = async (): Promise<PairTokenOut> => {
@@ -30,15 +30,21 @@ export const listDevices = async (driverId: string): Promise<Device[]> => {
 	return data.devices;
 };
 
+/** The removable drives on the driver's machine — what a UF2 flash target can name. */
+export const listVolumes = async (driverId: string): Promise<VolumeDTO[]> => {
+	const { data } = await http.get<{ volumes: VolumeDTO[] }>(`/drivers/${driverId}/volumes`);
+	return data.volumes;
+};
+
+/** Writes the board's firmware to `target` — where and how, picked in the flash dialog. */
 export const flashWorkflow = async (
 	driverId: string,
 	workflowId: string,
-	port: string,
-	baudrate: number,
+	target: FlashTarget,
 ): Promise<string> => {
 	const { data } = await http.post<{ id: string }>(
 		`/drivers/${driverId}/workflows/${workflowId}/flash`,
-		{ port, baudrate },
+		{ target },
 	);
 	return data.id;
 };

@@ -107,14 +107,38 @@ export const TaskCompilePayloadSchema = zod.object({
 	packages: SyncPackageSchema.array().optional(),
 });
 
-// Installs the compiled runtime on the board: flashes the MicroPython
-// firmware only if the board lacks it (or runs an incompatible one), then
+// The ways a board's firmware can be written — what its manifest's
+// `firmware.methods` lists, and the studio picks from.
+export const FlashMethodNameSchema = zod.enum(["serial", "uf2"]);
+
+// Where and how the studio has a board's firmware written. Every target names
+// the board's serial `port` too: the REPL — checking what the board runs, then
+// installing the runtime — always goes through it.
+export const FlashTargetSchema = zod.discriminatedUnion("method", [
+	// esptool & co., through the driver's RFC 2217 tunnel to `port`.
+	zod.object({
+		method: zod.literal("serial"),
+		port: zod.string().min(1),
+		// How fast to write. Absent: the board's script picks.
+		baudrate: zod.number().int().positive().optional(),
+	}),
+	// The board's UF2 drive: `volume` is its label (RPI-RP2) or where it's
+	// mounted (E:\, /Volumes/RPI-RP2). Not mounted yet: the driver restarts the
+	// board in its bootloader through `port`.
+	zod.object({
+		method: zod.literal("uf2"),
+		port: zod.string().min(1),
+		volume: zod.string().min(1),
+	}),
+]);
+
+// Installs the compiled runtime on the board: writes the MicroPython firmware
+// to `target` only if the board lacks it (or runs an incompatible one), then
 // uploads the runtime as .mpy files over the REPL. Components aren't part of
 // it — every session installs what it uses (see BoardInstallSchema).
 export const TaskFlashPayloadSchema = zod.object({
 	workflowId: zod.string(),
-	port: zod.string(),
-	baudrate: zod.number(),
+	target: FlashTargetSchema,
 });
 
 // What a session needs on the board — built by the hosting from the workflow
@@ -314,6 +338,10 @@ export type TaskCompilePayload = zod.infer<typeof TaskCompilePayloadSchema>;
 // uploads the runtime as .mpy files over the REPL. Components aren't part of
 // it — every session installs what it uses (see BoardInstallSchema).
 export type TaskFlashPayload = zod.infer<typeof TaskFlashPayloadSchema>;
+/** A way a board's firmware can be written. */
+export type FlashMethodName = zod.infer<typeof FlashMethodNameSchema>;
+/** Where and how a board's firmware is written — see FlashTargetSchema. */
+export type FlashTarget = zod.infer<typeof FlashTargetSchema>;
 /** An `execute` task's payload: the board's port, the first frame, and what to install first. */
 export type TaskExecutePayload = zod.infer<typeof TaskExecutePayloadSchema>;
 /** A `record` task's payload: the board's port, every frame to store, and what to install first. */

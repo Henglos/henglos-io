@@ -14,9 +14,11 @@ capabilities: [wifi, bluetooth]
 
 # How MicroPython gets onto it: src/firmware.ts, in the official image for
 # Espressif's chips.
-# `micropython` is also what the platform's build compiles the runtime and the
-# components for — bump it together with the version in src/firmware.ts.
+# `micropython` is also what the runtime and the components are compiled for,
+# with the mpy-cross src/firmware.ts builds — bump it together with the
+# version there.
 firmware:
   micropython: 1.29.0
   image: henglosio/workbench-espressif:1.0.0
   script: ./src/firmware.ts
+  methods: [serial]

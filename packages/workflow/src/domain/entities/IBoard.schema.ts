@@ -3,6 +3,9 @@ import { PinSchema } from "./IPin.schema.js";
 import { ConfigurationSchema } from "./IConfiguration.schema.js";
 import { CapabilitySchema } from "../value-objects/Capabilities.js";
 
+/** A way the board's firmware can be written — @henglosio/shared's FlashMethodNameSchema. */
+export const BoardFlashMethodSchema = zod.enum(["serial", "uf2"]);
+
 /** A serial baud rate the board's link can use. */
 export const BaudRateSchema = zod.union([
 	zod.literal(110),
@@ -72,6 +75,8 @@ export const WifiConnectionStateSchema = zod.object({
 	port: zod.number().int().min(1).max(65535),
 }).strict();
 
+/** A way the board's firmware can be written. */
+export type IBoardFlashMethod = zod.infer<typeof BoardFlashMethodSchema>;
 /** The link picked for a workflow's board. */
 export const BoardConnectionStateSchema = zod.object({
 	serial: SerialConnectionStateSchema.optional(),
@@ -161,6 +166,10 @@ export const BoardSchema = zod.object({
 
 	// The parameters of its firmware (its manifest's `options`).
 	options: zod.array(BoardOptionSchema).optional(),
+
+	// How its firmware can be written, the preferred first (its manifest's
+	// `firmware.methods`) — what the studio's flash offers. Absent: serial.
+	flashMethods: zod.array(BoardFlashMethodSchema).min(1).optional(),
 }).strict();
 
 /** A board as its package's board.schema.yaml declares it: its pins, its connection, its configs. */

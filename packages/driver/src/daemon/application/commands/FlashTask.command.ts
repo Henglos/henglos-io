@@ -23,8 +23,8 @@ export class FlashTaskCommand implements ITaskCommand<TaskFlashPayload> {
 	// wait on each other, just on the port they share.
 	async locks(p: TaskFlashPayload): Promise<string[]> {
 		const compiled = await this.workflowState.isCompiled(p.workflowId);
-		return compiled ? [`port:${p.port}`] : [`workflow:${p.workflowId}`, `port:${p.port}`];
+		return compiled ? [`port:${p.target.port}`] : [`workflow:${p.workflowId}`, `port:${p.target.port}`];
 	}
 
-	execute(p: TaskFlashPayload, ctx: TaskContext) { return this.useCase.execute(p.workflowId, p.port, p.baudrate, ctx); }
+	execute(p: TaskFlashPayload, ctx: TaskContext) { return this.useCase.execute(p.workflowId, p.target, ctx); }
 }

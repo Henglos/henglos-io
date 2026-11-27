@@ -1,7 +1,7 @@
-// What runs inside the build container — reading runner.map.json, loading the
-// platform's Runner and the board's firmware script, reporting back. Kept apart
-// from the registry (pacote) and the driver: it's what dist/runner-host.mjs,
-// the self-contained runner the driver injects into the container, is built from.
+// What runs inside the build container — reading runner.map.json and loading
+// the board's firmware script. Kept apart from the registry (pacote) and the
+// driver: it's what dist/runner-host.mjs, the self-contained runner the driver
+// injects into the container, is built from.
 
 import * as path from "path";
 import * as fs from "fs/promises";
@@ -13,7 +13,7 @@ import {
 	type PlatformPackage,
 } from "@henglosio/shared";
 import { resolveBoardOptions, type BoardOptionValue } from "@henglosio/workflow";
-import type { BoardFirmware, Runner, RunnerProtocol } from "@henglosio/runner";
+import type { BoardFirmware } from "@henglosio/runner";
 
 const packages = new PackageService();
 
@@ -26,21 +26,18 @@ export type ResolvedPackages = {
 	board: BoardPackage;
 	platform: PlatformPackage;
 	components: ComponentPackage[];
-	/** The workflow's platform setting overrides, by name. Empty: the platform's defaults. */
-	settings: Record<string, number>;
 	/** The value of each of the board's options: the workflow's, or the default. */
 	options: Record<string, string>;
 };
 
 /**
  * runner.map.json, written by the driver into the container: absolute paths
- * of the mounted packages, and the workflow's platform setting overrides.
+ * of the mounted packages, and the workflow's values of the board's options.
  */
 export type RunnerMap = {
 	board: string;
 	platform: string;
 	components: string[];
-	settings?: Record<string, number>;
 	options?: Record<string, BoardOptionValue>;
 };
 
@@ -68,21 +65,8 @@ export async function resolveFromMap(mapPath: string): Promise<ResolvedPackages>
 		components.push(component);
 	}
 
-	return { board, platform, components, settings: map.settings ?? {}, options: resolveBoardOptions(board.options ?? [], map.options ?? {}) };
+	return { board, platform, components, options: resolveBoardOptions(board.options ?? [], map.options ?? {}) };
 
-}
-
-/**
- * Loads the platform's Runner — the object that builds the platform and
- * flashes the board's firmware. It's the script the platform's manifest names
- * in `build.script`, so each platform version brings its own.
- *
- * @param platform The resolved platform package.
- * @returns The script's default export (or the module itself, for CommonJS).
- */
-export async function loadRunner(platform: PlatformPackage): Promise<Runner> {
-	const mod = await import(pathToFileURL(path.resolve(platform.path, platform.build.script)).href);
-	return (mod.default ?? mod) as Runner;
 }
 
 /**
@@ -92,51 +76,16 @@ export async function loadRunner(platform: PlatformPackage): Promise<Runner> {
  *
  * @param board The resolved board package.
  * @returns The script's default export.
- * @throws When it can't be loaded, or doesn't export `build` and `flash`.
+ * @throws When it can't be loaded, or doesn't export `prepare` and `flash`
+ *   (and `build`, when it has one, as a function).
  */
 export async function loadBoardFirmware(board: BoardPackage): Promise<BoardFirmware> {
 	const script = path.resolve(board.path, board.firmware.script);
 	const mod = await import(pathToFileURL(script).href) as { default?: Partial<BoardFirmware> };
-	if (typeof mod.default?.build !== "function" || typeof mod.default.flash !== "function") {
-		throw new Error(`${board.firmware.script} must export default { build, flash }.`);
+	const firmware = mod.default;
+	if (typeof firmware?.prepare !== "function" || typeof firmware.flash !== "function"
+		|| (firmware.build !== undefined && typeof firmware.build !== "function")) {
+		throw new Error(`${board.firmware.script} must export default { prepare, build?, flash }.`);
 	}
 	return mod.default as BoardFirmware;
-}
-
-/**
- * Where the Runner's logs, phases and errors go.
- *
- * - With a callback URL (container mode): each message is POSTed, as JSON, to
- *   the driver — which passes it on to the studio. A phase goes as one only to a
- *   driver that says it reads them (`HIO_RUNNER_PHASES=1`); to an older one, as
- *   a log line.
- *   It goes with the session's token (`HIO_CALLBACK_TOKEN`), which the driver
- *   requires.
- * - Without one (local mode): logs and phases go to stdout, errors to stderr.
- *
- * @param callbackUrl The driver's `HIO_CALLBACK_URL`, if any.
- * @param token The driver's `HIO_CALLBACK_TOKEN` for this session.
- * @returns A function that sends one message.
- */
-export function createSend(
-	callbackUrl: string | undefined,
-	token: string | undefined = process.env["HIO_CALLBACK_TOKEN"],
-): (payload: RunnerProtocol) => Promise<void> {
-	const phaseLine = (phase: string) => `── ${phase} ──\n`;
-	if (!callbackUrl) {
-		return async (payload) => {
-			if (payload.type === "data") process.stdout.write(payload.data);
-			else if (payload.type === "phase") process.stdout.write(phaseLine(payload.phase));
-			else process.stderr.write(`[error:${payload.id}] ${payload.data}\n`);
-		};
-	}
-	const phases = process.env["HIO_RUNNER_PHASES"] === "1";
-	return async (payload) => {
-		if (payload.type === "phase" && !phases) payload = { type: "data", data: phaseLine(payload.phase) };
-		await fetch(callbackUrl, {
-			method: "POST",
-			headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-			body: JSON.stringify(payload),
-		});
-	};
 }

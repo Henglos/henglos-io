@@ -11,6 +11,9 @@ import { useBaudrate } from "../baurate-connection/hooks/useBaurate.hook";
 import { useDebugger } from "../../hooks/useDebugger";
 import { useSelectedAction } from "../../hooks/useSelectedAction";
 import { isTriggerAction } from "@henglosio/workflow";
+import type { FlashTarget } from "@henglosio/shared";
+import { useState } from "react";
+import { FlashDialog } from "./components/FlashDialog.component";
 
 export const ExecutionControllers = () => {
 
@@ -37,10 +40,12 @@ export const ExecutionControllers = () => {
 		setActiveTaskId(taskId);
 	};
 
-	const onFlashHandler = async () => {
-		if (!workflow || !driverConnection || !selectedDevice || !selectedBaudrate) return;
+	// The flash dialog — where and how to write the board's firmware.
+	const [flashOpen, setFlashOpen] = useState(false);
+	const onFlash = async (target: FlashTarget) => {
+		if (!workflow || !driverConnection) return;
 		await flush();
-		const taskId = await flashWorkflow(driverConnection.id, workflow.id, selectedDevice.port, selectedBaudrate);
+		const taskId = await flashWorkflow(driverConnection.id, workflow.id, target);
 		setActiveTaskId(taskId);
 	};
 
@@ -61,11 +66,22 @@ export const ExecutionControllers = () => {
 				</Button.Icon>
 			</Button.Root>
 
-			<Button.Root variant="ghost" disabled={!workflow || !driverConnection || !selectedDevice} onClick={onFlashHandler}>
+			<Button.Root variant="ghost" disabled={!workflow || !driverConnection} onClick={() => setFlashOpen(true)} title="Flash — write the board's firmware and install the runtime">
 				<Button.Icon>
 					<Zap size={14} />
 				</Button.Icon>
 			</Button.Root>
+
+			{flashOpen && workflow && driverConnection && (
+				<FlashDialog
+					workflowId={workflow.id}
+					driverId={driverConnection.id}
+					methods={workflow.data.board.base.flashMethods ?? ["serial"]}
+					baudrate={selectedBaudrate}
+					onClose={() => setFlashOpen(false)}
+					onFlash={onFlash}
+				/>
+			)}
 
 			<Button.Root variant="ghost" disabled={!workflow || !driverConnection || !selectedDevice} onClick={onRecordHandler}>
 				<Button.Icon>

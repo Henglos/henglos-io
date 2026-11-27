@@ -62,14 +62,17 @@ export class PackageService {
 		}
 	}
 
-	// The platform package: its manifest plus the build script that compiles it.
+	// The platform package: its manifest plus the runtime's files it names. Not
+	// its packages: one may only be put there when it's packed (henglosio/).
 	async validatePlatform(packagePath: string): Promise<PlatformPackage | null> {
 		try {
 			const manifestPath = await locateManifest(packagePath);
 			if (!manifestPath) return null;
 			const manifest = await manifests.loadAs(manifestPath, "platform");
 			const root = path.dirname(manifestPath);
-			await fs.access(path.join(root, manifest.build.script));
+			for (const entry of manifest.runtime.files) {
+				await fs.access(path.join(root, entry));
+			}
 			return { ...manifest, path: root };
 		} catch {
 			return null;

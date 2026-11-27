@@ -4,6 +4,7 @@ import { createHash } from "crypto";
 import fs from "fs/promises";
 
 import { PackageService as PackageValidator, type SyncPackage, WorkflowCompileResponse } from "@henglosio/shared";
+import { BUILD_OUTPUT } from "@henglosio/runner";
 
 import { ContainerTunnel } from "../../services/ContainerTunnel.service.js";
 import { RunnerHost } from "../../services/RunnerHost.service.js";
@@ -13,16 +14,16 @@ import { PackageService } from "../../services/PackageService.service.js";
 import { WorkflowService } from "../../services/WorkflowService.service.js";
 import { SyncWorkflowUseCase } from "./SyncWorkflow.use-case.js";
 
-// Builds the board's runtime in the board's image (see the platform's
-// Runner.build): frozen into a MicroPython firmware when the board's script
-// builds one, else compiled to .mpy for the board's firmware version. The result lands on the host in WorkflowService.buildPath,
+// Builds the runtime in the board's image (`hio build`, with the mpy-cross the
+// board's prepare returns): frozen into a MicroPython firmware when the board's
+// script builds one, else compiled to .mpy for the board's firmware version. The result lands on the host in WorkflowService.buildPath,
 // where FlashWorkflowUseCase installs it from. Components aren't built here: each
 // session (Play, Run, Debug, Record) installs the ones it uses — see
 // BoardInstaller — so changing them needs no compile.
 // One cache per image, shared by the containers that run it: what a build fetches
-// once — mpy-cross per MicroPython version and, for a board whose script builds
-// its firmware, MicroPython's source, its toolchain (a few GB), the build folders
-// and the finished images. Per image: any image can write to it, and what one
+// once — what the board's prepare sets up (MicroPython's source, its mpy-cross,
+// a toolchain of a few GB) and, for a board whose script builds its firmware,
+// the build folders and the finished images. Per image: any image can write to it, and what one
 // leaves there must not end up in another's firmware.
 const buildCacheVolume = (image: string) => `henglosio-build-cache-${createHash("sha256").update(image).digest("hex").slice(0, 16)}`;
 const BUILD_CACHE_PATH = "/root/.cache/hio";
@@ -32,8 +33,8 @@ const CONTAINER_LAYOUT = "3";
 
 /**
  * Compiles a workflow: in its build container (the board's image, made once per workflow and
- * kept), `hio build` runs the platform's Runner with the workflow's board, platform and
- * components mounted; the output is kept for the board.
+ * kept), `hio build` builds the runtime with the workflow's board and platform mounted;
+ * the output is kept for the board.
  */
 @injectable()
 export class CompileWorkflowUseCase {
@@ -94,7 +95,6 @@ export class CompileWorkflowUseCase {
 		const board = await this.packageValidator.validateBoard(cachedBoard.path);
 		if (!board) throw new Error("Invalid board package.");
 
-		// The platform builds itself, in the board's image: its output folder.
 		const platform = await this.packageValidator.validatePlatform(cachedPlatform.path);
 		if (!platform) throw new Error("Invalid platform package.");
 
@@ -128,7 +128,7 @@ export class CompileWorkflowUseCase {
 			const volumes: VolumeBind[] = [
 				{ hostPath: cachedBoard.path,    containerPath: "/workspace/packages/board",    readOnly: true },
 				{ hostPath: cachedPlatform.path, containerPath: "/workspace/packages/platform", readOnly: true },
-				{ hostPath: buildPath,           containerPath: platform.build.output },
+				{ hostPath: buildPath,           containerPath: BUILD_OUTPUT },
 				{ volume: buildCacheVolume(image.name), containerPath: BUILD_CACHE_PATH },
 			];
 
@@ -177,9 +177,9 @@ export class CompileWorkflowUseCase {
 				signal: ctx.signal,
 				onLog: (data) => ctx.log("stdout", data),
 			});
-			// The platform's build failing ends the command, not the stream — its
-			// exit code is the only sign.
-			if (result.exitCode !== 0) throw new Error(`The platform's build failed (exit code ${result.exitCode}) — see the log above.`);
+			// The build failing ends the command, not the stream — its exit code is
+			// the only sign.
+			if (result.exitCode !== 0) throw new Error(`The build failed (exit code ${result.exitCode}) — see the log above.`);
 		} finally {
 			this.containerTunnel.destroySession(sessionId);
 			await this.containerService.stopContainer(containerName).catch(() => {});
