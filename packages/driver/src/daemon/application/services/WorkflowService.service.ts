@@ -145,7 +145,7 @@ export class WorkflowService {
 	}
 
 	// Where the build container leaves what gets uploaded to the board
-	// (mounted at the board manifest's build.output).
+	// (mounted at BUILD_OUTPUT).
 	buildPath(workflowId: string): string {
 		return path.join(this.WORKFLOWS_DIR, workflowId, "build");
 	}
