@@ -7,7 +7,7 @@ The Raspberry Pi Pico (RP2040), ready to use with Henglos IO.
 ## What it brings
 
 - Its pins, and what each one can do (digital, analog, PWM, UART…), so the studio only offers the right pins.
-- Its firmware: the stock MicroPython, written by UF2 — the Pico's bootloader drive — with the Henglos IO platform on its filesystem.
+- Its firmware: MicroPython with the Henglos IO platform built in, written by UF2 — the Pico's bootloader drive.
 
 ## Getting it
 

@@ -1,12 +1,16 @@
 import type { BoardFirmware, BoardPrepareContext } from "@henglosio/runner";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 // ── The board ────────────────────────────────────────────────────────────────
-// The stock MicroPython for the Pico (RPI_PICO), written by UF2 — the Pico shows
-// a drive (RPI-RP2) in its bootloader, which the driver puts it in through its
-// serial port when it isn't there already. Same version as the manifest's
-// firmware.micropython.
+// MicroPython's port and board (its folder under ports/<port>/boards).
+const PORT = "rp2";
+const BOARD = "RPI_PICO";
+
+// The stock MicroPython for the Pico, written when the board has no firmware of
+// its own — same version as the manifest's firmware.micropython. Written by UF2:
+// the Pico shows a drive (RPI-RP2) in its bootloader.
 const STOCK = "https://micropython.org/resources/firmware/RPI_PICO-20260824-v1.29.0.uf2";
 
 const MICROPYTHON_REPO = "https://github.com/micropython/micropython.git";
@@ -16,23 +20,40 @@ type Context = Pick<BoardPrepareContext, "run" | "log">;
 export default {
 
 	// Once per MicroPython version (hio runs it under the cache's lock, and only
-	// until it succeeds): MicroPython's checkout and its mpy-cross — what the
-	// runtime and the components are compiled with, for the stock firmware.
+	// until it succeeds), all in ctx.cache: MicroPython's checkout, the rp2
+	// port's submodules (the pico-sdk…), and its mpy-cross — what the runtime and
+	// the components are compiled with (the port's build uses it too).
 	async prepare(ctx) {
-		const micropython = path.join(ctx.cache, "micropython", "v" + ctx.micropython);
+		const micropython = micropythonDir(ctx.cache, ctx.micropython);
 		await cloneOnce(ctx, "MicroPython v" + ctx.micropython, MICROPYTHON_REPO, "v" + ctx.micropython, micropython);
 
+		await ctx.log("[prepare] the " + PORT + " port's submodules (pico-sdk…)\n");
+		await ctx.run("make", ["-C", path.join(micropython, "ports", PORT), "BOARD=" + BOARD, "submodules"]);
+
 		const mpyCross = path.join(micropython, "mpy-cross");
-		await ctx.run("make", ["-C", mpyCross]);
+		await ctx.run("make", ["-C", mpyCross, jobs()]);
 		return { mpyCross: path.join(mpyCross, "build", "mpy-cross") };
 	},
 
-	// No build: the Pico runs the stock MicroPython, and the runtime goes on its
-	// filesystem as .mpy files.
+	// MicroPython with the runtime frozen in, so it runs from flash and the RAM is
+	// left to the workflow. Same version and layout as STOCK, so the board's
+	// filesystem stays. Incremental: only what changed compiles again.
+	async build(ctx) {
+		const micropython = micropythonDir(ctx.cache, ctx.micropython);
+		const portDir = path.join(micropython, "ports", PORT);
+		await ctx.log("[firmware] MicroPython v" + ctx.micropython + " · " + PORT + "/" + BOARD + "\n");
 
-	// The firmware, by UF2: the driver copies it to the Pico's drive, and the Pico
-	// restarts into it. UF2 can't erase the flash first (ctx.erase): writing the
-	// firmware leaves the filesystem where it was — the runtime replaces its files.
+		// No BUILD= here: a variable on make's command line reaches every sub-make,
+		// mpy-cross's too. The port's default, build-<BOARD>, sits in the checkout,
+		// which is per version already.
+		await ctx.run("make", ["-C", portDir, "BOARD=" + BOARD, "FROZEN_MANIFEST=" + ctx.freezeManifest, jobs()]);
+
+		fs.copyFileSync(path.join(portDir, "build-" + BOARD, "firmware.uf2"), ctx.firmwareOutput);
+	},
+
+	// ctx.firmware (build's, the runtime frozen in) — or the stock one — by UF2:
+	// the driver copies it to the Pico's drive, and the Pico restarts into it. UF2
+	// can't erase the flash first (ctx.erase): the filesystem stays where it was.
 	async flash(ctx) {
 		let firmware = ctx.firmware ?? STOCK;
 		if (/^https?:\/\//.test(firmware)) {
@@ -46,6 +67,12 @@ export default {
 } satisfies BoardFirmware;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+// Where MicroPython `version` is checked out, in the cache.
+const micropythonDir = (cache: string, version: string) => path.join(cache, "micropython", "v" + version);
+
+// As many make jobs as the container has cores.
+const jobs = () => "-j" + os.availableParallelism();
 
 // Clones `ref` of `repo` into `dir`, unless it's there already — through a
 // .partial folder, so an interrupted clone is never mistaken for a finished one.

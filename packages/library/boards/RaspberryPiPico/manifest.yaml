@@ -11,16 +11,13 @@ ui:
 # The RP2040 offers nothing besides its pins (the Pico W adds Wi-Fi — another board).
 capabilities: []
 
-# How MicroPython gets onto it: src/firmware.ts writes the stock MicroPython by
-# UF2 — the drive the Pico shows in its bootloader (BOOTSEL) — and the runtime
-# goes on its filesystem as .mpy files. `micropython` is what they're compiled
-# for, with the mpy-cross src/firmware.ts builds — bump it together with the
-# version there.
-#
-# The image only needs git, make and a C compiler for that mpy-cross; the
-# espressif workbench has them.
+# How MicroPython gets onto it: src/firmware.ts builds MicroPython with the
+# runtime frozen in, in the official image for RP2 boards, and writes it by UF2
+# — the drive the Pico shows in its bootloader (BOOTSEL). `micropython` is also
+# what the runtime and the components are compiled for, with the mpy-cross
+# src/firmware.ts builds — bump it together with the version there.
 firmware:
   micropython: 1.29.0
-  image: henglosio/workbench-espressif:1.0.0
+  image: henglosio/workbench-rp2:1.0.0
   script: ./src/firmware.ts
   methods: [uf2]
