@@ -130,7 +130,6 @@ export const ExecutionControllers = () => {
 					workflowId={workflow.id}
 					driverId={driverConnection.id}
 					method={flashMethod}
-					baudrate={selectedBaudrate}
 					onClose={() => setFlashOpen(false)}
 					onFlash={onFlash}
 				/>
