@@ -3,6 +3,7 @@ import { injectable } from "tsyringe";
 import { TaskContext } from "../../../domain/entities/TaskContext.js";
 import { SocketIOClient } from "../../../infrastructure/ws/SocketIOClient.impl.js";
 import { REPL_BAUDRATE } from "../../services/ReplSession.service.js";
+import { serialLines } from "../../services/SerialLines.js";
 import { ReplTerminalsService } from "../../services/ReplTerminals.service.js";
 
 // Ctrl-C twice stops main.py (and anything it awaits).
@@ -47,7 +48,7 @@ export class RunReplTerminalUseCase {
 		ctx.info(`REPL on ${path} — the board's program is stopped while it's open, and plays again when it closes`);
 
 		try {
-			await this.attach(port);
+			await this.attach(port, path);
 
 			await new Promise<void>((resolve, reject) => {
 				port.on("data", (chunk: Buffer) => {
@@ -75,7 +76,7 @@ export class RunReplTerminalUseCase {
 	 * and the banners — noise, not the session. Ctrl-B only if it's sitting in
 	 * a raw REPL (Ctrl-B at the friendly prompt prints the banner again).
 	 */
-	private async attach(port: SerialPort): Promise<void> {
+	private async attach(port: SerialPort, path: string): Promise<void> {
 
 		let seen = "";
 		const collect = (chunk: Buffer) => { seen += chunk.toString("latin1"); };
@@ -86,9 +87,9 @@ export class RunReplTerminalUseCase {
 		};
 
 		try {
-			// Released lines: an asserted RTS holds EN low on boards with the
-			// usual auto-program circuit (a permanent reset).
-			await new Promise<void>(resolve => port.set({ dtr: false, rts: false }, () => resolve()));
+			// RTS released, DTR only for a native USB board — see serialLines.
+			const lines = await serialLines(path);
+			await new Promise<void>(resolve => port.set(lines, () => resolve()));
 			port.write(INTERRUPT);
 			await settled();
 			if (/\r\n>$/.test(seen)) {

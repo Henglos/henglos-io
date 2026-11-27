@@ -1,4 +1,5 @@
 import { SerialPort } from "serialport";
+import { serialLines } from "./SerialLines.js";
 import { FrameType, parseDebug, parseFrame, type ParsedFrame } from "@henglosio/shared";
 
 // How the driver talks to a MicroPython board: through its USB REPL, in raw
@@ -85,9 +86,11 @@ export class ReplSession {
 		const session = new ReplSession(port);
 
 		try {
-			// Released lines: an asserted RTS holds EN low on boards with the
-			// usual auto-program circuit (a permanent reset).
-			await new Promise<void>(resolve => port.set({ dtr: false, rts: false }, () => resolve()));
+			// RTS released (it holds EN low on boards with the usual auto-program
+			// circuit — a permanent reset); DTR only for a native USB board, whose
+			// long answers arrive scrambled without it — see serialLines.
+			const lines = await serialLines(path);
+			await new Promise<void>(resolve => port.set(lines, () => resolve()));
 			await session.enterRaw(timeoutMs);
 		} catch (err) {
 			await session.closePort();
