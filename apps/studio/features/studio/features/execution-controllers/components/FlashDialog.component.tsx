@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button, Dialog, Input, Select, Text, ToggleGroup } from "@henglosio/ui";
-import { FlashMethodNameSchema, type FlashMethodName, type FlashTarget, type VolumeDTO } from "@henglosio/shared";
+import { FlashMethodNameSchema, type FlashMethodName, type FlashTarget, type VolumeDTO } from "@henglosio/shared/browser";
 import { RefreshCw, X, Zap } from "lucide-react";
 import { useAtom, useAtomValue } from "jotai";
 import { DeviceSelectionAtom, DevicesAtom, FlashTargetsAtom } from "@/features/studio/store/driver.store";
