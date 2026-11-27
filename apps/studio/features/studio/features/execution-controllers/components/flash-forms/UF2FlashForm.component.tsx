@@ -32,10 +32,12 @@ export const UF2FlashForm: React.FC<FlashFormProps<"uf2">> = ({ driverId, last, 
 	const look = async (show: boolean) => {
 		if (show) setLoading(true);
 		try {
-			const found = (await listVolumes(driverId)).filter(drive => drive.uf2);
+			// Every drive on the driver's machine — the UF2 bootloaders first.
+			const found = (await listVolumes(driverId)).sort((a, b) => Number(b.uf2) - Number(a.uf2));
 			setDrives(found);
-			// The only drive there, picked for you when none is.
-			if (found.length === 1) setVolume(picked => picked || volumeName(found[0]!));
+			// The only UF2 drive there, picked for you when none is.
+			const uf2 = found.filter(drive => drive.uf2);
+			if (uf2.length === 1) setVolume(picked => picked || volumeName(uf2[0]!));
 		} catch {
 			setDrives(prev => prev ?? []);
 		} finally {
@@ -61,9 +63,9 @@ export const UF2FlashForm: React.FC<FlashFormProps<"uf2">> = ({ driverId, last, 
 	}, [volume, present, port, onChange]);
 
 	// The drive picked before, when it isn't there now: still offered.
-	const offered: { name: string; mount: string | null }[] = [
-		...(drives ?? []).map(drive => ({ name: volumeName(drive), mount: drive.mount })),
-		...(volume && !present ? [{ name: volume, mount: null }] : []),
+	const offered: { name: string; mount: string | null; uf2: boolean }[] = [
+		...(drives ?? []).map(drive => ({ name: volumeName(drive), mount: drive.mount, uf2: drive.uf2 })),
+		...(volume && !present ? [{ name: volume, mount: null, uf2: false }] : []),
 	];
 
 	return (
@@ -85,15 +87,17 @@ export const UF2FlashForm: React.FC<FlashFormProps<"uf2">> = ({ driverId, last, 
 				}
 				hint={volume && !present
 					? (port ? "Not plugged in: the board is restarted in its bootloader through its port." : "Not plugged in: hold BOOTSEL while plugging the board in — or restart it through its port, below.")
-					: undefined}
+					: drives?.some(drive => volumeName(drive) === volume && !drive.uf2)
+						? <span className="text-warning">Not a UF2 bootloader (no INFO_UF2.TXT): the firmware would only be copied there as a file.</span>
+						: undefined}
 			>
 				{offered.length === 0 ? (
 					<div className="flex items-center gap-2 h-10 px-3 rounded-md border border-dashed border-line">
 						<RefreshCw size={12} className="animate-spin text-fg-muted" />
-						<Text variant="low" size="xs">Waiting for a UF2 drive…</Text>
+						<Text variant="low" size="xs">Looking for drives…</Text>
 					</div>
 				) : (
-					<div role="radiogroup" className="flex flex-col gap-1">
+					<div role="radiogroup" className="flex flex-col gap-1 max-h-56 overflow-y-auto">
 						{offered.map(drive => {
 							const active = drive.name === volume;
 							return (
@@ -109,8 +113,9 @@ export const UF2FlashForm: React.FC<FlashFormProps<"uf2">> = ({ driverId, last, 
 									)}
 								>
 									<HardDrive size={16} className={active ? "text-accent-fg" : "text-fg-muted"} />
-									<span className="text-sm text-fg font-mono">{drive.name}</span>
-									<span className="text-xs text-fg-muted ml-auto">{drive.mount ?? "not plugged in"}</span>
+									<span className="text-sm text-fg font-mono truncate">{drive.name}</span>
+									{drive.uf2 && <span className="px-1.5 rounded-sm bg-accent-subtle text-[10px] font-mono text-accent-fg">UF2</span>}
+									<span className="text-xs text-fg-muted ml-auto shrink-0">{drive.mount ?? "not plugged in"}</span>
 								</button>
 							);
 						})}

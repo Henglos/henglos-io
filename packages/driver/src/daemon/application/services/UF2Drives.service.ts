@@ -18,7 +18,7 @@ const run = promisify(execFile);
 @injectable()
 export class UF2Drives {
 
-	/** The removable drives mounted now — `uf2` for a board's bootloader (it has an INFO_UF2.TXT). */
+	/** The drives mounted now — every one with a letter on Windows — `uf2` for a board's bootloader (it has an INFO_UF2.TXT). */
 	async list(): Promise<VolumeDTO[]> {
 		const drives: Omit<VolumeDTO, "uf2">[] = [];
 		if (process.platform === "win32") {
@@ -78,11 +78,11 @@ function exists(file: string): Promise<boolean> {
 	return access(/^[a-zA-Z]:$/.test(file) ? `${file}\\` : file).then(() => true, () => false);
 }
 
-// Windows: the removable volumes with a drive letter — the letter's root.
+// Windows: every volume with a drive letter — the letter's root.
 async function listOnWindows(): Promise<Omit<VolumeDTO, "uf2">[]> {
 	const { stdout } = await run("powershell.exe", [
 		"-NoProfile", "-NonInteractive", "-Command",
-		"Get-Volume | Where-Object { $_.DriveLetter -and $_.DriveType -eq 'Removable' } | Select-Object DriveLetter,FileSystemLabel | ConvertTo-Json -Compress",
+		"Get-Volume | Where-Object { $_.DriveLetter } | Sort-Object DriveLetter | Select-Object DriveLetter,FileSystemLabel | ConvertTo-Json -Compress",
 	], { windowsHide: true }).catch(() => ({ stdout: "" }));
 	if (!stdout.trim()) return [];
 	type Row = { DriveLetter: string; FileSystemLabel: string | null };

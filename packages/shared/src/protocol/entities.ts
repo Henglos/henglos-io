@@ -17,7 +17,7 @@ export const DeviceDTOSchema = zod.object({
 
 });
 
-/** A removable drive on a driver's machine — where a UF2 board's bootloader shows up. */
+/** A drive on a driver's machine — a UF2 board's bootloader shows up as one. */
 export const VolumeDTOSchema = zod.object({
 
 	/** Its label: RPI-RP2, RP2350, … (empty when it has none). */
