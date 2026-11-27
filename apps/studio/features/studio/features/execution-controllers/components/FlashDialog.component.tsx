@@ -1,14 +1,24 @@
 import { useEffect, useState } from "react";
 import { Button, Dialog, Input, Select, Text, ToggleGroup } from "@henglosio/ui";
-import type { FlashMethodName, FlashTarget, VolumeDTO } from "@henglosio/shared";
+import { FlashMethodNameSchema, type FlashMethodName, type FlashTarget, type VolumeDTO } from "@henglosio/shared";
 import { RefreshCw, X, Zap } from "lucide-react";
 import { useAtom, useAtomValue } from "jotai";
 import { DeviceSelectionAtom, DevicesAtom, FlashTargetsAtom } from "@/features/studio/store/driver.store";
 import { listVolumes } from "@/shared/api";
 
-const METHOD_LABELS: Record<FlashMethodName, string> = {
-	serial: "Serial",
-	uf2: "UF2 drive",
+// Every way a firmware can be written — the board's are offered, the rest shown
+// disabled, so it's clear what this board can't do.
+const ALL_METHODS: readonly FlashMethodName[] = FlashMethodNameSchema.options;
+
+const METHODS: Record<FlashMethodName, { label: string; description: string }> = {
+	serial: {
+		label: "Serial",
+		description: "Written through the board's serial port, by its own tool (esptool…) — the board is put in its bootloader through the port.",
+	},
+	uf2: {
+		label: "UF2 drive",
+		description: "Copied to the drive the board shows in its bootloader (RPI-RP2…) — like dragging the file onto it.",
+	},
 };
 
 type FlashDialogProps = {
@@ -109,22 +119,29 @@ export const FlashDialog: React.FC<FlashDialogProps> = ({ workflowId, driverId, 
 
 					<div className="flex flex-col gap-5 p-4">
 
-						{methods.length > 1 && (
-							<Field label="Method" hint="How the firmware gets onto the board — the ways this board supports.">
-								<ToggleGroup.Root
-									size="md"
-									value={method}
-									onValueChange={value => { if (value) setMethod(value as FlashMethodName); }}
-									className="w-full"
-								>
-									{methods.map(name => (
-										<ToggleGroup.Item key={name} value={name} className="flex-1 justify-center">
-											{METHOD_LABELS[name]}
+						<Field label="Method" hint={METHODS[method].description}>
+							<ToggleGroup.Root
+								size="md"
+								value={method}
+								onValueChange={value => { if (value && methods.includes(value as FlashMethodName)) setMethod(value as FlashMethodName); }}
+								className="w-full"
+							>
+								{ALL_METHODS.map(name => {
+									const supported = methods.includes(name);
+									return (
+										<ToggleGroup.Item
+											key={name}
+											value={name}
+											disabled={!supported}
+											title={supported ? METHODS[name].description : `This board can't be written by ${METHODS[name].label}.`}
+											className={`flex-1 justify-center ${supported ? "" : "opacity-40 cursor-not-allowed!"}`}
+										>
+											{METHODS[name].label}
 										</ToggleGroup.Item>
-									))}
-								</ToggleGroup.Root>
-							</Field>
-						)}
+									);
+								})}
+							</ToggleGroup.Root>
+						</Field>
 
 						<Field
 							label="Serial port"
