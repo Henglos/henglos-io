@@ -78,7 +78,7 @@ export const ExecutionControllers = () => {
 			</Button.Root>
 
 			{/* Flash, and next to it how: one control, two halves. */}
-			<div className="flex items-center rounded-md border border-line-subtle">
+			<div className="flex items-center">
 				<Button.Root
 					variant="ghost"
 					disabled={!workflow || !driverConnection}
@@ -89,18 +89,18 @@ export const ExecutionControllers = () => {
 					<Button.Icon>
 						<Zap size={14} />
 					</Button.Icon>
-					<span className="text-xs text-fg-muted">{FLASH_METHODS[flashMethod].label}</span>
+					<Button.Label>{FLASH_METHODS[flashMethod].label}</Button.Label>
 				</Button.Root>
 
 				<Dropdown.Root>
 					<Dropdown.Trigger asChild disabled={!workflow}>
-						<Button.Root variant="ghost" className="rounded-l-none! px-1! border-l border-line-subtle" title="How to flash">
+						<Button.Root variant="ghost" className="rounded-l-none! border-l border-line-subtle" title="How to flash">
 							<Button.Icon>
 								<ChevronDown size={12} />
 							</Button.Icon>
 						</Button.Root>
 					</Dropdown.Trigger>
-					<Dropdown.Content align="start" className="min-w-56! max-w-72!">
+					<Dropdown.Content align="start" className="w-64! max-w-none!">
 						<Dropdown.Label>Flash by</Dropdown.Label>
 						{ALL_FLASH_METHODS.map(method => {
 							const supported = boardMethods.includes(method);
@@ -115,7 +115,7 @@ export const ExecutionControllers = () => {
 									<div className="flex flex-col gap-0.5">
 										<span>{FLASH_METHODS[method].label}</span>
 										<span className="text-xs text-fg-muted">
-											{supported ? FLASH_METHODS[method].description : "This board can't be written this way."}
+											{supported ? FLASH_METHODS[method].hint : "Not supported by this board"}
 										</span>
 									</div>
 								</Dropdown.Item>
