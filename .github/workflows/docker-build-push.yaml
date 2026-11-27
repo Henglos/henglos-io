@@ -7,8 +7,8 @@ name: Docker Build & Push
 #
 #   push to main  → :main, :sha-<short>       (the edge build)
 #   tag v1.2.3    → :1.2.3, :1.2, :1, :latest  (a release — what get-hio.sh pulls)
-#   version: 1.0.0 (input) → :1.0.0, :latest too — an image versioned on its own
-#                  (a workbench, its VERSION file), whatever the ref
+#   version: 1.0.0 (input) → :1.0.0, :latest too — an image released on its own
+#                  (a workbench, by its workbench-<name>@1.0.0 tag)
 #
 # Each architecture builds on its own native runner (no emulation) and is pushed
 # by digest only; the merge job then tags the multi-arch manifest.

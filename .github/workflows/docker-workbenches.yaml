@@ -1,16 +1,15 @@
 name: Docker · workbenches
 
 # The workbench images — where boards build and write their firmware (a board's
-# firmware.image): deploy/docker/images/workbench-*/. Each is versioned on its
-# own, in the VERSION file next to its Dockerfile, and a version is published
-# once: boards pin it (henglosio/workbench-rp2:1.0.0), so what it holds never
-# changes under them.
+# firmware.image): deploy/docker/images/workbench-*/. Each is released on its
+# own, by a tag, and a version is published once: boards pin it
+# (henglosio/workbench-rp2:1.0.0), so what it holds never changes under them.
 #
-#   push to main, a workbench changed → it's built:
-#     its VERSION not published yet  → :<version>, :latest, :main, :sha-<short>
-#     its VERSION published already  → :main, :sha-<short> only (bump VERSION to release it)
-#   run by hand                       → the workbench picked (or all), the same way;
-#                                       "force" republishes a version already there
+#   push to main, a workbench changed → it's built: :main, :sha-<short>
+#   tag workbench-rp2@1.0.0           → workbench-rp2: :1.0.0, :latest (refused if 1.0.0 is published)
+#   run by hand                       → the workbench picked (or all): :main, :sha-<short>
+#
+#   git tag workbench-rp2@1.0.0 && git push origin workbench-rp2@1.0.0
 #
 # Docker Hub (henglosio/<workbench>) and GHCR (ghcr.io/henglos/henglosio/<workbench>),
 # multi-arch — see docker-build-push.yaml.
@@ -19,6 +18,9 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "workbench-*@*"
+    # Path filters only apply to branch pushes; a tag always builds.
     paths:
       - "deploy/docker/images/workbench-*/**"
       - ".github/workflows/docker-workbenches.yaml"
@@ -26,15 +28,10 @@ on:
   workflow_dispatch:
     inputs:
       workbench:
-        description: The workbench to build (workbench-espressif, workbench-rp2…) — empty for all.
+        description: The workbench to build (workbench-espressif, workbench-rp2…) — empty for all. To release a version, push a tag.
         required: false
         type: string
         default: ""
-      force:
-        description: Republish its version even when it's published already — boards pinned to it get the new image.
-        required: false
-        type: boolean
-        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -57,22 +54,33 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Which workbenches, each with the version to publish — empty when it's
-      # published already (and not forced): then only the edge tags.
+      # Which workbenches, each with the version to release — empty for an edge build.
       - name: Plan
         id: plan
         env:
           EVENT: ${{ github.event_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
           BEFORE: ${{ github.event.before }}
           PICKED: ${{ inputs.workbench }}
-          FORCE: ${{ inputs.force }}
         run: |
           set -euo pipefail
           all=$(for dir in deploy/docker/images/workbench-*/; do basename "$dir"; done)
+          version=""
 
-          if [ "$EVENT" = "workflow_dispatch" ]; then
+          if [ "$REF_TYPE" = "tag" ]; then
+            # workbench-rp2@1.0.0 → workbench-rp2, 1.0.0
+            chosen="${REF_NAME%@*}"
+            version="${REF_NAME#*@}"
+            echo "$all" | grep -qx "$chosen" || { echo "::error::No workbench $chosen — there are: $(paste -sd ' ' <<< "$all")"; exit 1; }
+            echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::$version isn't a version (x.y.z)"; exit 1; }
+            if docker buildx imagetools inspect "henglosio/$chosen:$version" >/dev/null 2>&1; then
+              echo "::error::henglosio/$chosen:$version is published already — boards pin it, so it's never replaced. Tag a new version."
+              exit 1
+            fi
+          elif [ "$EVENT" = "workflow_dispatch" ]; then
             if [ -n "$PICKED" ]; then
-              echo "$all" | grep -qx "$PICKED" || { echo "::error::No workbench $PICKED — there are: $all"; exit 1; }
+              echo "$all" | grep -qx "$PICKED" || { echo "::error::No workbench $PICKED — there are: $(paste -sd ' ' <<< "$all")"; exit 1; }
               chosen="$PICKED"
             else
               chosen="$all"
@@ -86,28 +94,10 @@ jobs:
             chosen=$(git diff --name-only "$BEFORE" "$GITHUB_SHA" | sed -n 's#^deploy/docker/images/\(workbench-[^/]*\)/.*#\1#p' | sort -u)
           fi
 
-          entries=()
-          for app in $chosen; do
-            file="deploy/docker/images/$app/VERSION"
-            [ -f "$file" ] || { echo "::error::$app has no VERSION file"; exit 1; }
-            version=$(tr -d ' \r\n' < "$file")
-            echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::$app's VERSION isn't x.y.z: $version"; exit 1; }
-
-            if docker buildx imagetools inspect "henglosio/$app:$version" >/dev/null 2>&1 && [ "$FORCE" != "true" ]; then
-              echo "::warning::henglosio/$app:$version is published already — building :main and :sha only. Bump deploy/docker/images/$app/VERSION to release this change."
-              version=""
-            fi
-            entries+=("$(jq -cn --arg app "$app" --arg version "$version" '{app: $app, version: $version}')")
-          done
-
-          if [ ${#entries[@]} -eq 0 ]; then
-            echo "matrix={\"include\":[]}" >> "$GITHUB_OUTPUT"
-            echo "any=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "matrix=$(printf '%s\n' "${entries[@]}" | jq -cs '{include: .}')" >> "$GITHUB_OUTPUT"
-            echo "any=true" >> "$GITHUB_OUTPUT"
-          fi
-          printf '%s\n' "${entries[@]}"
+          matrix=$(for app in $chosen; do jq -cn --arg app "$app" --arg version "$version" '{app: $app, version: $version}'; done | jq -cs '{include: .}')
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "any=$([ -n "$chosen" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "$matrix"
 
   image:
     name: ${{ matrix.app }}
