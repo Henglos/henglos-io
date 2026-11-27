@@ -1,0 +1,123 @@
+name: Docker · workbenches
+
+# The workbench images — where boards build and write their firmware (a board's
+# firmware.image): deploy/docker/images/workbench-*/. Each is versioned on its
+# own, in the VERSION file next to its Dockerfile, and a version is published
+# once: boards pin it (henglosio/workbench-rp2:1.0.0), so what it holds never
+# changes under them.
+#
+#   push to main, a workbench changed → it's built:
+#     its VERSION not published yet  → :<version>, :latest, :main, :sha-<short>
+#     its VERSION published already  → :main, :sha-<short> only (bump VERSION to release it)
+#   run by hand                       → the workbench picked (or all), the same way;
+#                                       "force" republishes a version already there
+#
+# Docker Hub (henglosio/<workbench>) and GHCR (ghcr.io/henglos/henglosio/<workbench>),
+# multi-arch — see docker-build-push.yaml.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "deploy/docker/images/workbench-*/**"
+      - ".github/workflows/docker-workbenches.yaml"
+      - ".github/workflows/docker-build-push.yaml"
+  workflow_dispatch:
+    inputs:
+      workbench:
+        description: The workbench to build (workbench-espressif, workbench-rp2…) — empty for all.
+        required: false
+        type: string
+        default: ""
+      force:
+        description: Republish its version even when it's published already — boards pinned to it get the new image.
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  plan:
+    name: what to build
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      any: ${{ steps.plan.outputs.any }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Which workbenches, each with the version to publish — empty when it's
+      # published already (and not forced): then only the edge tags.
+      - name: Plan
+        id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          PICKED: ${{ inputs.workbench }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          set -euo pipefail
+          all=$(for dir in deploy/docker/images/workbench-*/; do basename "$dir"; done)
+
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            if [ -n "$PICKED" ]; then
+              echo "$all" | grep -qx "$PICKED" || { echo "::error::No workbench $PICKED — there are: $all"; exit 1; }
+              chosen="$PICKED"
+            else
+              chosen="$all"
+            fi
+          elif [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BEFORE" 2>/dev/null; then
+            chosen="$all"
+          elif git diff --name-only "$BEFORE" "$GITHUB_SHA" | grep -q '^\.github/workflows/'; then
+            # The workflows changed: every workbench, so they're checked.
+            chosen="$all"
+          else
+            chosen=$(git diff --name-only "$BEFORE" "$GITHUB_SHA" | sed -n 's#^deploy/docker/images/\(workbench-[^/]*\)/.*#\1#p' | sort -u)
+          fi
+
+          entries=()
+          for app in $chosen; do
+            file="deploy/docker/images/$app/VERSION"
+            [ -f "$file" ] || { echo "::error::$app has no VERSION file"; exit 1; }
+            version=$(tr -d ' \r\n' < "$file")
+            echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::$app's VERSION isn't x.y.z: $version"; exit 1; }
+
+            if docker buildx imagetools inspect "henglosio/$app:$version" >/dev/null 2>&1 && [ "$FORCE" != "true" ]; then
+              echo "::warning::henglosio/$app:$version is published already — building :main and :sha only. Bump deploy/docker/images/$app/VERSION to release this change."
+              version=""
+            fi
+            entries+=("$(jq -cn --arg app "$app" --arg version "$version" '{app: $app, version: $version}')")
+          done
+
+          if [ ${#entries[@]} -eq 0 ]; then
+            echo "matrix={\"include\":[]}" >> "$GITHUB_OUTPUT"
+            echo "any=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "matrix=$(printf '%s\n' "${entries[@]}" | jq -cs '{include: .}')" >> "$GITHUB_OUTPUT"
+            echo "any=true" >> "$GITHUB_OUTPUT"
+          fi
+          printf '%s\n' "${entries[@]}"
+
+  image:
+    name: ${{ matrix.app }}
+    needs: plan
+    if: needs.plan.outputs.any == 'true'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    uses: ./.github/workflows/docker-build-push.yaml
+    with:
+      app: ${{ matrix.app }}
+      version: ${{ matrix.version }}
+    secrets: inherit

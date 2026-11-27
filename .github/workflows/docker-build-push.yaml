@@ -3,10 +3,12 @@ name: Docker Build & Push
 # Reusable: builds one app's image and pushes it to Docker Hub (henglosio/<app>)
 # and to the GitHub Container Registry (ghcr.io/henglos/henglosio/<app>: the
 # Henglos org's package henglosio/<app>).
-# Called by docker-hosting.yaml and docker-studio.yaml.
+# Called by docker-hosting.yaml, docker-studio.yaml and docker-workbenches.yaml.
 #
 #   push to main  → :main, :sha-<short>       (the edge build)
 #   tag v1.2.3    → :1.2.3, :1.2, :1, :latest  (a release — what get-hio.sh pulls)
+#   version: 1.0.0 (input) → :1.0.0, :latest too — an image versioned on its own
+#                  (a workbench, its VERSION file), whatever the ref
 #
 # Each architecture builds on its own native runner (no emulation) and is pushed
 # by digest only; the merge job then tags the multi-arch manifest.
@@ -22,6 +24,11 @@ on:
         description: The app to build — its Dockerfile is deploy/docker/images/<app>/Dockerfile.
         required: true
         type: string
+      version:
+        description: Tag it with this version (and latest), instead of the ref's — for an image versioned on its own.
+        required: false
+        type: string
+        default: ""
     secrets:
       DOCKERHUB_USERNAME:
         required: true
@@ -158,11 +165,13 @@ jobs:
           tags: |
             type=ref,event=branch
             type=sha,prefix=sha-
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
+            type=semver,pattern={{version}},enable=${{ inputs.version == '' }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ inputs.version == '' }}
+            type=semver,pattern={{major}},enable=${{ inputs.version == '' && !startsWith(github.ref, 'refs/tags/v0.') }}
+            type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
+            type=raw,value=latest,enable=${{ inputs.version != '' }}
           flavor: |
-            latest=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') }}
+            latest=${{ inputs.version == '' && startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') }}
 
       # The per-arch images were pushed to both registries; one manifest list,
       # built from the Docker Hub digests, gets every tag in both.
