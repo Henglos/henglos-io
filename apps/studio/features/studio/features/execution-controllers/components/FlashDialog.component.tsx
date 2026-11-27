@@ -1,25 +1,11 @@
 import { useEffect, useState } from "react";
-import { Button, Dialog, Select, Text, ToggleGroup } from "@henglosio/ui";
-import { FlashMethodNameSchema, type FlashMethodName, type FlashTarget, type VolumeDTO } from "@henglosio/shared/browser";
+import { Button, Dialog, Select, Text } from "@henglosio/ui";
+import type { FlashMethodName, FlashTarget, VolumeDTO } from "@henglosio/shared/browser";
 import { HardDrive, RefreshCw, X, Zap } from "lucide-react";
 import { useAtom, useAtomValue } from "jotai";
 import { DeviceSelectionAtom, DevicesAtom, FlashTargetsAtom } from "@/features/studio/store/driver.store";
 import { listVolumes } from "@/shared/api";
-
-// Every way a firmware can be written — the board's are offered, the rest shown
-// disabled, so it's clear what this board can't do.
-const ALL_METHODS: readonly FlashMethodName[] = FlashMethodNameSchema.options;
-
-const METHODS: Record<FlashMethodName, { label: string; description: string }> = {
-	serial: {
-		label: "Serial",
-		description: "Written through the board's serial port, by its own tool (esptool…) — the board is put in its bootloader through the port.",
-	},
-	uf2: {
-		label: "UF2 drive",
-		description: "Copied to the drive the board shows in its bootloader (RPI-RP2…) — like dragging the file onto it.",
-	},
-};
+import { FLASH_METHODS } from "../flashMethods";
 
 // How often the UF2 drives are looked for while the dialog shows them — a board
 // plugged in with BOOTSEL held shows up on its own.
@@ -35,8 +21,8 @@ const volumeName = (volume: VolumeDTO) => volume.label || volume.mount;
 type FlashDialogProps = {
 	workflowId: string;
 	driverId: string;
-	/** The ways the workflow's board can be written, the preferred first (its manifest's firmware.methods). */
-	methods: FlashMethodName[];
+	/** How to write it — picked in the toolbar, one of the board's. */
+	method: FlashMethodName;
 	/** The baud rate picked in the toolbar, for a serial write. */
 	baudrate: number | null;
 	onClose: () => void;
@@ -45,20 +31,19 @@ type FlashDialogProps = {
 };
 
 /**
- * Where and how to write the board's firmware: the method (one of the board's)
- * and its address. Serial: the board's port. UF2: the board's drive, picked
+ * Where to write the board's firmware, by `method` (picked in the toolbar).
+ * Serial: the board's port. UF2: the board's drive, picked
  * from those on the driver's machine — and its serial port, if it has one now:
  * a board in its bootloader shows only its drive, and the port it comes back
  * on is found after the write. Opens with the last target picked for the workflow.
  */
-export const FlashDialog: React.FC<FlashDialogProps> = ({ workflowId, driverId, methods, baudrate, onClose, onFlash }) => {
+export const FlashDialog: React.FC<FlashDialogProps> = ({ workflowId, driverId, method, baudrate, onClose, onFlash }) => {
 
 	const devices = useAtomValue(DevicesAtom);
 	const selectedDevice = useAtomValue(DeviceSelectionAtom);
 	const [targets, setTargets] = useAtom(FlashTargetsAtom);
 	const last = targets[workflowId];
 
-	const [method, setMethod] = useState<FlashMethodName>(last && methods.includes(last.method) ? last.method : methods[0] ?? "serial");
 	const [port, setPort] = useState(last?.port ?? selectedDevice?.port ?? "");
 	const [volume, setVolume] = useState(last?.method === "uf2" ? last.volume : "");
 	const [drives, setDrives] = useState<VolumeDTO[] | null>(null);
@@ -134,7 +119,7 @@ export const FlashDialog: React.FC<FlashDialogProps> = ({ workflowId, driverId, 
 				<form onSubmit={submit} className="flex flex-col">
 					<div className="flex items-center gap-2 px-4 h-11 border-b border-line-subtle">
 						<Zap size={14} className="text-accent-fg" />
-						<Dialog.Title>Flash the board</Dialog.Title>
+						<Dialog.Title>Flash the board · {FLASH_METHODS[method].label}</Dialog.Title>
 						<Dialog.Close asChild>
 							<Button.Root type="button" variant="ghost" className="p-2! ml-auto">
 								<Button.Icon>
@@ -146,29 +131,7 @@ export const FlashDialog: React.FC<FlashDialogProps> = ({ workflowId, driverId, 
 
 					<div className="flex flex-col gap-5 p-4">
 
-						<Field label="Method" hint={METHODS[method].description}>
-							<ToggleGroup.Root
-								size="md"
-								value={method}
-								onValueChange={value => { if (value && methods.includes(value as FlashMethodName)) setMethod(value as FlashMethodName); }}
-								className="w-full"
-							>
-								{ALL_METHODS.map(name => {
-									const supported = methods.includes(name);
-									return (
-										<ToggleGroup.Item
-											key={name}
-											value={name}
-											disabled={!supported}
-											title={supported ? METHODS[name].description : `This board can't be written by ${METHODS[name].label}.`}
-											className={`flex-1 justify-center ${supported ? "" : "opacity-40 cursor-not-allowed!"}`}
-										>
-											{METHODS[name].label}
-										</ToggleGroup.Item>
-									);
-								})}
-							</ToggleGroup.Root>
-						</Field>
+						<Text variant="low" size="xs">{FLASH_METHODS[method].description}</Text>
 
 						{method === "uf2" && (
 							<Field

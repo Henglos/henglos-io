@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
-import type { Device, FlashTarget } from "@henglosio/shared";
+import type { Device, FlashMethodName, FlashTarget } from "@henglosio/shared";
 
 export type DriverConnection = {
 	id: string;
@@ -17,3 +17,6 @@ export const BaurateAtom = atom<number | null>(null);
 
 // The last flash target picked, by workflow — the flash dialog opens with it.
 export const FlashTargetsAtom = atomWithStorage<Record<string, FlashTarget>>("henglosio:flash-targets", {});
+
+// The flash method picked in the toolbar, by workflow — what Flash writes by.
+export const FlashMethodsAtom = atomWithStorage<Record<string, FlashMethodName>>("henglosio:flash-methods", {});

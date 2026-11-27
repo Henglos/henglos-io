@@ -1,9 +1,9 @@
-import { Button, Text } from "@henglosio/ui";
-import { Bug, Hammer, Loader2, Play, Square, StepForward, Zap } from "lucide-react";
+import { Button, Dropdown, Text } from "@henglosio/ui";
+import { Bug, Check, ChevronDown, Hammer, Loader2, Play, Square, StepForward, Zap } from "lucide-react";
 import clsx from "clsx";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { WorkflowAtom } from "../../store/workflow.store";
-import { DeviceSelectionAtom, DriverConnectionAtom } from "../../store/driver.store";
+import { DeviceSelectionAtom, DriverConnectionAtom, FlashMethodsAtom } from "../../store/driver.store";
 import { ActiveTaskIdAtom } from "../../store/logs.store";
 import { compileWorkflow, flashWorkflow, recordWorkflow } from "@/shared/api";
 import { useWorkflowAutoSave } from "../../hooks/useWorkflowAutoSave";
@@ -11,9 +11,10 @@ import { useBaudrate } from "../baurate-connection/hooks/useBaurate.hook";
 import { useDebugger } from "../../hooks/useDebugger";
 import { useSelectedAction } from "../../hooks/useSelectedAction";
 import { isTriggerAction } from "@henglosio/workflow";
-import type { FlashTarget } from "@henglosio/shared";
+import type { FlashMethodName, FlashTarget } from "@henglosio/shared";
 import { useState } from "react";
 import { FlashDialog } from "./components/FlashDialog.component";
+import { ALL_FLASH_METHODS, FLASH_METHODS } from "./flashMethods";
 
 export const ExecutionControllers = () => {
 
@@ -40,7 +41,17 @@ export const ExecutionControllers = () => {
 		setActiveTaskId(taskId);
 	};
 
-	// The flash dialog — where and how to write the board's firmware.
+	// How Flash writes the board: picked next to it, kept by workflow — the
+	// board's first way when none is (or the one picked isn't the board's).
+	const boardMethods: FlashMethodName[] = workflow?.data.board.base.flashMethods ?? ["serial"];
+	const [flashMethods, setFlashMethods] = useAtom(FlashMethodsAtom);
+	const picked = workflow ? flashMethods[workflow.id] : undefined;
+	const flashMethod: FlashMethodName = picked && boardMethods.includes(picked) ? picked : boardMethods[0] ?? "serial";
+	const pickFlashMethod = (method: FlashMethodName) => {
+		if (workflow) setFlashMethods(prev => ({ ...prev, [workflow.id]: method }));
+	};
+
+	// The flash dialog — where to write the board's firmware, by flashMethod.
 	const [flashOpen, setFlashOpen] = useState(false);
 	const onFlash = async (target: FlashTarget) => {
 		if (!workflow || !driverConnection) return;
@@ -66,17 +77,59 @@ export const ExecutionControllers = () => {
 				</Button.Icon>
 			</Button.Root>
 
-			<Button.Root variant="ghost" disabled={!workflow || !driverConnection} onClick={() => setFlashOpen(true)} title="Flash — write the board's firmware and install the runtime">
-				<Button.Icon>
-					<Zap size={14} />
-				</Button.Icon>
-			</Button.Root>
+			{/* Flash, and next to it how: one control, two halves. */}
+			<div className="flex items-center rounded-md border border-line-subtle">
+				<Button.Root
+					variant="ghost"
+					disabled={!workflow || !driverConnection}
+					onClick={() => setFlashOpen(true)}
+					title={`Flash by ${FLASH_METHODS[flashMethod].label} — write the board's firmware and install the runtime`}
+					className="rounded-r-none! gap-1.5!"
+				>
+					<Button.Icon>
+						<Zap size={14} />
+					</Button.Icon>
+					<span className="text-xs text-fg-muted">{FLASH_METHODS[flashMethod].label}</span>
+				</Button.Root>
+
+				<Dropdown.Root>
+					<Dropdown.Trigger asChild disabled={!workflow}>
+						<Button.Root variant="ghost" className="rounded-l-none! px-1! border-l border-line-subtle" title="How to flash">
+							<Button.Icon>
+								<ChevronDown size={12} />
+							</Button.Icon>
+						</Button.Root>
+					</Dropdown.Trigger>
+					<Dropdown.Content align="start" className="min-w-56! max-w-72!">
+						<Dropdown.Label>Flash by</Dropdown.Label>
+						{ALL_FLASH_METHODS.map(method => {
+							const supported = boardMethods.includes(method);
+							return (
+								<Dropdown.Item
+									key={method}
+									disabled={!supported}
+									onSelect={() => pickFlashMethod(method)}
+									className={clsx("items-start!", !supported && "opacity-40 cursor-not-allowed! data-highlighted:bg-transparent!")}
+								>
+									<Check size={14} className={clsx("mt-0.5 shrink-0", method === flashMethod ? "text-accent-fg" : "invisible")} />
+									<div className="flex flex-col gap-0.5">
+										<span>{FLASH_METHODS[method].label}</span>
+										<span className="text-xs text-fg-muted">
+											{supported ? FLASH_METHODS[method].description : "This board can't be written this way."}
+										</span>
+									</div>
+								</Dropdown.Item>
+							);
+						})}
+					</Dropdown.Content>
+				</Dropdown.Root>
+			</div>
 
 			{flashOpen && workflow && driverConnection && (
 				<FlashDialog
 					workflowId={workflow.id}
 					driverId={driverConnection.id}
-					methods={workflow.data.board.base.flashMethods ?? ["serial"]}
+					method={flashMethod}
 					baudrate={selectedBaudrate}
 					onClose={() => setFlashOpen(false)}
 					onFlash={onFlash}
