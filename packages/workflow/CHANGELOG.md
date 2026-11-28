@@ -1,5 +1,11 @@
 # @henglosio/workflow
 
+## 2.6.0
+
+### Minor Changes
+
+- 62fd885: A board's schema carries how its firmware can be written (`flashMethods`: serial, uf2).
+
 ## 2.5.0
 
 ### Minor Changes

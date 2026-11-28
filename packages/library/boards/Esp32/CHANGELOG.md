@@ -1,5 +1,11 @@
 # @henglosio/board-esp32
 
+## 1.3.0
+
+### Minor Changes
+
+- 62fd885: `prepare` builds and returns the checkout's mpy-cross. Depends on platform `^2.0.0`.
+
 ## 1.2.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
 	"name": "@henglosio/workflow",
-	"version": "2.5.0",
+	"version": "2.6.0",
 	"description": "The HenglosIO workflow model and its real-time collaboration.",
 	"author": "Henglos",
 	"license": "SEE LICENSE IN LICENSE",
