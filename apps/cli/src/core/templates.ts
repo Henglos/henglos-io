@@ -4,7 +4,7 @@
  */
 
 /** The platform versions a new package says it works with. */
-const PLATFORM_RANGE = "^1.4.0";
+const PLATFORM_RANGE = "^2.0.0";
 
 /** What a template is filled in with. */
 export type TemplateOptions = {
