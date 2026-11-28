@@ -3,7 +3,7 @@ name: LCD
 schemaVersion: 1
 
 dependences:
-  platform: ^1.2.0
+  platform: ^1.2.0 || ^2.0.0
 
 schema:
 

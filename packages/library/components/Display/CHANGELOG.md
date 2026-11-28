@@ -1,5 +1,11 @@
 # @henglosio/component-display
 
+## 1.1.2
+
+### Patch Changes
+
+- Works on platform 2.0.0 too (`^1.2.0 || ^2.0.0`) — the runtime it runs on is the same.
+
 ## 1.1.1
 
 ### Patch Changes

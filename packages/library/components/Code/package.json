@@ -1,6 +1,6 @@
 {
 	"name": "@henglosio/component-code",
-	"version": "1.1.1",
+	"version": "1.1.2",
 	"description": "Runs a short Python (MicroPython) script on a HenglosIO board",
 	"author": "Henglos",
 	"license": "SEE LICENSE IN LICENSE",
