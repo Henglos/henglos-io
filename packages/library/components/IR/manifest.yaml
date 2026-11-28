@@ -3,7 +3,7 @@ name: IR
 schemaVersion: 1
 
 dependences:
-  platform: ^1.2.0 || ^2.0.0
+  platform: ^3.0.0
 
 schema:
 

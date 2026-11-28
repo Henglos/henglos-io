@@ -11,12 +11,15 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "changeset": "changeset",
-    "version-packages": "changeset version",
-    "release": "changeset publish --no-git-tag",
+    "version-packages": "changeset version && node scripts/check-majors.mjs",
+    "release": "node scripts/check-majors.mjs && changeset publish --no-git-tag",
+    "major": "node scripts/major.mjs",
+    "check:majors": "node scripts/check-majors.mjs",
     "publish:dev": "node scripts/publish-dev.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "3.0.3",
+    "semver": "^7.8.5",
     "turbo": "^2.8.9"
   }
 }

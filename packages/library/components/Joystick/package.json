@@ -1,6 +1,6 @@
 {
 	"name": "@henglosio/component-joystick",
-	"version": "1.1.2",
+	"version": "3.0.0",
 	"description": "2-axis analog joystick with push button (KY-023 and the like) component for HenglosIO",
 	"author": "Henglos",
 	"license": "SEE LICENSE IN LICENSE",

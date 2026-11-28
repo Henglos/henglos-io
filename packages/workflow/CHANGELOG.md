@@ -1,5 +1,11 @@
 # @henglosio/workflow
 
+## 3.0.0
+
+### Major Changes
+
+- Every HenglosIO package now shares its major: compatible means the same major. Boards and components depend on platform ^3.0.0.
+
 ## 2.6.0
 
 ### Minor Changes
