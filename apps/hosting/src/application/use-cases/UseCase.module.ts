@@ -26,6 +26,7 @@ import { ListPackageVersionsUseCase } from "./package/ListPackageVersions.use-ca
 import { RefreshDriverAuthUseCase } from "./driver/RefreshDriverAuth.use-case";
 import { ListPlatformsUseCase } from "./platform/ListPlatforms.use-case";
 import { GetPlatformSettingsUseCase } from "./platform/GetPlatformSettings.use-case";
+import { GetUpdateStatusUseCase } from "./system/GetUpdateStatus.use-case";
 import { UpdateWorkflowUseCase } from "./workflow/UpdateWorkflow.use-case";
 import { GetWorkflowUseCase } from "./workflow/GetWorkflow.use-case";
 import { ExportWorkflowUseCase } from "./workflow/ExportWorkflow.use-case";
@@ -147,6 +148,7 @@ import { DeleteCredentialUseCase } from "./credential/DeleteCredential.use-case"
 
 		ListPlatformsUseCase,
 		GetPlatformSettingsUseCase,
+		GetUpdateStatusUseCase,
 
 	],
 	exports: [
@@ -217,6 +219,7 @@ import { DeleteCredentialUseCase } from "./credential/DeleteCredential.use-case"
 
 		ListPlatformsUseCase,
 		GetPlatformSettingsUseCase,
+		GetUpdateStatusUseCase,
 
 	]
 })

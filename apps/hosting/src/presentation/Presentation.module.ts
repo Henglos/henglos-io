@@ -11,6 +11,7 @@ import { AppWSGateway } from "./ws/app.gateway";
 import { DatabaseModule } from "@/infrastructure/database/Database.module";
 import { PlatformController } from "./http/platform.controller";
 import { CredentialController } from "./http/credential.controller";
+import { SystemController } from "./http/system.controller";
 import { CollabGateway } from "./collab/Collab.gateway";
 
 /**
@@ -28,6 +29,7 @@ import { CollabGateway } from "./collab/Collab.gateway";
 		WorkflowController,
 		PlatformController,
 		CredentialController,
+		SystemController,
 	],
 	providers: [AppWSGateway, DriverWSGateway, CollabGateway, ConsoleLogger],
 })

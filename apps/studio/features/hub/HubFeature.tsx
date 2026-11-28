@@ -12,6 +12,7 @@ import { importWorkflow, listDrivers, listPackages, listWorkflows } from "@share
 import { DayMessageLayout } from "./layouts/DayMessage.layout";
 import { WorkflowCard } from "./components/WorkflowCard.component";
 import { CreateWorkflowPanel } from "./panels/CreateWorkflowPanel.panel";
+import { UpdateAlert } from "./components/UpdateAlert.component";
 
 // Everything at once, searched here — so the counts stay put while typing.
 const WORKFLOWS_LIMIT = 500;
@@ -99,6 +100,9 @@ export const HubFeature = () => {
 					<div className="w-5xl h-fit flex flex-col gap-6 p-6">
 
 						<DayMessageLayout />
+
+						{/* A newer HenglosIO was released — only shown when there is one. */}
+						<UpdateAlert />
 
 						{/* Overview — drivers and packages open their pages */}
 						<div className="flex border border-line rounded-xl divide-x divide-line bg-panel overflow-hidden">

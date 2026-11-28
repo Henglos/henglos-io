@@ -51,6 +51,12 @@ VOLUME /data
 USER node
 EXPOSE 3333
 
+# The release (its git tag, v1.2.3 — docker-build-push.yaml passes it): what
+# the update check compares GitHub's tags with. Anything else (main, unset):
+# unknown, no update announced. Late, so a new tag rebuilds only this layer.
+ARG HIO_VERSION=""
+ENV HIO_VERSION=${HIO_VERSION}
+
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
 	CMD node -e "fetch('http://127.0.0.1:' + process.env.HIO_PORT + '/io/api/v1/auth/setup-status').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
 

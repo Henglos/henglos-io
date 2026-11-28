@@ -6,6 +6,13 @@ import { ApiError, describeRequestError } from "./errors";
 const BASE_URL = "/io/api/v1";
 const REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
 
+declare module "axios" {
+	interface AxiosRequestConfig {
+		/** Fails without the error toast — for requests the user didn't ask for (a background check). */
+		silent?: boolean;
+	}
+}
+
 export const http = axios.create({ baseURL: BASE_URL });
 
 http.interceptors.request.use(config => {
@@ -99,8 +106,11 @@ http.interceptors.response.use(
 			}
 		}
 
-		const display = describeRequestError(error);
-		emitToast("error", display.message, { detail: display.detail, code: display.code });
+		// A request made in the background (`silent`) fails without a toast.
+		if (!config?.silent) {
+			const display = describeRequestError(error);
+			emitToast("error", display.message, { detail: display.detail, code: display.code });
+		}
 
 		if (errorId === "invalid_token" || errorId === "user_not_found") {
 			void handleAuthFailure();

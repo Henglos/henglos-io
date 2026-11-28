@@ -102,6 +102,10 @@ jobs:
           file: deploy/docker/images/${{ inputs.app }}/Dockerfile
           platforms: linux/${{ matrix.arch }}
           labels: ${{ steps.meta.outputs.labels }}
+          # The release it is — the tag (v1.2.3), or the input version; a
+          # branch push passes its name, which the hosting takes as unknown.
+          build-args: |
+            HIO_VERSION=${{ inputs.version || github.ref_name }}
           tags: |
             ${{ env.DOCKERHUB_IMAGE }}
             ${{ env.GHCR_IMAGE }}

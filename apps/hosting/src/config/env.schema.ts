@@ -65,6 +65,15 @@ export const EnvSchema = zod.object({
 	// The installation's random id, kept across restarts.
 	HIO_TELEMETRY_ID_FILE: zod.string().default("./data/telemetry-id"),
 
+	// The HenglosIO release this is — the release image sets it from its tag
+	// (v1.2.3). Unset (a dev run) or not a version (an edge build, "main"):
+	// unknown, and no update is announced.
+	HIO_VERSION: zod.string().optional(),
+	// Whether the studio is told about a newer release: the hosting asks
+	// GitHub for HenglosIO's tags (no data of the installation is sent) every
+	// few hours. On unless HIO_UPDATE_CHECK=false|0|off|no.
+	HIO_UPDATE_CHECK: zod.string().optional().transform(flag),
+
 });
 
 // An on/off env value: off for false / 0 / off / no (any case), on otherwise — unset is on.

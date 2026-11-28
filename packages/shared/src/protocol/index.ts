@@ -9,6 +9,7 @@ export * from "./logs.js";
 export * from "./task.js";
 export * from "./package.js";
 export * from "./platform.js";
+export * from "./system.js";
 export * from "./workflow.js";
 export * from "./hio.js";
 export * from "./credentials.js";
