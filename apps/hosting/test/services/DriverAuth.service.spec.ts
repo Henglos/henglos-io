@@ -1,96 +1,88 @@
 import { Test } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { DriverAuthService } from '@/application/services/DriverAuth.service';
+import { TokenService } from '@/application/services/Token.service';
 import { Driver } from '@/domain/entities/Driver';
+import { DriverAuth } from '@/domain/entities/DriverAuth';
+
+const ENV: Record<string, string> = {
+	HIO_JWT_SECRET: 'test-secret',
+	HIO_DRIVER_JWT_EXPIRATION: '30d',
+};
+
+const payloadOf = (token: string) => JSON.parse(Buffer.from(token.split('.')[1]!, 'base64url').toString());
 
 describe('DriverAuthService', () => {
 	let service: DriverAuthService;
 
-	const mockDriverRepo = {
-		findById: jest.fn(),
-	};
-
-	const driver = new Driver('driver-uuid', 'machine-123', 'user-uuid', 'My Driver', 'linux');
+	const driver = new Driver('driver-uuid', 'user-uuid', 'machine-123', 'henry', 'My Driver');
 
 	beforeEach(async () => {
 		const module = await Test.createTestingModule({
 			providers: [
 				DriverAuthService,
-				{ provide: 'IDriverRepository', useValue: mockDriverRepo },
+				TokenService,
+				{ provide: ConfigService, useValue: { get: (key: string) => ENV[key] } },
 			],
 		}).compile();
 
 		service = module.get(DriverAuthService);
-		jest.clearAllMocks();
 	});
 
 	describe('generateToken()', () => {
 		it('returns a three-part JWT string', async () => {
 			const token = await service.generateToken(driver);
-			expect(typeof token).toBe('string');
 			expect(token.split('.')).toHaveLength(3);
 		});
 
-		it('encodes the driver id as the sub claim', async () => {
-			const token = await service.generateToken(driver);
-			const payload = JSON.parse(Buffer.from(token.split('.')[1]!, 'base64url').toString());
-			expect(payload.sub).toBe(driver.id);
-		});
-
-		it('encodes the userId claim', async () => {
-			const token = await service.generateToken(driver);
-			const payload = JSON.parse(Buffer.from(token.split('.')[1]!, 'base64url').toString());
-			expect(payload.userId).toBe(driver.userId);
+		it('says which driver and whose', async () => {
+			const payload = payloadOf(await service.generateToken(driver));
+			expect(payload).toMatchObject({ sub: driver.id, userId: driver.userId, deviceUser: driver.deviceUser, deviceName: driver.deviceName });
 		});
 	});
 
 	describe('refreshToken()', () => {
-		it('returns a new token string different from the original', async () => {
+		it('returns a new token for the same driver', async () => {
 			const token = await service.generateToken(driver);
 			const refreshed = service.refreshToken(token);
-			expect(typeof refreshed).toBe('string');
 			expect(refreshed).not.toBe(token);
+			expect(payloadOf(refreshed).sub).toBe(driver.id);
 		});
 
-		it('preserves the sub claim across refresh', async () => {
-			const token = await service.generateToken(driver);
-			const refreshed = service.refreshToken(token);
-			const payload = JSON.parse(Buffer.from(refreshed.split('.')[1]!, 'base64url').toString());
-			expect(payload.sub).toBe(driver.id);
-		});
-
-		it('throws InvalidToken for a completely invalid string', () => {
+		it('throws InvalidToken for a malformed or empty token', () => {
 			expect(() => service.refreshToken('not-a-jwt')).toThrow('invalid_token');
-		});
-
-		it('throws InvalidToken for an empty string', () => {
 			expect(() => service.refreshToken('')).toThrow('invalid_token');
 		});
 	});
 
-	describe('authenticateToken()', () => {
-		it('returns the driver from the repository for a valid token', async () => {
-			mockDriverRepo.findById.mockResolvedValue(driver);
+	describe('verify()', () => {
+		it('reads the driver from a valid token', async () => {
 			const token = await service.generateToken(driver);
-
-			const result = await service.authenticateToken(token);
-
-			expect(mockDriverRepo.findById).toHaveBeenCalledWith(driver.id);
-			expect(result).toBe(driver);
+			expect(service.verify(token)).toEqual(new DriverAuth(driver.id!, driver.userId, driver.deviceUser, driver.deviceName));
 		});
 
-		it('throws InvalidToken when the token is malformed', async () => {
-			await expect(service.authenticateToken('bad-token')).rejects.toThrow('invalid_token');
+		it('throws InvalidToken for a malformed, empty or foreign token', async () => {
+			expect(() => service.verify('bad-token')).toThrow('invalid_token');
+			expect(() => service.verify('')).toThrow('invalid_token');
+
+			const other = await Test.createTestingModule({
+				providers: [
+					DriverAuthService,
+					TokenService,
+					{ provide: ConfigService, useValue: { get: (key: string) => ({ ...ENV, HIO_JWT_SECRET: 'another-secret' })[key] } },
+				],
+			}).compile();
+			const foreign = await other.get(DriverAuthService).generateToken(driver);
+			expect(() => service.verify(foreign)).toThrow('invalid_token');
 		});
+	});
 
-		it('throws InvalidToken when the driver is not found in the repository', async () => {
-			mockDriverRepo.findById.mockResolvedValue(null);
-			const token = await service.generateToken(driver);
-
-			await expect(service.authenticateToken(token)).rejects.toThrow('invalid_token');
-		});
-
-		it('throws InvalidToken for an empty string', async () => {
-			await expect(service.authenticateToken('')).rejects.toThrow('invalid_token');
+	describe('refresh tokens', () => {
+		it('stores a hash, never the token', () => {
+			const token = service.generateRefreshToken();
+			const hash = service.hashRefreshToken(token);
+			expect(hash).not.toBe(token);
+			expect(service.hashRefreshToken(token)).toBe(hash);
 		});
 	});
 });

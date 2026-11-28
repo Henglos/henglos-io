@@ -1,22 +1,18 @@
 import { Test } from '@nestjs/testing';
 import { DeleteDriverUseCase } from '@/application/use-cases/driver/DeleteDriver.use-case';
-import { DriverAuthService } from '@/application/services/DriverAuth.service';
 import { Driver } from '@/domain/entities/Driver';
-import { InvalidToken } from '@/application/errors/use-cases/Auth.error';
 
 describe('DeleteDriverUseCase', () => {
 	let useCase: DeleteDriverUseCase;
 
-	const mockDriverAuth = { authenticateToken: jest.fn() };
-	const mockDriverRepo = { delete: jest.fn() };
+	const mockDriverRepo = { findById: jest.fn(), delete: jest.fn() };
 
-	const driver = new Driver('d-uuid', 'machine-1', 'user-1', 'My Driver', 'linux');
+	const driver = new Driver('d-uuid', 'user-1', 'machine-1', 'henry', 'My Driver');
 
 	beforeEach(async () => {
 		const module = await Test.createTestingModule({
 			providers: [
 				DeleteDriverUseCase,
-				{ provide: DriverAuthService,    useValue: mockDriverAuth },
 				{ provide: 'IDriverRepository', useValue: mockDriverRepo },
 			],
 		}).compile();
@@ -25,20 +21,25 @@ describe('DeleteDriverUseCase', () => {
 		jest.clearAllMocks();
 	});
 
-	it('authenticates the token and deletes the driver by id', async () => {
-		mockDriverAuth.authenticateToken.mockResolvedValue(driver);
-		mockDriverRepo.delete.mockResolvedValue(undefined);
+	it("deletes the user's driver", async () => {
+		mockDriverRepo.findById.mockResolvedValue(driver);
 
-		await useCase.execute('valid-token');
+		await useCase.execute('user-1', 'd-uuid');
 
-		expect(mockDriverAuth.authenticateToken).toHaveBeenCalledWith('valid-token');
-		expect(mockDriverRepo.delete).toHaveBeenCalledWith(driver.id);
+		expect(mockDriverRepo.delete).toHaveBeenCalledWith('d-uuid');
 	});
 
-	it('propagates InvalidToken and does not call delete when token is invalid', async () => {
-		mockDriverAuth.authenticateToken.mockRejectedValue(new InvalidToken());
+	it('throws DriverNotFound when there is no such driver', async () => {
+		mockDriverRepo.findById.mockResolvedValue(null);
 
-		await expect(useCase.execute('bad-token')).rejects.toThrow('invalid_token');
+		await expect(useCase.execute('user-1', 'missing')).rejects.toThrow('driver_not_found');
+		expect(mockDriverRepo.delete).not.toHaveBeenCalled();
+	});
+
+	it("throws DriverNotFound for another user's driver", async () => {
+		mockDriverRepo.findById.mockResolvedValue(driver);
+
+		await expect(useCase.execute('user-2', 'd-uuid')).rejects.toThrow('driver_not_found');
 		expect(mockDriverRepo.delete).not.toHaveBeenCalled();
 	});
 });

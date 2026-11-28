@@ -1,13 +1,14 @@
 import { randomUUID } from "crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "fs";
 import { arch, platform, release } from "os";
-import { dirname, resolve } from "path";
+import { dirname } from "path";
 import { Inject, Injectable, Logger, OnApplicationBootstrap, OnModuleDestroy } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { PostHog } from "posthog-node";
 
 import type { Env } from "@/config/env.schema";
+import { releaseVersion } from "@/config/version";
 import type { IStatsRepository } from "@/domain/repositories/IStatsRepository.repo";
 
 /** Every event this installation can send — see docs/telemetry.md. */
@@ -27,20 +28,6 @@ export type TelemetryEvent =
 
 /** What an event carries: plain values only — no names people typed, no ids of theirs. */
 export type TelemetryProperties = Record<string, string | number | boolean | null | Record<string, number>>;
-
-// The hosting's own version, from its package.json — the first one up from
-// here (src/application/services, or dist/src/… once built).
-const VERSION = (() => {
-	for (let folder = __dirname, depth = 0; depth < 6; folder = dirname(folder), depth++) {
-		try {
-			const pkg = JSON.parse(readFileSync(resolve(folder, "package.json"), "utf-8")) as { name?: string; version?: string };
-			if (pkg.name === "hosting" && pkg.version) return pkg.version;
-		} catch {
-			// not here: one folder up
-		}
-	}
-	return "unknown";
-})();
 
 /**
  * A package as telemetry names it: an official one (@henglosio/…) by its
@@ -70,6 +57,8 @@ export class TelemetryService implements OnApplicationBootstrap, OnModuleDestroy
 	private readonly logger = new Logger(TelemetryService.name);
 	private readonly client: PostHog | null;
 	private readonly debug: boolean;
+	// The release it is (HIO_VERSION) — "unknown" for a dev run or an edge build.
+	private readonly version: string;
 	private readonly startedAt = Date.now();
 	private instanceId = "";
 	// Tasks since the last heartbeat, by type — what the heartbeat reports besides the totals.
@@ -82,6 +71,7 @@ export class TelemetryService implements OnApplicationBootstrap, OnModuleDestroy
 		const enabled = config.get("HIO_TELEMETRY", { infer: true }) && !config.get("DO_NOT_TRACK", { infer: true });
 		const key = config.get("HIO_TELEMETRY_KEY", { infer: true });
 		this.debug = config.get("HIO_TELEMETRY_DEBUG", { infer: true });
+		this.version = releaseVersion(config.get("HIO_VERSION", { infer: true })) ?? "unknown";
 
 		if (!enabled) {
 			this.logger.log("Telemetry is off (HIO_TELEMETRY=false or DO_NOT_TRACK=1).");
@@ -129,7 +119,7 @@ export class TelemetryService implements OnApplicationBootstrap, OnModuleDestroy
 	capture(event: TelemetryEvent, properties: TelemetryProperties = {}): void {
 		if (!this.client) return;
 		try {
-			const payload = { ...properties, hosting_version: VERSION };
+			const payload = { ...properties, hosting_version: this.version };
 			if (this.debug) this.logger.log(`[telemetry] ${event} ${JSON.stringify(payload)}`);
 			this.client.capture({
 				distinctId: this.instanceId,
